@@ -1,0 +1,30 @@
+/* styles/test-responsive.css */
+/* Test breakpoints visually during development */
+body::after {
+  content: 'xs: <480px';
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  z-index: 9999;
+}
+
+ @media (min-width: 480px) {
+  body::after { content: 'sm: 480px-767px'; }
+}
+
+ @media (min-width: 768px) {
+  body::after { content: 'md: 768px-1023px'; }
+}
+
+ @media (min-width: 1024px) {
+  body::after { content: 'lg: 1024px-1279px'; }
+}
+
+ @media (min-width: 1280px) {
+  body::after { content: 'xl: 1280px+'; }
+}

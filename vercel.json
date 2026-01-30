@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "regions": ["fra1"],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://api.barterpoint.co.ke"
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "https://api.barterpoint.co.ke/api/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
