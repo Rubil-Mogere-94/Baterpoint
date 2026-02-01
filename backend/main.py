@@ -2,6 +2,9 @@ import os
 import psycopg2
 from fastapi import FastAPI, Depends, HTTPException, status
 from typing import Annotated
+from dotenv import load_dotenv
+
+load_dotenv() # Load environment variables from .env file
 
 app = FastAPI()
 
