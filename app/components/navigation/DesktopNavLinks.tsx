@@ -1,9 +1,19 @@
+import Link from 'next/link';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+
 export default function DesktopNavLinks() {
   return (
-    <div className="flex space-x-4">
-      <a href="#" className="text-gray-700 hover:text-primary">Browse Listings</a>
-      <a href="#" className="text-gray-700 hover:text-primary">How it Works</a>
-      <a href="#" className="text-gray-700 hover:text-primary">Pricing</a>
-    </div>
+    <Box sx={{ display: 'flex', gap: 2 }}>
+      <Button component={Link} href="/browse" color="inherit">
+        Browse Listings
+      </Button>
+      <Button component={Link} href="/how-it-works" color="inherit">
+        How it Works
+      </Button>
+      <Button component={Link} href="/pricing" color="inherit">
+        Pricing
+      </Button>
+    </Box>
   );
 }

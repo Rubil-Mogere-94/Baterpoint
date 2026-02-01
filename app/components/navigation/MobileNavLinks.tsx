@@ -1,9 +1,18 @@
+import Link from 'next/link';
+import MenuItem from '@mui/material/MenuItem';
+
 export default function MobileNavLinks() {
   return (
-    <div className="flex flex-col space-y-2 p-4">
-      <a href="#" className="text-gray-700 hover:text-primary">Browse Listings</a>
-      <a href="#" className="text-gray-700 hover:text-primary">How it Works</a>
-      <a href="#" className="text-gray-700 hover:text-primary">Pricing</a>
-    </div>
+    <>
+      <MenuItem component={Link} href="/browse">
+        Browse Listings
+      </MenuItem>
+      <MenuItem component={Link} href="/how-it-works">
+        How it Works
+      </MenuItem>
+      <MenuItem component={Link} href="/pricing">
+        Pricing
+      </MenuItem>
+    </>
   );
 }

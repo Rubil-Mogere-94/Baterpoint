@@ -7,47 +7,72 @@ import NotificationBell from './navigation/NotificationBell';
 import UserProfile from './navigation/UserProfile';
 import MenuIcon from './navigation/MenuIcon';
 import MobileNavLinks from './navigation/MobileNavLinks';
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+} from '@mui/material';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
+  const toggleDrawer = (open: boolean) => () => {
+    setIsMobileMenuOpen(open);
+  };
+
   return (
-    <nav className="bg-white shadow-md">
-      <div className="container mx-auto px-4">
+    <AppBar position="static" color="default" elevation={1}>
+      <Toolbar>
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <Logo />
-            <DesktopNavLinks />
-          </div>
-          <div className="flex items-center space-x-4">
-            <NotificationBell />
-            <UserProfile />
-          </div>
-        </div>
-        
-        {/* Mobile Navigation */}
-        <div className="md:hidden flex items-center justify-between h-16">
+        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           <Logo />
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-700"
-            aria-label="Menu"
+          <Box sx={{ ml: 4 }}>
+            <DesktopNavLinks />
+          </Box>
+        </Box>
+        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', alignItems: 'center' }}>
+          <NotificationBell />
+          <UserProfile />
+        </Box>
+
+        {/* Mobile Navigation */}
+        <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
+          <Logo />
+          <IconButton
+            edge="end"
+            color="inherit"
+            aria-label="menu"
+            onClick={toggleDrawer(true)}
+            sx={{ ml: 2 }}
           >
             <MenuIcon />
-          </button>
-        </div>
-        
-        {/* Mobile Menu (Dropdown) */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t">
-            <MobileNavLinks />
-            <div className="p-4 border-t">
-              <UserProfile />
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
+          </IconButton>
+          <Drawer
+            anchor="right"
+            open={isMobileMenuOpen}
+            onClose={toggleDrawer(false)}
+          >
+            <Box
+              sx={{ width: 250 }}
+              role="presentation"
+              onClick={toggleDrawer(false)}
+              onKeyDown={toggleDrawer(false)}
+            >
+              <List>
+                <MobileNavLinks />
+                <ListItem>
+                  <UserProfile />
+                </ListItem>
+              </List>
+            </Box>
+          </Drawer>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }
