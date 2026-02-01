@@ -1,5 +1,12 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import {
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
+} from "@mui/material";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 
@@ -13,10 +20,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "BarterPoint Africa",
-  description: "Trade goods and services across Kenya",
-};
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#4f46e5",
+    },
+    secondary: {
+      main: "#ec4899",
+    },
+  },
+});
 
 export default function RootLayout({
   children,
@@ -31,8 +44,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navigation />
-        <main>{children}</main>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Navigation />
+          <main>{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );
