@@ -1,5 +1,5 @@
-import ListingCard from "./ListingCard.js";
-import { Listing } from "./ListingCard.js";
+import ListingCard from "./ListingCard";
+import { Listing } from "./ListingCard";
 import { Button } from '@mui/material'; // Import Material-UI Button
 
 export default function ListingGrid({ listings }: { listings: Listing[] }) {
