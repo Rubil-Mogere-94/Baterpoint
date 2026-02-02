@@ -23,10 +23,17 @@ const geistMono = Geist_Mono({
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#4f46e5",
+      main: "#003366", // Darker, more professional blue (similar to Amazon's branding)
     },
     secondary: {
-      main: "#ec4899",
+      main: "#FF9900", // Vibrant orange (Amazon's signature orange)
+    },
+    text: {
+      primary: "#000000",
+    },
+    background: {
+      default: "#ffffff",
+      paper: "#f6f6f6",
     },
   },
 });

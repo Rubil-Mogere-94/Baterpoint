@@ -16,7 +16,10 @@ import {
   List,
   ListItem,
   ListItemText,
+  TextField,
+  InputAdornment, // Add InputAdornment import
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search'; // Add SearchIcon import
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,21 +29,49 @@ export default function Navigation() {
   };
 
   return (
-    <AppBar position="static" color="default" elevation={1}>
-      <Toolbar>
-        {/* Desktop Navigation */}
-        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+    <AppBar position="static" color="primary" elevation={4}>
+      <Toolbar sx={{ px: 2, justifyContent: 'space-between' }}>
+        {/* Desktop Left Section: Logo and Nav Links */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
           <Logo />
           <Box sx={{ ml: 4 }}>
             <DesktopNavLinks />
           </Box>
         </Box>
-        <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', alignItems: 'center' }}>
+
+        {/* Search Bar for Desktop (Central) */}
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: { xs: 'none', md: 'flex' },
+            justifyContent: 'center',
+            alignItems: 'center',
+            maxWidth: '500px', // Limit search bar width
+            mx: 2,
+          }}
+        >
+          <TextField
+            fullWidth
+            variant="outlined"
+            size="small"
+            placeholder="Search for items..."
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+
+        {/* Desktop Right Section: Notification and User Profile */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', ml: 2 }}>
           <NotificationBell />
           <UserProfile />
         </Box>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Remains largely the same for now */}
         <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
           <Logo />
           <IconButton

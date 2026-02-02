@@ -11,13 +11,14 @@
     "export": "next export",
     "test": "jest",
     "build:backend": "cd backend && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
-    "start:backend": "cd backend && ./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000",
+    "start:backend": "cd backend && ./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
     "dev:all": "concurrently \"npm run dev\" \"npm run start:backend\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
+    "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@tanstack/react-query": "^5.90.20",
     "@vercel/analytics": "^1.6.1",
