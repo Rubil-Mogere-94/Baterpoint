@@ -54,7 +54,7 @@ export default function Navigation() {
             fullWidth
             variant="outlined"
             size="small"
-            placeholder="Search for items..."
+            placeholder="Search for listings..."
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

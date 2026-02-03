@@ -56,9 +56,20 @@ pip install -r requirements.txt
 cd .. # Return to project root
 ```
 
-### 4. Run the Application
+### 4. Configure Environment Variables
 
-Start both the frontend and backend servers concurrently:
+Create a `.env` file in the `backend/` directory and add your PostgreSQL connection string.
+
+```
+# backend/.env
+DATABASE_URL="postgresql://user:password@host:port/dbname"
+```
+
+Replace `user`, `password`, `host`, `port`, and `dbname` with your actual PostgreSQL credentials.
+
+### 5. Run the Application
+
+Once the environment variable is set, return to the project root and start both the frontend and backend servers concurrently:
 
 ```bash
 npm run dev:all

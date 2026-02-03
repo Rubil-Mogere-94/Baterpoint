@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# virtual environments and build outputs
+backend/venv/
+dist/
+
 # env files (can opt-in for committing if needed)
 .env*
 

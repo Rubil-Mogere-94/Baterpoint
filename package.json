@@ -4,16 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
-    "start": "next start",
-    "lint": "next lint",
-    "export": "next export",
-    "test": "jest",
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite preview",
+    "lint": "eslint .",
     "build:backend": "cd backend && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
     "start:backend": "cd backend && ./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
-    "dev:all": "concurrently \"npm run dev\" \"npm run start:backend\""
+    "dev:all": "concurrently \"vite\" \"npm run start:backend\""
   },
+  
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -23,6 +22,7 @@
     "@tanstack/react-query": "^5.90.20",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
+    "@vitejs/plugin-react": "^5.1.3",
     "axios": "^1.13.4",
     "critters": "^0.0.23",
     "date-fns": "^4.1.0",
@@ -30,7 +30,9 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
+    "react-router-dom": "^7.13.0",
     "socket.io-client": "^4.8.3",
+    "vite": "^7.3.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -42,12 +44,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-router-dom": "^5.3.3",
     "concurrently": "^9.2.1",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
-    "next": "^16.1.6",
     "typescript": "^5"
   }
 }

@@ -1,14 +1,40 @@
 import os
 import psycopg2
 from fastapi import FastAPI, Depends, HTTPException, status
-from typing import Annotated
+from typing import Annotated, Optional
+from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv() # Load environment variables from .env file
 
 app = FastAPI()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@host:port/dbname")
+
+# Configure CORS
+origins = [
+    "http://localhost:3000",  # Frontend URL
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class Listing(BaseModel):
+    title: str
+    description: Optional[str] = None
+    cashPrice: Optional[float] = None
+    exchange: Optional[str] = None
+    category: str
+    tradeType: str
+    imageUrl: Optional[str] = None
 
 def get_db_connection():
     conn = None
@@ -25,12 +51,15 @@ def init_db():
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS items (
+            DROP TABLE IF EXISTS items;
+            CREATE TABLE IF NOT EXISTS listings (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 price DECIMAL(10, 2),
-                trade_type VARCHAR(50)
+                trade_type VARCHAR(50),
+                category VARCHAR(255),
+                image_url TEXT
             );
         """)
         conn.commit()
@@ -49,34 +78,42 @@ async def startup_event():
 def read_root():
     return {"Hello": "World"}
 
-@app.post("/items/", status_code=status.HTTP_201_CREATED)
-def create_item(name: str, description: str, price: float, trade_type: str, db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
+@app.post("/listings/", status_code=status.HTTP_201_CREATED)
+def create_listing(listing: Listing, db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
     cur = db.cursor()
     try:
         cur.execute(
-            "INSERT INTO items (name, description, price, trade_type) VALUES (%s, %s, %s, %s) RETURNING id;",
-            (name, description, price, trade_type)
+            "INSERT INTO listings (name, description, price, trade_type, category, image_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;",
+            (listing.title, listing.description, listing.cashPrice, listing.tradeType, listing.category, listing.imageUrl)
         )
-        item_id = cur.fetchone()[0]
+        listing_id = cur.fetchone()[0]
         db.commit()
-        return {"id": item_id, "name": name, "description": description, "price": price, "trade_type": trade_type}
+        return {
+            "id": listing_id,
+            "name": listing.title,
+            "description": listing.description,
+            "price": listing.cashPrice,
+            "trade_type": listing.tradeType,
+            "category": listing.category,
+            "image_url": listing.imageUrl
+        }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error creating item: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error creating listing: {e}")
     finally:
         cur.close()
 
-@app.get("/items/")
-def get_items(db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
+@app.get("/listings/")
+def get_listings(db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
     cur = db.cursor()
     try:
-        cur.execute("SELECT id, name, description, price, trade_type FROM items;")
-        items = cur.fetchall()
+        cur.execute("SELECT id, name, description, price, trade_type, category, image_url FROM listings;")
+        listings = cur.fetchall()
         return [
-            {"id": item[0], "name": item[1], "description": item[2], "price": item[3], "trade_type": item[4]}
-            for item in items
+            {"id": listing[0], "name": listing[1], "description": listing[2], "price": listing[3], "trade_type": listing[4], "category": listing[5], "image_url": listing[6]}
+            for listing in listings
         ]
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching items: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching listings: {e}")
     finally:
         cur.close()

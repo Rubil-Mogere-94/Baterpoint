@@ -32,9 +32,7 @@ export default function NetworkAwareImage({ src, alt, ...props }: { src: string,
   }, []);
   
   // For Kenyan users with data limits
-  const imageSrc = useLowQuality 
-    ? `${src}?w=400&q=30`  // Lower quality, smaller size
-    : `${src}?w=800&q=80`; // Higher quality
+  const imageSrc = src;
   
   return (
     // eslint-disable-next-line @next/next/no-img-element

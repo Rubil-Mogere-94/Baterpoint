@@ -32,9 +32,9 @@ export default function CreateListingForm() {
               </div>
               <div className="font-semibold capitalize">{type}</div>
               <div className="text-sm text-gray-600 mt-1 text-center">
-                {type === 'barter' && 'Trade items only'}
+                {type === 'barter' && 'Trade listings only'}
                 {type === 'cash' && 'Sell for cash only'}
-                {type === 'mixed' && 'Cash + items'}
+                {type === 'mixed' && 'Cash + listings'}
               </div>
             </button>
           ))}
@@ -83,7 +83,7 @@ export default function CreateListingForm() {
               </label>
               <textarea 
                 className="w-full p-3 border rounded-lg h-32"
-                placeholder="List items you want to trade for..."
+                placeholder="List listings you want to trade for..."
               />
             </div>
           )}
