@@ -17,9 +17,9 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-primary-dark shadow-md">
+    <nav className="bg-gradient-to-r from-primary-dark to-primary shadow-lg ring-1 ring-inset ring-black ring-opacity-5">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Desktop Left Section: Logo, User Profile, and Nav Links */}
           <div className="flex items-center space-x-4">
             <Logo />
@@ -35,7 +35,7 @@ export default function Navigation() {
               <input
                 type="text"
                 placeholder="Search for listings..."
-                className="block w-full rounded-md border-0 bg-primary-dark-light py-1.5 pl-10 pr-3 text-white ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 bg-primary py-1.5 pl-10 pr-3 text-white ring-1 ring-inset ring-primary-light focus:ring-2 focus:ring-inset focus:ring-primary-light sm:text-sm sm:leading-6"
               />
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <SearchIcon className="h-5 w-5 text-gray-400" />

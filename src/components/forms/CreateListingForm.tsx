@@ -6,10 +6,10 @@ import { TouchButton } from '../buttons/TouchButton';
 export default function CreateListingForm() {
   const [tradeType, setTradeType] = useState<'barter' | 'cash' | 'mixed'>('mixed');
   
-  const inputClassNames = "w-full p-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary placeholder-neutral-400 text-neutral-800";
+  const inputClassNames = "w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary-dark focus:border-primary-dark placeholder-neutral-400 text-neutral-800 transition-all duration-200";
 
   return (
-    <div className="max-w-4xl mx-auto p-4 bg-white shadow-lg rounded-lg">
+    <div className="max-w-4xl mx-auto p-4 bg-white shadow-xl rounded-lg border border-neutral-100">
       <h2 className="text-2xl font-bold text-neutral-800 mb-6">Create New Listing</h2>
       
       {/* Trade Type Selector - Different layout for mobile/desktop */}
@@ -23,8 +23,8 @@ export default function CreateListingForm() {
               className={`
                 p-4 rounded-lg border-2 transition-all duration-200
                 ${tradeType === type 
-                  ? 'border-primary-dark bg-primary-light text-white shadow-md' 
-                  : 'border-neutral-300 hover:border-primary-light bg-neutral-50 text-neutral-700 hover:text-primary-dark'}
+                  ? 'border-primary-dark bg-primary text-white shadow-lg' 
+                  : 'border-neutral-200 hover:border-primary hover:bg-primary-50 hover:text-primary-dark'}
                 flex flex-col items-center justify-center
                 h-24 sm:h-32
               `}
@@ -111,7 +111,7 @@ export default function CreateListingForm() {
       <div className="mt-8 text-right">
         <TouchButton
           type="submit"
-          className="w-full md:w-auto"
+          className="w-full md:w-auto bg-primary-dark hover:bg-primary-dark-dark text-white font-bold py-2 px-6 rounded-lg transition-colors duration-200"
         >
           Create Listing
         </TouchButton>
