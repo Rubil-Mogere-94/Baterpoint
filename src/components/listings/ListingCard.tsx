@@ -1,5 +1,6 @@
-import { Button, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 import NetworkAwareImage from '@/components/media/NetworkAwareImage';
+import { TouchButton } from '../buttons/TouchButton'; // Import the TouchButton
 
 export interface Listing {
   id: number;
@@ -13,40 +14,41 @@ export interface Listing {
 
 export default function ListingCard({ listing, className }: { listing: Listing, className?: string }) {
   return (
-    <div className={`flex flex-col border rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ${className}`}>
-      <div className="relative w-full h-48 overflow-hidden rounded-t-lg bg-gray-100 flex items-center justify-center">
+    <div className={`flex flex-col bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer ${className}`}>
+      <div className="relative w-full h-48 bg-neutral-100 flex items-center justify-center overflow-hidden">
         {listing.imageUrl ? (
           <NetworkAwareImage
             src={listing.imageUrl}
             alt={listing.title}
-            className="w-full h-full"
-            style={{ objectFit: 'cover' }}
+            className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-gray-400 text-sm">No Image</span>
+          <span className="text-neutral-400 text-sm">No Image Available</span>
         )}
       </div>
       <div className="p-4 flex-grow flex flex-col justify-between">
-        <Typography variant="h6" component="h3" className="font-bold mb-1 text-gray-800">
+        <h3 className="text-lg font-semibold text-text-dark mb-2">
           {listing.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" className="mb-2">
-          {listing.description.length > 70 ? listing.description.substring(0, 67) + '...' : listing.description}
-        </Typography>
-        <div className="flex justify-between items-center mb-2">
-          <Typography variant="body2" color="text.secondary">
+        </h3>
+        <p className="text-sm text-text-DEFAULT mb-2 leading-tight">
+          {listing.description.length > 70 ? listing.description.substring(0, 70) + '...' : listing.description}
+        </p>
+        <div className="flex justify-between items-center text-xs text-text-light mb-3">
+          <span>
             Category: {listing.category}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" className="capitalize">
+          </span>
+          <span className="capitalize">
             {listing.tradeType}
-          </Typography>
+          </span>
         </div>
-        <Typography variant="subtitle1" component="p" className="text-lg font-semibold text-blue-600 mb-4">
+        <p className="text-xl font-bold text-text-dark mb-4">
           KES {parseFloat(listing.price).toLocaleString()}
-        </Typography>
-        <Button variant="contained" color="primary" fullWidth>
-          View Details
-        </Button>
+        </p>
+        <Link to={"/listings/" + listing.id}>
+          <TouchButton className="w-full">
+            View Details
+          </TouchButton>
+        </Link>
       </div>
     </div>
   );

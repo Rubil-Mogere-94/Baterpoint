@@ -1,27 +1,4 @@
-import {
-  createTheme,
-  ThemeProvider,
-  CssBaseline,
-} from "@mui/material";
 import Navigation from "@/components/Navigation";
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#003366", // Darker, more professional blue (similar to Amazon's branding)
-    },
-    secondary: {
-      main: "#FF9900", // Vibrant orange (Amazon's signature orange)
-    },
-    text: {
-      primary: "#000000",
-    },
-    background: {
-      default: "#ffffff",
-      paper: "#f6f6f6",
-    },
-  },
-});
 
 export default function Layout({
   children,
@@ -29,10 +6,11 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <div className="min-h-screen bg-neutral-50 font-sans text-text-DEFAULT antialiased">
       <Navigation />
-      <main>{children}</main>
-    </ThemeProvider>
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex-grow">
+        {children}
+      </main>
+    </div>
   );
 }

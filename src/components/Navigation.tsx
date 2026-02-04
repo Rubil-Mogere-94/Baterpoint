@@ -7,19 +7,7 @@ import NotificationBell from './navigation/NotificationBell';
 import UserProfile from './navigation/UserProfile';
 import MenuIcon from './navigation/MenuIcon';
 import MobileNavLinks from './navigation/MobileNavLinks';
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemText,
-  TextField,
-  InputAdornment, // Add InputAdornment import
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search'; // Add SearchIcon import
+import SearchIcon from '@mui/icons-material/Search';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,81 +17,78 @@ export default function Navigation() {
   };
 
   return (
-    <AppBar position="static" color="primary" elevation={4}>
-      <Toolbar sx={{ px: 2, justifyContent: 'space-between' }}>
-        {/* Desktop Left Section: Logo and Nav Links */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
-          <Logo />
-          <Box sx={{ ml: 4 }}>
+    <nav className="bg-primary-dark shadow-md">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Desktop Left Section: Logo, User Profile, and Nav Links */}
+          <div className="flex items-center space-x-4">
+            <Logo />
+            <UserProfile /> {/* UserProfile moved to far left */}
             <DesktopNavLinks />
-          </Box>
-        </Box>
+          </div>
 
-        {/* Search Bar for Desktop (Central) */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: { xs: 'none', md: 'flex' },
-            justifyContent: 'center',
-            alignItems: 'center',
-            maxWidth: '500px', // Limit search bar width
-            mx: 2,
-          }}
-        >
-          <TextField
-            fullWidth
-            variant="outlined"
-            size="small"
-            placeholder="Search for listings..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-
-        {/* Desktop Right Section: Notification and User Profile */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', ml: 2 }}>
-          <NotificationBell />
-          <UserProfile />
-        </Box>
-
-        {/* Mobile Navigation - Remains largely the same for now */}
-        <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
-          <Logo />
-          <IconButton
-            edge="end"
-            color="inherit"
-            aria-label="menu"
-            onClick={toggleDrawer(true)}
-            sx={{ ml: 2 }}
+          {/* Search Bar for Desktop (Central) */}
+          <div
+            className="flex-grow hidden md:flex justify-center items-center max-w-lg mx-4"
           >
-            <MenuIcon />
-          </IconButton>
-          <Drawer
-            anchor="right"
-            open={isMobileMenuOpen}
-            onClose={toggleDrawer(false)}
-          >
-            <Box
-              sx={{ width: 250 }}
-              role="presentation"
-              onClick={toggleDrawer(false)}
-              onKeyDown={toggleDrawer(false)}
+            <div className="relative flex items-center w-full">
+              <input
+                type="text"
+                placeholder="Search for listings..."
+                className="block w-full rounded-md border-0 bg-primary-dark-light py-1.5 pl-10 pr-3 text-white ring-1 ring-inset ring-gray-700 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <SearchIcon className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Right Section: Notification */}
+          <div className="hidden md:flex items-center">
+            <NotificationBell />
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex-grow flex md:hidden justify-between items-center">
+            <Logo />
+            <button
+              type="button"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              aria-controls="mobile-menu"
+              aria-expanded="false"
+              onClick={toggleDrawer(true)}
             >
-              <List>
+              <span className="sr-only">Open main menu</span>
+              <MenuIcon />
+            </button>
+            {isMobileMenuOpen && (
+              <div className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 transition-opacity md:hidden" onClick={toggleDrawer(false)}></div>
+            )}
+            <div className={`fixed inset-y-0 right-0 z-50 w-64 bg-primary-dark text-white shadow-lg transform ${isMobileMenuOpen ? 'translate-x-0 ease-out duration-300' : 'translate-x-full ease-in duration-200'} md:hidden`}>
+              <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                <Logo />
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  onClick={toggleDrawer(false)}
+                >
+                  <span className="sr-only">Close menu</span>
+                  {/* Close icon */}
+                  <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <MobileNavLinks />
-                <ListItem>
+                <div className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">
                   <UserProfile />
-                </ListItem>
-              </List>
-            </Box>
-          </Drawer>
-        </Box>
-      </Toolbar>
-    </AppBar>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 }

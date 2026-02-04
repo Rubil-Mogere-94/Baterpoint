@@ -1,11 +1,10 @@
-import { Box, Typography, Button } from "@mui/material";
-import CreateListingFormMui from "@/components/forms/CreateListingFormMui"; from "@/components/listings/ListingCard";
+import CreateListingForm from "@/components/forms/CreateListingForm";
 
 export default function Home() {
 
   return (
-    <Box>
-      <CreateListingFormMui />
-    </Box>
+    <div className="py-8">
+      <CreateListingForm />
+    </div>
   );
 }

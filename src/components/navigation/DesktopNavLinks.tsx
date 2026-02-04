@@ -1,19 +1,17 @@
 import { Link } from 'react-router-dom';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
 
 export default function DesktopNavLinks() {
   return (
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Button component={Link} to="/browse" color="inherit">
+    <div className="hidden md:flex items-center space-x-4">
+      <Link to="/browse" className="text-white hover:bg-primary-light px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
         Browse Listings
-      </Button>
-      <Button component={Link} to="/how-it-works" color="inherit">
+      </Link>
+      <Link to="/how-it-works" className="text-white hover:bg-primary-light px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
         How it Works
-      </Button>
-      <Button component={Link} to="/pricing" color="inherit">
+      </Link>
+      <Link to="/pricing" className="text-white hover:bg-primary-light px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">
         Pricing
-      </Button>
-    </Box>
+      </Link>
+    </div>
   );
 }

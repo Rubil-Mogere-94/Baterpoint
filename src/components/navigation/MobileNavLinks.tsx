@@ -1,18 +1,26 @@
 import { Link } from 'react-router-dom';
-import MenuItem from '@mui/material/MenuItem';
 
 export default function MobileNavLinks() {
   return (
-    <>
-      <MenuItem component={Link} to="/browse">
+    <div className="px-2 pt-2 pb-3 space-y-1">
+      <Link
+        to="/browse"
+        className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700"
+      >
         Browse Listings
-      </MenuItem>
-      <MenuItem component={Link} to="/how-it-works">
+      </Link>
+      <Link
+        to="/how-it-works"
+        className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700"
+      >
         How it Works
-      </MenuItem>
-      <MenuItem component={Link} to="/pricing">
+      </Link>
+      <Link
+        to="/pricing"
+        className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700"
+      >
         Pricing
-      </MenuItem>
-    </>
+      </Link>
+    </div>
   );
 }
