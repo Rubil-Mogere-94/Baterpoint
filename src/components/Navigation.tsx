@@ -20,10 +20,9 @@ export default function Navigation() {
     <nav className="bg-gradient-to-r from-primary-dark to-primary shadow-lg ring-1 ring-inset ring-black ring-opacity-5">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Desktop Left Section: Logo, User Profile, and Nav Links */}
+          {/* Desktop Left Section: Logo and Nav Links */}
           <div className="flex items-center space-x-4">
             <Logo />
-            <UserProfile /> {/* UserProfile moved to far left */}
             <DesktopNavLinks />
           </div>
 
@@ -43,9 +42,13 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Desktop Right Section: Notification */}
-          <div className="hidden md:flex items-center">
+          {/* Desktop Right Section: Notification, User Profile, and Create Listing */}
+          <div className="hidden md:flex items-center space-x-4">
             <NotificationBell />
+            <UserProfile />
+            <a href="/create-listing" className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-accent hover:bg-primary-accent-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-accent">
+              Create Listing
+            </a>
           </div>
 
           {/* Mobile Navigation */}
@@ -80,10 +83,11 @@ export default function Navigation() {
                 </button>
               </div>
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                <MobileNavLinks />
                 <div className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">
                   <UserProfile />
                 </div>
+                <MobileNavLinks />
+                <a href="/create-listing" className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">Create Listing</a>
               </div>
             </div>
           </div>
