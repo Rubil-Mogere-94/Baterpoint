@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../firebase';
 
 const RegisterPage = () => {
@@ -8,6 +8,7 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -17,7 +18,10 @@ const RegisterPage = () => {
       return;
     }
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, {
+        displayName: displayName,
+      });
       navigate('/');
     } catch (error: any) {
       setError(error.message);
@@ -47,6 +51,25 @@ const RegisterPage = () => {
               className="block w-full px-3 py-2 mt-1 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
+          <div>
+            <label
+              htmlFor="display-name"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Display Name
+            </label>
+            <input
+              id="display-name"
+              name="display-name"
+              type="text"
+              autoComplete="name"
+              required
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="block w-full px-3 py-2 mt-1 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+
           <div>
             <label
               htmlFor="password"
