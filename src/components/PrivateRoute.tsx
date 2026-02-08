@@ -1,16 +1,12 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../firebase';
 
 const PrivateRoute = () => {
-  const [user, loading] = useAuthState(auth);
+  const token = localStorage.getItem('access_token');
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return user ? <Outlet /> : <Navigate to="/login" />;
+  // A more robust check would be to validate the token's expiration
+  // For now, we'll just check for its presence.
+  return token ? <Outlet /> : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;

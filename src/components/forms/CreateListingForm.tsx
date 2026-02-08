@@ -66,9 +66,16 @@ export default function CreateListingForm() {
     }
     formData.append('description', ''); 
 
+    const token = localStorage.getItem('access_token');
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
       const response = await fetch('http://localhost:8000/listings/', {
         method: 'POST',
+        headers: headers,
         body: formData,
       });
 

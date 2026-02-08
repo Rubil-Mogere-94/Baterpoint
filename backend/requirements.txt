@@ -3,3 +3,7 @@ uvicorn
 psycopg2-binary
 python-dotenv
 fastapi-cors
+passlib[bcrypt]
+python-jose[cryptography]
+python-socketio
+fastapi-socketio

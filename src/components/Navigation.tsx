@@ -26,22 +26,6 @@ export default function Navigation() {
             <DesktopNavLinks />
           </div>
 
-          {/* Search Bar for Desktop (Central) */}
-          <div
-            className="flex-grow hidden md:flex justify-center items-center max-w-lg mx-4"
-          >
-            <div className="relative flex items-center w-full">
-              <input
-                type="text"
-                placeholder="Search for listings..."
-                className="block w-full rounded-md border-0 bg-primary py-1.5 pl-10 pr-3 text-white ring-1 ring-inset ring-primary-light focus:ring-2 focus:ring-inset focus:ring-primary-light sm:text-sm sm:leading-6"
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <SearchIcon className="h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-          </div>
-
           {/* Desktop Right Section: Notification, User Profile, and Create Listing */}
           <div className="hidden md:flex items-center space-x-4">
             <NotificationBell />

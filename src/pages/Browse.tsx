@@ -9,6 +9,13 @@ export default function BrowsePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // New state for filters and sorting
+  const [category, setCategory] = useState('');
+  const [tradeType, setTradeType] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [order, setOrder] = useState('desc');
+
+
   const fetchListings = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -17,19 +24,39 @@ export default function BrowsePage() {
       if (searchTerm) {
         url.searchParams.append('search', searchTerm);
       }
+      // Add new params
+      if (category) {
+        url.searchParams.append('category', category);
+      }
+      if (tradeType) {
+        url.searchParams.append('tradeType', tradeType);
+      }
+      if (sortBy) {
+        url.searchParams.append('sortBy', sortBy);
+        url.searchParams.append('order', order);
+      }
       
       const response = await fetch(url.toString());
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data: Listing[] = await response.json();
-      setListings(data);
+      const data: any[] = await response.json();
+      const mappedListings = data.map((listing: any) => ({
+          id: listing.id,
+          title: listing.title,
+          description: listing.description,
+          price: listing.cashPrice ? String(listing.cashPrice) : '0',
+          category: listing.category,
+          tradeType: listing.tradeType,
+          imageUrl: listing.imageUrl,
+        }));
+      setListings(mappedListings);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, category, tradeType, sortBy, order]); // Add new dependencies
 
   useEffect(() => {
     fetchListings();
@@ -40,6 +67,15 @@ export default function BrowsePage() {
     setSearchTerm(searchQuery);
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSearchTerm('');
+    setCategory('');
+    setTradeType('');
+    setSortBy('created_at');
+    setOrder('desc');
+  };
+
   return (
     <div className="py-8">
       <h2 className="text-3xl font-bold text-center text-text-dark mb-4">
@@ -47,7 +83,7 @@ export default function BrowsePage() {
       </h2>
 
       {/* Search Bar */}
-      <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8 px-4">
+      <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-4 px-4">
         <div className="relative">
           <input
             type="search"
@@ -61,6 +97,36 @@ export default function BrowsePage() {
           </button>
         </div>
       </form>
+      
+      {/* Filters and Sorting */}
+      <div className="max-w-4xl mx-auto mb-8 px-4 flex flex-wrap gap-4 items-center justify-center">
+        {/* Category Filter */}
+        <select value={category} onChange={e => setCategory(e.target.value)} className="p-2 border rounded-md">
+            <option value="">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="phones">Phones & Tablets</option>
+            <option value="agriculture">Agriculture</option>
+            <option value="services">Services</option>
+        </select>
+        {/* Trade Type Filter */}
+        <select value={tradeType} onChange={e => setTradeType(e.target.value)} className="p-2 border rounded-md">
+            <option value="">All Trade Types</option>
+            <option value="barter">Barter</option>
+            <option value="cash">Cash</option>
+            <option value="mixed">Mixed</option>
+        </select>
+        {/* Sort By */}
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="p-2 border rounded-md">
+            <option value="created_at">Date Posted</option>
+            <option value="price">Price</option>
+        </select>
+        {/* Order */}
+        <select value={order} onChange={e => setOrder(e.target.value)} className="p-2 border rounded-md">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+        </select>
+        <button onClick={handleResetFilters} className="p-2 bg-gray-200 rounded-md">Reset</button>
+      </div>
 
       {loading && (
         <div className="flex justify-center items-center h-48">
