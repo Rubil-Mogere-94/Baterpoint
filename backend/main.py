@@ -133,11 +133,20 @@ def create_listing(
         cur.close()
 
 @app.get("/listings/")
-def get_listings(db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
+def get_listings(db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)], search: Optional[str] = None):
     cur = db.cursor()
     try:
-        cur.execute("SELECT id, name, description, price, trade_type, category, image_url FROM listings;")
+        query = "SELECT id, name, description, price, trade_type, category, image_url FROM listings"
+        params = []
+        
+        if search:
+            query += " WHERE name ILIKE %s OR description ILIKE %s"
+            search_term = f"%{search}%"
+            params.extend([search_term, search_term])
+            
+        cur.execute(query, params)
         listings = cur.fetchall()
+        
         return [
             {"id": listing[0], "title": listing[1], "description": listing[2], "price": listing[3], "tradeType": listing[4], "category": listing[5], "imageUrl": listing[6]}
             for listing in listings
