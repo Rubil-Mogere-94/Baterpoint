@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '../firebase';
 import Logo from './navigation/Logo';
 import DesktopNavLinks from './navigation/DesktopNavLinks';
 import NotificationBell from './navigation/NotificationBell';
@@ -11,6 +12,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 export default function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { currentUser } = useAuth(); // Get current user from auth context
 
   const toggleDrawer = (open: boolean) => () => {
     setIsMobileMenuOpen(open);
@@ -24,6 +26,11 @@ export default function Navigation() {
           <div className="flex items-center space-x-4">
             <Logo />
             <DesktopNavLinks />
+            {currentUser && currentUser.role === 'admin' && (
+              <a href="/admin" className="text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                Admin Dashboard
+              </a>
+            )}
           </div>
 
           {/* Desktop Right Section: Notification, User Profile, and Create Listing */}
@@ -71,6 +78,11 @@ export default function Navigation() {
                   <UserProfile />
                 </div>
                 <MobileNavLinks />
+                {currentUser && currentUser.role === 'admin' && (
+                  <a href="/admin" className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">
+                    Admin Dashboard
+                  </a>
+                )}
                 <a href="/create-listing" className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-gray-700">Create Listing</a>
               </div>
             </div>

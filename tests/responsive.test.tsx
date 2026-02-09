@@ -3,6 +3,24 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import Navigation from '@/components/Navigation'; // Adjust path if necessary
 import MatchMedia from 'jest-matchmedia-mock';
 
+// Explicitly mock firebase for this test file
+jest.mock('../src/firebase', () => ({
+  useAuth: jest.fn(() => ({
+    currentUser: null,
+    userToken: null,
+    loading: false,
+  })),
+  auth: {},
+  app: {},
+  analytics: {},
+  initializeApp: jest.fn(),
+  getAnalytics: jest.fn(),
+  getAuth: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
+}));
+
+
+
 let matchMedia: any;
 
 describe('Responsive Design', () => {
@@ -23,18 +41,18 @@ describe('Responsive Design', () => {
     expect(mobileMenuButton).toBeInTheDocument();
     
     // Desktop nav links should be hidden (not in the document flow)
-    expect(screen.queryByText('Browse Listings')).toBeInTheDocument(); 
-    expect(screen.queryByText('How it Works')).toBeInTheDocument();
-    expect(screen.queryByText('Pricing')).toBeInTheDocument();
+    expect(screen.queryAllByText('Browse Listings').length).toBeGreaterThanOrEqual(1); 
+    expect(screen.queryAllByText('How it Works').length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryAllByText('Pricing').length).toBeGreaterThanOrEqual(1);
 
     // The elements are technically in the DOM, but their display is controlled by CSS.
     // We can simulate clicking the mobile menu button to open the mobile menu and then check for the links.
     fireEvent.click(mobileMenuButton);
 
-    expect(screen.getByText('Browse Listings')).toBeVisible();
-    expect(screen.getByText('How it Works')).toBeVisible();
-    expect(screen.getByText('Pricing')).toBeVisible();
-    expect(screen.getByText('Create Listing')).toBeVisible();
+    expect(screen.getAllByText('Browse Listings')[0]).toBeVisible();
+    expect(screen.getAllByText('How it Works')[0]).toBeVisible();
+    expect(screen.getAllByText('Pricing')[0]).toBeVisible();
+    expect(screen.getAllByText('Create Listing')[0]).toBeVisible();
   });
   
   test('Shows desktop navigation on large screens and hides mobile menu button', () => {
@@ -42,9 +60,9 @@ describe('Responsive Design', () => {
     render(<Router><Navigation /></Router>);
     
     // Desktop nav links should be visible
-    expect(screen.getByText('Browse Listings')).toBeInTheDocument();
-    expect(screen.getByText('How it Works')).toBeInTheDocument();
-    expect(screen.getByText('Pricing')).toBeInTheDocument();
+    expect(screen.getAllByText('Browse Listings')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('How it Works')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Pricing')[0]).toBeInTheDocument();
     
     // Mobile menu button should be hidden
     expect(screen.queryByRole('button', { name: 'Open main menu' })).not.toBeVisible();

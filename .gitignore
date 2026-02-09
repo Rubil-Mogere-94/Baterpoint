@@ -32,6 +32,7 @@ yarn-error.log*
 
 # virtual environments and build outputs
 backend/venv/
+backend/__pycache__/
 backend/static/
 dist/
 

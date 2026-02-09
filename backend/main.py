@@ -41,12 +41,12 @@ async def get_sio_current_user(token: str, db_connection: psycopg2.extensions.co
         raise credentials_exception
     
     cur = db_connection.cursor()
-    cur.execute("SELECT id, username, email FROM users WHERE username = %s", (token_data.username,))
+    cur.execute("SELECT id, username, email, role FROM users WHERE username = %s", (token_data.username,))
     user = cur.fetchone()
     cur.close()
     if user is None:
         raise credentials_exception
-    return User(id=user[0], username=user[1], email=user[2])
+    return User(id=user[0], username=user[1], email=user[2], role=user[3])
 
 # Store active connections and their associated user/trade_id
 active_sids = {} # {sid: {'user_id': int, 'username': str, 'trade_id': int}}
@@ -205,11 +205,14 @@ class User(BaseModel):
     id: int
     email: str
     username: str
+    role: str
+    subscription_status: Optional[str] = "basic"
 
 class UserCreate(BaseModel):
     username: str
     email: str
     password: str = Field(min_length=8, max_length=72)
+    role: str = "user"
 
 class Token(BaseModel):
     access_token: str
@@ -228,6 +231,12 @@ class Listing(BaseModel):
     tradeType: str
     imageUrl: Optional[str] = None
     user_id: int
+
+class UserRoleUpdate(BaseModel):
+    role: str
+
+class UserSubscriptionUpdate(BaseModel):
+    subscription_status: str
 
 # --- Database ---
 os.makedirs("static/images", exist_ok=True)
@@ -265,6 +274,7 @@ def init_db():
                 username VARCHAR(255) UNIQUE NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 hashed_password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'user' NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
@@ -347,12 +357,20 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: An
         raise credentials_exception
     
     cur = db.cursor()
-    cur.execute("SELECT id, username, email FROM users WHERE username = %s", (token_data.username,))
+    cur.execute("SELECT id, username, email, role FROM users WHERE username = %s", (token_data.username,))
     user = cur.fetchone()
     cur.close()
     if user is None:
         raise credentials_exception
-    return User(id=user[0], username=user[1], email=user[2])
+    return User(id=user[0], username=user[1], email=user[2], role=user[3])
+
+
+async def get_current_active_admin_user(current_user: Annotated[User, Depends(get_current_user)]):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not an admin user")
+    return current_user
+
+
 
 
 # --- Authentication Endpoints ---
@@ -390,13 +408,13 @@ def register_user(user: UserCreate, db: Annotated[psycopg2.extensions.connection
     
     hashed_password = get_password_hash(user.password)
     cur.execute(
-        "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id, username, email;",
-        (user.username, user.email, hashed_password)
+        "INSERT INTO users (username, email, hashed_password, role) VALUES (%s, %s, %s, %s) RETURNING id, username, email, role;",
+        (user.username, user.email, hashed_password, user.role)
     )
     new_user = cur.fetchone()
     db.commit()
     cur.close()
-    return {"id": new_user[0], "username": new_user[1], "email": new_user[2]}
+    return {"id": new_user[0], "username": new_user[1], "email": new_user[2], "role": new_user[3]}
 
 @app.get("/users/me/listings", response_model=List[Listing])
 async def read_own_listings(
@@ -412,6 +430,68 @@ async def read_own_listings(
          "category": row[5], "imageUrl": row[6], "user_id": row[7]}
         for row in listings
     ]
+
+@app.get("/admin/users", response_model=List[User])
+async def get_all_users(
+    current_user: Annotated[User, Depends(get_current_active_admin_user)],
+    db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
+):
+    cur = db.cursor()
+    cur.execute("SELECT id, username, email, role FROM users;")
+    users = cur.fetchall()
+    cur.close()
+    return [
+        {"id": row[0], "username": row[1], "email": row[2], "role": row[3]}
+        for row in users
+    ]
+
+@app.put("/admin/users/{user_id}/role", response_model=User)
+async def update_user_role(
+    user_id: int,
+    user_role_update: UserRoleUpdate,
+    current_user: Annotated[User, Depends(get_current_active_admin_user)],
+    db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
+):
+    cur = db.cursor()
+    cur.execute("UPDATE users SET role = %s WHERE id = %s RETURNING id, username, email, role;", (user_role_update.role, user_id))
+    updated_user = cur.fetchone()
+    db.commit()
+    cur.close()
+    if updated_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return User(id=updated_user[0], username=updated_user[1], email=updated_user[2], role=updated_user[3])
+
+@app.put("/admin/users/{user_id}/subscription", response_model=User)
+async def update_user_subscription(
+    user_id: int,
+    user_subscription_update: UserSubscriptionUpdate,
+    current_user: Annotated[User, Depends(get_current_active_admin_user)],
+    db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
+):
+    cur = db.cursor()
+    # Before updating, check if the subscription_status column exists.
+    # If not, add it to the users table. This is a simple migration approach.
+    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='subscription_status';")
+    if cur.fetchone() is None:
+        print("Adding 'subscription_status' column to 'users' table...")
+        cur.execute("ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT 'basic';")
+        db.commit()
+        print("'subscription_status' column added.")
+
+    cur.execute(
+        "UPDATE users SET subscription_status = %s WHERE id = %s RETURNING id, username, email, role, subscription_status;",
+        (user_subscription_update.subscription_status, user_id)
+    )
+    updated_user = cur.fetchone()
+    db.commit()
+    cur.close()
+    if updated_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    # Need to return a User object, but the User model doesn't have subscription_status yet.
+    # For now, let's return a basic User object and then update the User model.
+    # This will be handled in a subsequent step.
+    return User(id=updated_user[0], username=updated_user[1], email=updated_user[2], role=updated_user[3], subscription_status=updated_user[4])
 
 # --- App Endpoints (Modified and New) ---
 # ... (current user dependency will be added in Phase 3)

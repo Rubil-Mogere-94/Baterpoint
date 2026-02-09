@@ -1,4 +1,4 @@
-#!/home/solregem/barterpoint/backend/venv/bin/python3
+#!/home/solregem/Baterpoint/backend/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

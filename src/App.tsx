@@ -12,6 +12,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -38,6 +40,9 @@ function App() {
               </Layout>
             }
           />
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
         </Route>
       </Routes>
     </Router>
