@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '../firebase';
+import { useAuth } from '../lib/hooks/useAuth';
 import Logo from './navigation/Logo';
 import DesktopNavLinks from './navigation/DesktopNavLinks';
 import NotificationBell from './navigation/NotificationBell';
@@ -43,10 +43,11 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="flex-grow flex md:hidden justify-between items-center">
+          <div data-testid="mobile-nav" className="flex-grow flex md:hidden justify-between items-center">
             <Logo />
             <button
               type="button"
+              data-testid="mobile-menu-button"
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               aria-controls="mobile-menu"
               aria-expanded="false"

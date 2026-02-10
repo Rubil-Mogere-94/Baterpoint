@@ -2,13 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, Outlet } from 'react-router-dom';
 import Navigation from '../src/components/Navigation';
 import AdminDashboard from '../src/pages/AdminDashboard';
-import { useAuth } from '../src/firebase'; // Mock this import
+import { useAuth } from '../src/lib/hooks/useAuth'; // Corrected import path for useAuth
 import AdminRoute from '../src/components/AdminRoute'; // Import AdminRoute for direct testing
 
 // Explicitly mock firebase for this test file
 jest.mock('../src/firebase', () => ({
-  useAuth: jest.fn(),
-  auth: {},
+  auth: {
+    onAuthStateChanged: jest.fn((callback) => {
+      callback(null); // Simulate no user initially
+      return jest.fn(); // unsubscribe function
+    }),
+  },
   app: {},
   analytics: {},
   initializeApp: jest.fn(),
@@ -16,6 +20,12 @@ jest.mock('../src/firebase', () => ({
   getAuth: jest.fn(),
   sendPasswordResetEmail: jest.fn(),
 }));
+
+// Mock the useAuth hook directly
+jest.mock('../src/lib/hooks/useAuth', () => ({
+  useAuth: jest.fn(),
+}));
+
 
 // Mock the Layout component as it's a wrapper
 jest.mock('../src/Layout', () => ({ children }: { children: React.ReactNode }) => (

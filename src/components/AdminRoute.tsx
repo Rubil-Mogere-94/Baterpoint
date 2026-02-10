@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../firebase'; // Assuming useAuth provides current user
+import { useAuth } from '../lib/hooks/useAuth'; // Assuming useAuth provides current user
 import { Navigate, Outlet } from 'react-router-dom';
 
 const AdminRoute: React.FC = () => {

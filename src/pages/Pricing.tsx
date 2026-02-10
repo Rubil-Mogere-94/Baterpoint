@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { notification } from 'antd'; // Import Ant Design notification
+import { notification, Tooltip } from 'antd'; // Import Ant Design notification and Tooltip
+import { useAuth } from '../lib/hooks/useAuth'; // Import useAuth hook
 
 export default function PricingPage() {
   const [api, contextHolder] = notification.useNotification(); // Ant Design notification hook
+  const { currentUser } = useAuth(); // Get the current user
+  const isAdmin = currentUser?.role === 'admin';
 
   // In a real application, currentUserPlan would likely come from an authenticated user's context or API fetch.
   // For demonstration, we'll use local state.
@@ -64,6 +67,14 @@ export default function PricingPage() {
   }));
 
   const handlePlanChange = (planName: string) => {
+    if (!isAdmin) {
+      api.error({
+        message: 'Permission Denied',
+        description: 'Only administrators can change subscription plans.',
+        placement: 'topRight',
+      });
+      return;
+    }
     // In a real application, this would trigger an API call to update the subscription
     console.log(`Attempting to change plan to: ${planName}`);
     setCurrentUserPlan(planName); // Simulate plan change
@@ -75,6 +86,14 @@ export default function PricingPage() {
   };
 
   const handleCancelSubscription = () => {
+    if (!isAdmin) {
+      api.error({
+        message: 'Permission Denied',
+        description: 'Only administrators can manage subscriptions.',
+        placement: 'topRight',
+      });
+      return;
+    }
     api.info({
       message: 'Cancellation Flow Initiated',
       description: 'You are now entering the simulated cancellation flow.',
@@ -97,12 +116,15 @@ export default function PricingPage() {
         <p className="text-lg">
           Status: Active | Renews: {currentUserPlan === 'Basic' ? 'N/A' : 'March 8, 2027'} (Example)
         </p>
-        <button 
-          onClick={handleCancelSubscription}
-          className="mt-4 px-6 py-2 bg-white text-primary-dark font-semibold rounded-lg hover:bg-neutral-100 transition-colors duration-200"
-        >
-          Manage / Cancel Subscription
-        </button>
+        <Tooltip title={!isAdmin ? "Only admins can manage subscriptions" : ""}>
+          <button 
+            onClick={handleCancelSubscription}
+            className={`mt-4 px-6 py-2 bg-white text-primary-dark font-semibold rounded-lg hover:bg-neutral-100 transition-colors duration-200 ${!isAdmin ? 'cursor-not-allowed opacity-50' : ''}`}
+            disabled={!isAdmin}
+          >
+            Manage / Cancel Subscription
+          </button>
+        </Tooltip>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -137,19 +159,21 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              className={"w-full py-3 rounded-lg font-semibold transition-colors duration-200 " + (
-                plan.isCurrent
-                  ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed'
-                  : (plan.highlight
-                      ? 'bg-primary-dark hover:bg-primary text-white'
-                      : 'bg-neutral-100 text-primary-dark hover:bg-neutral-200')
-              )}
-              disabled={plan.isCurrent}
-              onClick={() => handlePlanChange(plan.name)}
-            >
-              {plan.buttonText}
-            </button>
+            <Tooltip title={!isAdmin && !plan.isCurrent ? "Only admins can change plans" : ""}>
+              <button
+                className={"w-full py-3 rounded-lg font-semibold transition-colors duration-200 " + (
+                  plan.isCurrent
+                    ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed'
+                    : (plan.highlight
+                        ? 'bg-primary-dark hover:bg-primary text-white'
+                        : 'bg-neutral-100 text-primary-dark hover:bg-neutral-200')
+                ) + (!isAdmin && !plan.isCurrent ? ' opacity-50 cursor-not-allowed' : '')}
+                disabled={plan.isCurrent || !isAdmin}
+                onClick={() => handlePlanChange(plan.name)}
+              >
+                {plan.buttonText}
+              </button>
+            </Tooltip>
           </div>
         ))}
       </div>

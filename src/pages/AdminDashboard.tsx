@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../firebase'; // Assuming useAuth provides current user and token
+import { useAuth } from '../lib/hooks/useAuth'; // Assuming useAuth provides current user and token
 import { useNavigate } from 'react-router-dom';
 
 interface User {
@@ -16,6 +16,41 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [newSubscriptionStatus, setNewSubscriptionStatus] = useState<string>('');
+
+  const handleUpdateSubscription = async (userId: number) => {
+    if (!userToken) {
+      setError('Authentication token missing. Please log in again.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/admin/users/${userId}/subscription`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ subscription_status: newSubscriptionStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update subscription: ${response.statusText}`);
+      }
+
+      const updatedUser = await response.json();
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === userId ? updatedUser : user))
+      );
+      setEditingUserId(null); // Exit editing mode
+      setError(null); // Clear any previous errors
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user subscription.');
+    }
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -90,9 +125,44 @@ const AdminDashboard: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.subscription_status}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {/* Action buttons for role and subscription will go here */}
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-2">Edit Role</button>
-                  <button className="text-blue-600 hover:text-blue-900">Edit Subscription</button>
+                  {editingUserId === user.id ? (
+                    <div className="flex items-center">
+                      <select
+                        value={newSubscriptionStatus}
+                        onChange={(e) => setNewSubscriptionStatus(e.target.value)}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="pro">Pro</option>
+                        <option value="premium">Premium</option>
+                      </select>
+                      <button
+                        onClick={() => handleUpdateSubscription(user.id)}
+                        className="ml-2 px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingUserId(null)}
+                        className="ml-2 px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button className="text-indigo-600 hover:text-indigo-900 mr-2">Edit Role</button>
+                      <button
+                        onClick={() => {
+                          setEditingUserId(user.id);
+                          setNewSubscriptionStatus(user.subscription_status);
+                        }}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Edit Subscription
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
