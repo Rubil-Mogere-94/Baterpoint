@@ -18,6 +18,41 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [newSubscriptionStatus, setNewSubscriptionStatus] = useState<string>('');
+  const [editingUserRole, setEditingUserRole] = useState<number | null>(null);
+  const [newRole, setNewRole] = useState<string>('');
+
+  const handleUpdateRole = async (userId: number) => {
+    if (!userToken) {
+      setError('Authentication token missing. Please log in again.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/admin/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update user role: ${response.statusText}`);
+      }
+
+      const updatedUser = await response.json();
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === userId ? updatedUser : user))
+      );
+      setEditingUserRole(null); // Exit editing mode
+      setError(null); // Clear any previous errors
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user role.');
+    }
+  };
 
   const handleUpdateSubscription = async (userId: number) => {
     if (!userToken) {
@@ -125,8 +160,45 @@ const AdminDashboard: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.subscription_status}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  {/* Edit Role functionality */}
+                  {editingUserRole === user.id ? (
+                    <div className="flex items-center space-x-2 mb-2">
+                      <select
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value)}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <button
+                        onClick={() => handleUpdateRole(user.id)}
+                        className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingUserRole(null)}
+                        className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setEditingUserRole(user.id);
+                        setNewRole(user.role);
+                      }}
+                      className="text-indigo-600 hover:text-indigo-900 mr-2"
+                    >
+                      Edit Role
+                    </button>
+                  )}
+
+                  {/* Edit Subscription functionality */}
                   {editingUserId === user.id ? (
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-2">
                       <select
                         value={newSubscriptionStatus}
                         onChange={(e) => setNewSubscriptionStatus(e.target.value)}
@@ -138,30 +210,27 @@ const AdminDashboard: React.FC = () => {
                       </select>
                       <button
                         onClick={() => handleUpdateSubscription(user.id)}
-                        className="ml-2 px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingUserId(null)}
-                        className="ml-2 px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        className="px-3 py-1 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
-                    <>
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-2">Edit Role</button>
-                      <button
-                        onClick={() => {
-                          setEditingUserId(user.id);
-                          setNewSubscriptionStatus(user.subscription_status);
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Edit Subscription
-                      </button>
-                    </>
+                    <button
+                      onClick={() => {
+                        setEditingUserId(user.id);
+                        setNewSubscriptionStatus(user.subscription_status);
+                      }}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      Edit Subscription
+                    </button>
                   )}
                 </td>
               </tr>
