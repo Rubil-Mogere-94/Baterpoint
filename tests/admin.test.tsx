@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Outlet } from 'react-router-dom'; // Keep Router for Navigation tests
+import { MemoryRouter, Routes, Route, Outlet } from 'react-router-dom';
 import Navigation from '../src/components/Navigation';
 import AdminDashboard from '../src/pages/AdminDashboard';
 import { useAuth } from '../src/firebase'; // Mock this import
-import App from '../src/App';
 import AdminRoute from '../src/components/AdminRoute'; // Import AdminRoute for direct testing
 
 // Explicitly mock firebase for this test file
@@ -18,12 +17,6 @@ jest.mock('../src/firebase', () => ({
   sendPasswordResetEmail: jest.fn(),
 }));
 
-// Mock react-router-dom to control useNavigate for App component tests
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: jest.fn(),
-}));
-
 // Mock the Layout component as it's a wrapper
 jest.mock('../src/Layout', () => ({ children }: { children: React.ReactNode }) => (
   <div data-testid="layout">{children}</div>
@@ -33,20 +26,18 @@ jest.mock('../src/Layout', () => ({ children }: { children: React.ReactNode }) =
 jest.mock('../src/pages/LoginPage', () => () => <div data-testid="login-page-mock">Login Page Placeholder or similar</div>);
 
 // Mock AdminDashboard when testing redirects through AdminRoute to prevent actual rendering
-jest.mock('../src/pages/AdminDashboard', () => () => <div data-testid="admin-dashboard-mock">Admin Dashboard</div>);
+jest.mock('../src/pages/AdminDashboard', () => ({
+  __esModule: true,
+  default: () => <div data-testid="admin-dashboard-mock">Admin Dashboard</div>,
+}));
 
 describe('Admin Functionality Frontend Tests', () => {
-  let mockNavigate: jest.Mock;
-
   beforeEach(() => {
     (useAuth as jest.Mock<any, any>).mockReturnValue({
       currentUser: null,
       userToken: null,
       loading: false,
     });
-    // Mock useNavigate for App component
-    mockNavigate = jest.fn();
-    (useNavigate as jest.Mock<any, any>).mockReturnValue(mockNavigate);
   });
 
   afterEach(() => {
@@ -61,9 +52,9 @@ describe('Admin Functionality Frontend Tests', () => {
       loading: false,
     });
     render(
-      <Router> {/* Use BrowserRouter for simple component rendering */}
+      <MemoryRouter>
         <Navigation />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.getAllByText('Admin Dashboard').length).toBeGreaterThan(0);
   });
@@ -75,9 +66,9 @@ describe('Admin Functionality Frontend Tests', () => {
       loading: false,
     });
     render(
-      <Router>
+      <MemoryRouter>
         <Navigation />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument();
   });
@@ -89,9 +80,9 @@ describe('Admin Functionality Frontend Tests', () => {
       loading: false,
     });
     render(
-      <Router>
+      <MemoryRouter>
         <Navigation />
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.queryByText('Admin Dashboard')).not.toBeInTheDocument();
   });
@@ -103,13 +94,6 @@ describe('Admin Functionality Frontend Tests', () => {
       userToken: 'fake-admin-token',
       loading: false,
     });
-    // Mock fetch for AdminDashboard content
-    jest.spyOn(global, 'fetch').mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve([
-        { id: 1, username: 'admin', email: 'admin@example.com', role: 'admin', subscription_status: 'premium' },
-      ]),
-    } as Response);
 
     render(
       <MemoryRouter initialEntries={['/admin']}>
