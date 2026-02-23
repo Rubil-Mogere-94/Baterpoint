@@ -39,8 +39,7 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
     ```
 5.  **Run the server**:
     ```bash
-    
-    
+    uvicorn main:app --reload
     ```
 
 ### Frontend Setup (Flutter)
