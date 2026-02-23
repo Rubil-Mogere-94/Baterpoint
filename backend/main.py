@@ -407,6 +407,28 @@ async def read_own_listings(
         for row in listings
     ]
 
+@app.get("/users/me/chats", response_model=List[Listing])
+async def read_user_chats(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
+):
+    cur = db.cursor()
+    # Find all listings where the user has sent or received a message
+    # Or listings that the user OWNS and have messages
+    cur.execute("""
+        SELECT DISTINCT l.id, l.name, l.description, l.price, l.exchange_item, l.trade_type, l.category, l.image_url, l.user_id
+        FROM listings l
+        JOIN chat_messages cm ON l.id = cm.trade_id
+        WHERE cm.sender_id = %s OR l.user_id = %s
+    """, (current_user.id, current_user.id))
+    listings = cur.fetchall()
+    cur.close()
+    return [
+        {"id": row[0], "title": row[1], "description": row[2], "cashPrice": row[3], "exchangeItem": row[4], "tradeType": row[5], 
+         "category": row[6], "imageUrl": row[7], "user_id": row[8]}
+        for row in listings
+    ]
+
 @app.get("/admin/users", response_model=List[User])
 async def get_all_users(
     current_user: Annotated[User, Depends(get_current_active_admin_user)],

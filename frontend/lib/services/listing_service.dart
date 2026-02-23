@@ -20,6 +20,34 @@ class ListingService {
     }
   }
 
+  Future<List<Listing>> fetchMyListings() async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('$apiUrl/users/me/listings'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      throw Exception('Failed to load your listings');
+    }
+  }
+
+  Future<List<Listing>> fetchMyChats() async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('$apiUrl/users/me/chats'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      throw Exception('Failed to load your chats');
+    }
+  }
+
   Future<void> createListing({
     required String title,
     required String description,

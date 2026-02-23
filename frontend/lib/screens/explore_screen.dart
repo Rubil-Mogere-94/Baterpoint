@@ -1,20 +1,18 @@
-// frontend/lib/screens/home_screen.dart
+// frontend/lib/screens/explore_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
-import '../providers/auth_provider.dart';
 import 'create_listing_screen.dart';
 import 'chat_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _ExploreScreenState extends State<ExploreScreen> {
   final ListingService _listingService = ListingService();
   late Future<List<Listing>> _listingsFuture;
 
@@ -43,26 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
             pinned: true,
             expandedHeight: 140.0,
             flexibleSpace: FlexibleSpaceBar(
-              title: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Baterpoint',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Cash & Barter Marketplace',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary.withOpacity(0.8),
-                      fontSize: 12,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ],
+              title: const Text(
+                'Explore Trades',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               centerTitle: false,
               background: Container(
@@ -78,12 +61,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.logout_rounded, color: theme.colorScheme.onPrimary),
-                onPressed: () => Provider.of<AuthProvider>(context, listen: false).logout(),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search items, categories...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
               ),
-            ],
+            ),
           ),
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
@@ -125,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -135,10 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _refreshListings();
           }
         },
-        icon: const Icon(Icons.swap_horiz_rounded),
-        label: const Text('Post Trade'),
-        backgroundColor: theme.colorScheme.secondary,
-        foregroundColor: theme.colorScheme.onSecondary,
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
