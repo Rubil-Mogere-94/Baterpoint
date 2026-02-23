@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
 import 'create_listing_screen.dart';
-import 'chat_screen.dart';
+import 'listing_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -14,17 +14,56 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final ListingService _listingService = ListingService();
-  late Future<List<Listing>> _listingsFuture;
+  List<Listing> _allListings = [];
+  List<Listing> _filteredListings = [];
+  bool _isLoading = true;
+  String _searchQuery = '';
+  String _selectedCategory = 'All';
+
+  final List<String> _categories = [
+    'All',
+    'Electronics',
+    'Vehicles',
+    'Home',
+    'Fashion',
+    'Sports',
+    'Services',
+    'Other'
+  ];
 
   @override
   void initState() {
     super.initState();
-    _listingsFuture = _listingService.fetchListings();
+    _fetchListings();
   }
 
-  Future<void> _refreshListings() async {
+  Future<void> _fetchListings() async {
+    try {
+      final listings = await _listingService.fetchListings();
+      if (mounted) {
+        setState(() {
+          _allListings = listings;
+          _filteredListings = listings;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _filterListings() {
     setState(() {
-      _listingsFuture = _listingService.fetchListings();
+      _filteredListings = _allListings.where((listing) {
+        final matchesSearch = listing.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            (listing.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+        final matchesCategory = _selectedCategory == 'All' || 
+            listing.category.toLowerCase() == _selectedCategory.toLowerCase();
+        
+        return matchesSearch && matchesCategory;
+      }).toList();
     });
   }
 
@@ -63,60 +102,106 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search items, categories...',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search items...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      _searchQuery = value;
+                      _filterListings();
+                    },
                   ),
+                ),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: _categories.map((category) {
+                      final isSelected = _selectedCategory == category;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(category),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = category;
+                              _filterListings();
+                            });
+                          },
+                          backgroundColor: Colors.white,
+                          selectedColor: theme.colorScheme.primaryContainer,
+                          labelStyle: TextStyle(
+                            color: isSelected ? theme.colorScheme.primary : Colors.grey.shade700,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+                              width: 1,
+                            ),
+                          ),
+                          showCheckmark: false,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_filteredListings.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No trades found',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(16.0),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  childAspectRatio: 0.65,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final listing = _filteredListings[index];
+                    return _ListingCard(listing: listing);
+                  },
+                  childCount: _filteredListings.length,
                 ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16.0),
-            sliver: FutureBuilder<List<Listing>>(
-              future: _listingsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                } else if (snapshot.hasError) {
-                  return SliverFillRemaining(
-                    child: Center(child: Text('Error: ${snapshot.error}')),
-                  );
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('No trades available. Start bartering today!')),
-                  );
-                }
-
-                final listings = snapshot.data!;
-                return SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final listing = listings[index];
-                      return _ListingCard(listing: listing);
-                    },
-                    childCount: listings.length,
-                  ),
-                );
-              },
-            ),
-          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -126,7 +211,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             MaterialPageRoute(builder: (context) => const CreateListingScreen()),
           );
           if (result == true) {
-            _refreshListings();
+            _fetchListings();
           }
         },
         child: const Icon(Icons.add_rounded),
@@ -150,7 +235,7 @@ class _ListingCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ChatScreen(tradeId: listing.id),
+              builder: (context) => ListingDetailScreen(listing: listing),
             ),
           );
         },
@@ -161,17 +246,20 @@ class _ListingCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: listing.imageUrl != null
-                        ? Image.network(
-                            listing.imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
-                          )
-                        : Container(
-                            color: theme.colorScheme.surfaceVariant,
-                            child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
-                          ),
+                    child: Hero(
+                      tag: 'listing_image_${listing.id}',
+                      child: listing.imageUrl != null
+                          ? Image.network(
+                              listing.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
+                            )
+                          : Container(
+                              color: theme.colorScheme.surfaceVariant,
+                              child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                    ),
                   ),
                   Positioned(
                     top: 8,
@@ -255,7 +343,7 @@ class _ListingCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Trade Now',
+                        'View Details',
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
