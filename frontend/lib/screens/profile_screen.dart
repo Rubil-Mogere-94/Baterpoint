@@ -84,7 +84,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 24),
                         Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
                         const SizedBox(height: 8),
-                        Text('You haven't posted any trades yet.', style: TextStyle(color: Colors.grey.shade600)),
+                        Text("You haven't posted any trades yet.", style: TextStyle(color: Colors.grey.shade600)),
                       ],
                     ),
                   );
