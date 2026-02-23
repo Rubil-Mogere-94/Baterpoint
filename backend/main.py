@@ -373,6 +373,10 @@ async def get_current_active_admin_user(current_user: Annotated[User, Depends(ge
 
 
 
+@app.get("/users/me", response_model=User)
+async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
+    return current_user
+
 # --- Authentication Endpoints ---
 @app.post("/token", response_model=Token)
 def login_for_access_token(
