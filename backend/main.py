@@ -22,7 +22,6 @@ sio = SocketManager(app=app) # Initialize SocketManager
 @app.sio.on("connect")
 async def handle_connect(sid, environ):
     print(f"Client connected: {sid}")
-    # await app.sio.emit("message", {"data": "Connected to server"}, room=sid) # Removed initial welcome, client will authenticate
 
 # Helper function to get current user from token in Socket.IO context
 async def get_sio_current_user(token: str, db_connection: psycopg2.extensions.connection):
@@ -60,7 +59,7 @@ async def authenticate(sid, data):
 
     db_gen = get_db_connection()
     try:
-        db = next(db_gen) # Get a database connection
+        db = next(db_gen)
         current_user = await get_sio_current_user(token, db)
         active_sids[sid] = {'user_id': current_user.id, 'username': current_user.username}
         await app.sio.emit("authenticated", {"username": current_user.username, "user_id": current_user.id}, room=sid)
@@ -72,9 +71,9 @@ async def authenticate(sid, data):
         await app.sio.emit("auth_error", {"detail": "Server error during authentication"}, room=sid)
     finally:
         try:
-            db_gen.close() # Close the database connection
+            db_gen.close()
         except Exception:
-            pass # Already closed or not assigned
+            pass
 
 @app.sio.on("join_trade_chat")
 async def join_trade_chat(sid, data):
@@ -92,9 +91,7 @@ async def join_trade_chat(sid, data):
     active_sids[sid]['trade_id'] = trade_id
     await app.sio.emit("joined_trade_chat", {"trade_id": trade_id, "room": room}, room=sid)
     await app.sio.emit("status_message", {"message": f"{active_sids[sid]['username']} has joined the chat."}, room=room, skip_sid=sid)
-    print(f"Client {sid} ({active_sids[sid]['username']}) joined room {room}")
 
-    # Fetch and send message history
     db_gen = get_db_connection()
     try:
         db = next(db_gen)
@@ -120,7 +117,7 @@ async def join_trade_chat(sid, data):
                     "timestamp": timestamp.isoformat(),
                     "trade_id": trade_id
                 },
-                room=sid # Send only to the joining client
+                room=sid
             )
     except Exception as e:
         print(f"Error fetching message history for trade {trade_id}: {e}")
@@ -145,7 +142,6 @@ async def send_message(sid, data):
     if not message_content:
         return
 
-    # Store message in DB
     db_gen = get_db_connection()
     try:
         db = next(db_gen)
@@ -157,8 +153,6 @@ async def send_message(sid, data):
         db.commit()
         cur.close()
 
-        # Broadcast message to the room
-        # Include sender's own message for consistent display across clients
         await app.sio.emit(
             "message",
             {
@@ -189,10 +183,7 @@ async def handle_disconnect(sid):
             await app.sio.emit("status_message", {"message": f"{username} has left the chat."}, room=room, skip_sid=sid)
         del active_sids[sid]
         print(f"Client disconnected: {sid} ({username})")
-    else:
-        print(f"Client disconnected: {sid} (unauthenticated)")
 
-# --- Security and Authentication ---
 SECRET_KEY = os.environ.get("SECRET_KEY", "a_super_secret_key_that_should_be_in_env")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -200,7 +191,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# --- Pydantic Models ---
 class User(BaseModel):
     id: int
     email: str
@@ -226,7 +216,7 @@ class Listing(BaseModel):
     title: str
     description: Optional[str] = None
     cashPrice: Optional[float] = None
-    exchange: Optional[str] = None
+    exchangeItem: Optional[str] = None
     category: str
     tradeType: str
     imageUrl: Optional[str] = None
@@ -238,7 +228,6 @@ class UserRoleUpdate(BaseModel):
 class UserSubscriptionUpdate(BaseModel):
     subscription_status: str
 
-# --- Database ---
 os.makedirs("static/images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@host:port/dbname")
@@ -258,16 +247,11 @@ def init_db():
         print("--- Attempting to initialize database ---")
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
-        print("Connected to database.")
         
-        # Drop tables in correct order to handle foreign key constraints
-        print("Dropping existing tables if they exist...")
         cur.execute("DROP TABLE IF EXISTS chat_messages CASCADE;")
         cur.execute("DROP TABLE IF EXISTS listings CASCADE;")
         cur.execute("DROP TABLE IF EXISTS users CASCADE;")
-        print("Tables dropped.")
 
-        print("Creating 'users' table...")
         cur.execute("""
             CREATE TABLE users (
                 id SERIAL PRIMARY KEY,
@@ -278,15 +262,14 @@ def init_db():
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        print("'users' table created.")
 
-        print("Creating 'listings' table...")
         cur.execute("""
             CREATE TABLE listings (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 price DECIMAL(10, 2),
+                exchange_item TEXT,
                 trade_type VARCHAR(50),
                 category VARCHAR(255),
                 image_url TEXT,
@@ -294,9 +277,7 @@ def init_db():
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        print("'listings' table created.")
 
-        print("Creating 'chat_messages' table...")
         cur.execute("""
             CREATE TABLE chat_messages (
                 id SERIAL PRIMARY KEY,
@@ -306,7 +287,6 @@ def init_db():
                 timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        print("'chat_messages' table created.")
 
         conn.commit()
         cur.close()
@@ -314,17 +294,15 @@ def init_db():
     except Exception as e:
         print(f"Error initializing database: {e}")
         if conn:
-            conn.rollback() # Rollback in case of error during table creation
+            conn.rollback()
     finally:
         if conn:
             conn.close()
 
-# --- Password and JWT Utilities ---
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    # bcrypt can only handle passwords up to 72 bytes
     if isinstance(password, str):
         password = password.encode('utf-8')
     if len(password) > 72:
@@ -364,20 +342,15 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: An
         raise credentials_exception
     return User(id=user[0], username=user[1], email=user[2], role=user[3])
 
-
 async def get_current_active_admin_user(current_user: Annotated[User, Depends(get_current_user)]):
     if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not an admin user")
     return current_user
 
-
-
-
 @app.get("/users/me", response_model=User)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
 
-# --- Authentication Endpoints ---
 @app.post("/token", response_model=Token)
 def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
@@ -402,7 +375,6 @@ def login_for_access_token(
 @app.post("/register/", response_model=User)
 def register_user(user: UserCreate, db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]):
     cur = db.cursor()
-    # Check if user already exists
     cur.execute("SELECT id FROM users WHERE username = %s OR email = %s", (user.username, user.email))
     if cur.fetchone():
         raise HTTPException(
@@ -426,12 +398,12 @@ async def read_own_listings(
     db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
 ):
     cur = db.cursor()
-    cur.execute("SELECT id, name, description, price, trade_type, category, image_url, user_id FROM listings WHERE user_id = %s", (current_user.id,))
+    cur.execute("SELECT id, name, description, price, exchange_item, trade_type, category, image_url, user_id FROM listings WHERE user_id = %s", (current_user.id,))
     listings = cur.fetchall()
     cur.close()
     return [
-        {"id": row[0], "title": row[1], "description": row[2], "price": row[3], "tradeType": row[4], 
-         "category": row[5], "imageUrl": row[6], "user_id": row[7]}
+        {"id": row[0], "title": row[1], "description": row[2], "cashPrice": row[3], "exchangeItem": row[4], "tradeType": row[5], 
+         "category": row[6], "imageUrl": row[7], "user_id": row[8]}
         for row in listings
     ]
 
@@ -473,14 +445,10 @@ async def update_user_subscription(
     db: Annotated[psycopg2.extensions.connection, Depends(get_db_connection)]
 ):
     cur = db.cursor()
-    # Before updating, check if the subscription_status column exists.
-    # If not, add it to the users table. This is a simple migration approach.
     cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='subscription_status';")
     if cur.fetchone() is None:
-        print("Adding 'subscription_status' column to 'users' table...")
         cur.execute("ALTER TABLE users ADD COLUMN subscription_status VARCHAR(50) DEFAULT 'basic';")
         db.commit()
-        print("'subscription_status' column added.")
 
     cur.execute(
         "UPDATE users SET subscription_status = %s WHERE id = %s RETURNING id, username, email, role, subscription_status;",
@@ -492,13 +460,7 @@ async def update_user_subscription(
     if updated_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
-    # Need to return a User object, but the User model doesn't have subscription_status yet.
-    # For now, let's return a basic User object and then update the User model.
-    # This will be handled in a subsequent step.
     return User(id=updated_user[0], username=updated_user[1], email=updated_user[2], role=updated_user[3], subscription_status=updated_user[4])
-
-# --- App Endpoints (Modified and New) ---
-# ... (current user dependency will be added in Phase 3)
 
 @app.post("/listings/", status_code=status.HTTP_201_CREATED)
 def create_listing(
@@ -507,7 +469,7 @@ def create_listing(
     title: str = Form(...),
     description: Optional[str] = Form(None),
     cashPrice: Optional[float] = Form(None),
-    exchange: Optional[str] = Form(None),
+    exchangeItem: Optional[str] = Form(None),
     category: str = Form(...),
     tradeType: str = Form(...),
     image: UploadFile = File(...)
@@ -515,7 +477,6 @@ def create_listing(
     cur = db.cursor()
     try:
         user_id = current_user.id
-
         file_extension = image.filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         file_path = f"static/images/{unique_filename}"
@@ -526,15 +487,15 @@ def create_listing(
         image_url = f"http://localhost:8000/{file_path}"
 
         cur.execute(
-            "INSERT INTO listings (name, description, price, trade_type, category, image_url, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;",
-            (title, description, cashPrice, tradeType, category, image_url, user_id)
+            "INSERT INTO listings (name, description, price, exchange_item, trade_type, category, image_url, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;",
+            (title, description, cashPrice, exchangeItem, tradeType, category, image_url, user_id)
         )
         listing_id = cur.fetchone()[0]
         db.commit()
         
         return {
             "id": listing_id, "title": title, "description": description, "cashPrice": cashPrice,
-            "tradeType": tradeType, "category": category, "imageUrl": image_url, "user_id": user_id
+            "exchangeItem": exchangeItem, "tradeType": tradeType, "category": category, "imageUrl": image_url, "user_id": user_id
         }
     except Exception as e:
         db.rollback()
@@ -548,12 +509,12 @@ def get_listings(
     search: Optional[str] = None,
     category: Optional[str] = None,
     tradeType: Optional[str] = None,
-    sortBy: Optional[str] = None, # e.g., 'created_at', 'price'
-    order: Optional[str] = 'desc' # 'asc' or 'desc'
+    sortBy: Optional[str] = None,
+    order: Optional[str] = 'desc'
 ):
     cur = db.cursor()
     try:
-        query = "SELECT id, name, description, price, trade_type, category, image_url, user_id FROM listings"
+        query = "SELECT id, name, description, price, exchange_item, trade_type, category, image_url, user_id FROM listings"
         params = []
         conditions = []
 
@@ -575,15 +536,15 @@ def get_listings(
 
         if sortBy in ['created_at', 'price']:
             if order.lower() not in ['asc', 'desc']:
-                order = 'desc' # default to desc
+                order = 'desc'
             query += f" ORDER BY {sortBy} {order.upper()}"
         
         cur.execute(query, tuple(params))
         listings = cur.fetchall()
         
         return [
-            {"id": row[0], "title": row[1], "description": row[2], "price": row[3], "tradeType": row[4], 
-             "category": row[5], "imageUrl": row[6], "user_id": row[7]}
+            {"id": row[0], "title": row[1], "description": row[2], "cashPrice": row[3], "exchangeItem": row[4],
+             "tradeType": row[5], "category": row[6], "imageUrl": row[7], "user_id": row[8]}
             for row in listings
         ]
     except Exception as e:
@@ -595,10 +556,8 @@ def get_listings(
 def read_root():
     return {"Hello": "World"}
 
-# Call init_db directly to ensure it runs on startup
 init_db()
 
-# Configure CORS
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

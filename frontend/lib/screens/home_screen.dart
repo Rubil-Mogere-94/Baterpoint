@@ -41,14 +41,28 @@ class _HomeScreenState extends State<HomeScreen> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            expandedHeight: 120.0,
+            expandedHeight: 140.0,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Baterpoint',
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
+              title: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Baterpoint',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Cash & Barter Marketplace',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
               ),
               centerTitle: false,
               background: Container(
@@ -86,15 +100,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const SliverFillRemaining(
-                    child: Center(child: Text('No listings found. Be the first to add one!')),
+                    child: Center(child: Text('No trades available. Start bartering today!')),
                   );
                 }
 
                 final listings = snapshot.data!;
                 return SliverGrid(
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    childAspectRatio: 0.75,
+                    maxCrossAxisExtent: 220,
+                    childAspectRatio: 0.65,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -121,8 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _refreshListings();
           }
         },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('List Item'),
+        icon: const Icon(Icons.swap_horiz_rounded),
+        label: const Text('Post Trade'),
         backgroundColor: theme.colorScheme.secondary,
         foregroundColor: theme.colorScheme.onSecondary,
       ),
@@ -153,17 +167,42 @@ class _ListingCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: listing.imageUrl != null
-                  ? Image.network(
-                      listing.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
-                    )
-                  : Container(
-                      color: theme.colorScheme.surfaceVariant,
-                      child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: listing.imageUrl != null
+                        ? Image.network(
+                            listing.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
+                          )
+                        : Container(
+                            color: theme.colorScheme.surfaceVariant,
+                            child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        listing.category,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
                     ),
+                  ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(12.0),
@@ -178,27 +217,61 @@ class _ListingCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    listing.description ?? 'No description',
-                    style: theme.textTheme.bodySmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                   const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '\$${listing.price ?? 0}',
+                  if (listing.cashPrice != null && listing.cashPrice! > 0)
+                    Row(
+                      children: [
+                        Icon(Icons.attach_money_rounded, size: 14, color: Colors.green.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${listing.cashPrice}',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.swap_horiz_rounded, size: 14, color: theme.colorScheme.secondary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'For: ${listing.exchangeItem}',
+                            style: TextStyle(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Trade Now',
                         style: TextStyle(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 12,
                         ),
                       ),
-                      Icon(Icons.arrow_forward_rounded, size: 16, color: theme.colorScheme.primary),
-                    ],
+                    ),
                   ),
                 ],
               ),

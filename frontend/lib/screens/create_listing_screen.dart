@@ -16,8 +16,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _exchangeController = TextEditingController();
   final _categoryController = TextEditingController();
-  final _tradeTypeController = TextEditingController();
+  String _tradeType = 'Both';
   File? _image;
   bool _isSubmitting = false;
 
@@ -39,7 +40,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('New Listing'),
+        title: const Text('New Trade Listing'),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.pop(context),
@@ -81,7 +82,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Tap to add photo',
+                              'Tap to add item photo',
                               style: TextStyle(
                                 color: Colors.grey.shade600,
                                 fontWeight: FontWeight.w500,
@@ -96,47 +97,62 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Item Name',
                   prefixIcon: Icon(Icons.title_rounded),
                 ),
-                validator: (v) => v!.isEmpty ? 'Please enter a title' : null,
+                validator: (v) => v!.isEmpty ? 'Please enter item name' : null,
               ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _tradeType,
+                decoration: const InputDecoration(
+                  labelText: 'Accepting',
+                  prefixIcon: Icon(Icons.swap_horiz_rounded),
+                ),
+                items: ['Both', 'Cash Only', 'Barter Only']
+                    .map((label) => DropdownMenuItem(
+                          value: label,
+                          child: Text(label),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _tradeType = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              if (_tradeType != 'Barter Only')
+                TextFormField(
+                  controller: _priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Cash Price (Optional if Bartering)',
+                    prefixIcon: Icon(Icons.attach_money_rounded),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              if (_tradeType != 'Cash Only') ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _exchangeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Looking to Barter For...',
+                    hintText: 'e.g., A mountain bike, iPhone, etc.',
+                    prefixIcon: Icon(Icons.shopping_bag_outlined),
+                  ),
+                  validator: (v) => (_tradeType == 'Barter Only' && (v == null || v.isEmpty))
+                      ? 'Please specify what you want to barter for'
+                      : null,
+                ),
+              ],
               const SizedBox(height: 16),
               TextFormField(
-                controller: _priceController,
+                controller: _categoryController,
                 decoration: const InputDecoration(
-                  labelText: 'Price',
-                  prefixIcon: Icon(Icons.attach_money_rounded),
+                  labelText: 'Category',
+                  prefixIcon: Icon(Icons.category_rounded),
                 ),
-                keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'Please enter a price' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _categoryController,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        prefixIcon: Icon(Icons.category_rounded),
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _tradeTypeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        hintText: 'Cash/Trade',
-                        prefixIcon: Icon(Icons.swap_horiz_rounded),
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Required' : null,
-                    ),
-                  ),
-                ],
+                validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -145,7 +161,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   labelText: 'Description',
                   alignLabelWithHint: true,
                   prefixIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 60), // Align icon to top
+                    padding: EdgeInsets.only(bottom: 60),
                     child: Icon(Icons.description_rounded),
                   ),
                 ),
@@ -171,8 +187,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         await _listingService.createListing(
                           title: _titleController.text,
                           description: _descriptionController.text,
-                          price: double.tryParse(_priceController.text) ?? 0,
-                          tradeType: _tradeTypeController.text,
+                          cashPrice: double.tryParse(_priceController.text) ?? 0,
+                          exchangeItem: _exchangeController.text,
+                          tradeType: _tradeType,
                           category: _categoryController.text,
                           image: _image!,
                         );

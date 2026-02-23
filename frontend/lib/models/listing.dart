@@ -3,7 +3,8 @@ class Listing {
   final int id;
   final String title;
   final String? description;
-  final double? price;
+  final double? cashPrice;
+  final String? exchangeItem;
   final String? tradeType;
   final String category;
   final String? imageUrl;
@@ -13,7 +14,8 @@ class Listing {
     required this.id,
     required this.title,
     this.description,
-    this.price,
+    this.cashPrice,
+    this.exchangeItem,
     this.tradeType,
     required this.category,
     this.imageUrl,
@@ -25,7 +27,8 @@ class Listing {
       id: json['id'],
       title: json['title'],
       description: json['description'],
-      price: json['price'] != null ? (json['price'] as num).toDouble() : null,
+      cashPrice: json['cashPrice'] != null ? (json['cashPrice'] as num).toDouble() : null,
+      exchangeItem: json['exchangeItem'],
       tradeType: json['tradeType'],
       category: json['category'],
       imageUrl: json['imageUrl'],
