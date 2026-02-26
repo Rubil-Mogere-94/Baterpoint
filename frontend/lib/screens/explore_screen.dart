@@ -20,6 +20,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'All';
   String? _selectedTradeType;
+  String _sortBy = 'created_at';
+  String _sortOrder = 'desc';
   Timer? _debounce;
 
   final List<String> _categories = [
@@ -54,6 +56,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
         search: _searchQuery,
         category: _selectedCategory,
         tradeType: _selectedTradeType == 'Both' ? null : _selectedTradeType,
+        sortBy: _sortBy,
+        order: _sortOrder,
       );
       if (mounted) {
         setState(() {
@@ -116,6 +120,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
               ),
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.sort_rounded, color: Colors.white),
+                  onSelected: (value) {
+                    setState(() {
+                      if (value == 'price_asc') {
+                        _sortBy = 'price';
+                        _sortOrder = 'asc';
+                      } else if (value == 'price_desc') {
+                        _sortBy = 'price';
+                        _sortOrder = 'desc';
+                      } else {
+                        _sortBy = 'created_at';
+                        _sortOrder = 'desc';
+                      }
+                    });
+                    _fetchListings();
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'newest', child: Text('Newest First')),
+                    const PopupMenuItem(value: 'price_asc', child: Text('Price: Low to High')),
+                    const PopupMenuItem(value: 'price_desc', child: Text('Price: High to Low')),
+                  ],
+                ),
+              ],
             ),
             SliverToBoxAdapter(
               child: Column(
@@ -286,8 +315,7 @@ class _ListingCard extends StatelessWidget {
             ),
           );
           if (result == true) {
-            // Something changed (deleted or edited), so refresh explore
-            // In a better state management setup, this would be reactive
+            // refresh happens automatically if popped with true but we should handle it better
           }
         },
         child: Column(
