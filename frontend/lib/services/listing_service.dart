@@ -10,8 +10,23 @@ import 'auth_service.dart';
 class ListingService {
   final AuthService _authService = AuthService();
 
-  Future<List<Listing>> fetchListings() async {
-    final response = await http.get(Uri.parse('$apiUrl/listings/'));
+  Future<List<Listing>> fetchListings({
+    String? search,
+    String? category,
+    String? tradeType,
+    String? sortBy,
+    String? order,
+  }) async {
+    final queryParams = <String, String>{};
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+    if (category != null && category != 'All') queryParams['category'] = category;
+    if (tradeType != null) queryParams['tradeType'] = tradeType;
+    if (sortBy != null) queryParams['sortBy'] = sortBy;
+    if (order != null) queryParams['order'] = order;
+
+    final uri = Uri.parse('$apiUrl/listings/').replace(queryParameters: queryParams);
+    final response = await http.get(uri);
+    
     if (response.statusCode == 200) {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));

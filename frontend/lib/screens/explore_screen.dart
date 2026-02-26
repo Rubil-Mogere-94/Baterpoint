@@ -1,4 +1,5 @@
 // frontend/lib/screens/explore_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
@@ -14,11 +15,11 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final ListingService _listingService = ListingService();
-  List<Listing> _allListings = [];
-  List<Listing> _filteredListings = [];
+  List<Listing> _listings = [];
   bool _isLoading = true;
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  Timer? _debounce;
 
   final List<String> _categories = [
     'All',
@@ -37,33 +38,42 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _fetchListings();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Future<void> _fetchListings() async {
+    setState(() => _isLoading = true);
     try {
-      final listings = await _listingService.fetchListings();
+      final listings = await _listingService.fetchListings(
+        search: _searchQuery,
+        category: _selectedCategory,
+      );
       if (mounted) {
         setState(() {
-          _allListings = listings;
-          _filteredListings = listings;
+          _listings = listings;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading listings: $e')),
+        );
       }
     }
   }
 
-  void _filterListings() {
-    setState(() {
-      _filteredListings = _allListings.where((listing) {
-        final matchesSearch = listing.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            (listing.description?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
-        final matchesCategory = _selectedCategory == 'All' || 
-            listing.category.toLowerCase() == _selectedCategory.toLowerCase();
-        
-        return matchesSearch && matchesCategory;
-      }).toList();
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (_searchQuery != query) {
+        _searchQuery = query;
+        _fetchListings();
+      }
     });
   }
 
@@ -73,136 +83,136 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            expandedHeight: 140.0,
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Explore Trades',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
+      body: RefreshIndicator(
+        onRefresh: _fetchListings,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              pinned: true,
+              expandedHeight: 140.0,
+              flexibleSpace: FlexibleSpaceBar(
+                title: const Text(
+                  'Explore Trades',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                centerTitle: false,
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              centerTitle: false,
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
+            ),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Search items...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onChanged: _onSearchChanged,
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: _categories.map((category) {
+                        final isSelected = _selectedCategory == category;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = category;
+                              });
+                              _fetchListings();
+                            },
+                            backgroundColor: Colors.white,
+                            selectedColor: theme.colorScheme.primaryContainer,
+                            labelStyle: TextStyle(
+                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade700,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+                                width: 1,
+                              ),
+                            ),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_isLoading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_listings.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No trades found',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search items...',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      _searchQuery = value;
-                      _filterListings();
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(16.0),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final listing = _listings[index];
+                      return _ListingCard(listing: listing);
                     },
+                    childCount: _listings.length,
                   ),
                 ),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: _categories.map((category) {
-                      final isSelected = _selectedCategory == category;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(category),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedCategory = category;
-                              _filterListings();
-                            });
-                          },
-                          backgroundColor: Colors.white,
-                          selectedColor: theme.colorScheme.primaryContainer,
-                          labelStyle: TextStyle(
-                            color: isSelected ? theme.colorScheme.primary : Colors.grey.shade700,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
-                              width: 1,
-                            ),
-                          ),
-                          showCheckmark: false,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_filteredListings.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No trades found',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                    ),
-                  ],
-                ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.all(16.0),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220,
-                  childAspectRatio: 0.65,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final listing = _filteredListings[index];
-                    return _ListingCard(listing: listing);
-                  },
-                  childCount: _filteredListings.length,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
