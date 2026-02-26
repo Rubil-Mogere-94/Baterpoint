@@ -5,17 +5,31 @@ import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
 import 'chat_screen.dart';
+import 'edit_listing_screen.dart';
 
-class ListingDetailScreen extends StatelessWidget {
+class ListingDetailScreen extends StatefulWidget {
   final Listing listing;
 
   const ListingDetailScreen({super.key, required this.listing});
 
   @override
+  State<ListingDetailScreen> createState() => _ListingDetailScreenState();
+}
+
+class _ListingDetailScreenState extends State<ListingDetailScreen> {
+  late Listing _currentListing;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentListing = widget.listing;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isOwner = authProvider.user?.id == listing.userId;
+    final isOwner = authProvider.user?.id == _currentListing.userId;
     final listingService = ListingService();
 
     return Scaffold(
@@ -26,10 +40,10 @@ class ListingDetailScreen extends StatelessWidget {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
-                tag: 'listing_image_${listing.id}',
-                child: listing.imageUrl != null
+                tag: 'listing_image_${_currentListing.id}',
+                child: _currentListing.imageUrl != null
                     ? Image.network(
-                        listing.imageUrl!,
+                        _currentListing.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image, size: 64)),
@@ -48,7 +62,29 @@ class ListingDetailScreen extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
             actions: [
-              if (isOwner)
+              if (isOwner) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white54,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditListingScreen(listing: _currentListing),
+                          ),
+                        );
+                        if (result == true) {
+                          // Ideally fetch updated listing here, but for now we signal back or just show placeholder
+                          // In a real app, you'd fetch by ID again
+                          Navigator.pop(context, true); 
+                        }
+                      },
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: CircleAvatar(
@@ -59,6 +95,7 @@ class ListingDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
           SliverToBoxAdapter(
@@ -73,13 +110,13 @@ class ListingDetailScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          listing.title,
+                          _currentListing.title,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      if (listing.cashPrice != null && listing.cashPrice! > 0)
+                      if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
@@ -88,7 +125,7 @@ class ListingDetailScreen extends StatelessWidget {
                             border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Text(
-                            '\$${listing.cashPrice}',
+                            '\$${_currentListing.cashPrice}',
                             style: TextStyle(
                               color: Colors.green.shade700,
                               fontWeight: FontWeight.bold,
@@ -106,7 +143,7 @@ class ListingDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      listing.category.toUpperCase(),
+                      _currentListing.category.toUpperCase(),
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontSize: 12,
@@ -116,7 +153,7 @@ class ListingDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
+                  if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
                     Text(
                       'Looking For:',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -139,7 +176,7 @@ class ListingDetailScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              listing.exchangeItem!,
+                              _currentListing.exchangeItem!,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.secondary,
                                 fontWeight: FontWeight.w600,
@@ -157,7 +194,7 @@ class ListingDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    listing.description ?? 'No description provided.',
+                    _currentListing.description ?? 'No description provided.',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: Colors.grey.shade700,
                       height: 1.5,
@@ -177,7 +214,7 @@ class ListingDetailScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChatScreen(tradeId: listing.id),
+                    builder: (context) => ChatScreen(tradeId: _currentListing.id),
                   ),
                 );
               },
@@ -204,7 +241,7 @@ class ListingDetailScreen extends StatelessWidget {
           TextButton(
             onPressed: () async {
               try {
-                await listingService.deleteListing(listing.id);
+                await listingService.deleteListing(_currentListing.id);
                 if (context.mounted) {
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context, true); // Close detail screen and signal refresh
