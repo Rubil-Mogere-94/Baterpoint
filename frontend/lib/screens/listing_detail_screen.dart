@@ -15,7 +15,7 @@ class ListingDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isOwner = authProvider.currentUser?.id == listing.user_id;
+    final isOwner = authProvider.user?.id == listing.userId;
     final listingService = ListingService();
 
     return Scaffold(
