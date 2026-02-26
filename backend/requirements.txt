@@ -10,3 +10,4 @@ python-socketio
 fastapi-socketio
 pytest
 httpx
+email-validator
