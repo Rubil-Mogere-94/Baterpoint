@@ -12,6 +12,23 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
 
+  AuthProvider() {
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _user = await _authService.getCurrentUser();
+    } catch (e) {
+      _user = null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> login(String username, String password) async {
     _isLoading = true;
     notifyListeners();

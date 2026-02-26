@@ -104,7 +104,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _tradeType,
+                initialValue: _tradeType,
                 decoration: const InputDecoration(
                   labelText: 'Accepting',
                   prefixIcon: Icon(Icons.swap_horiz_rounded),

@@ -256,7 +256,7 @@ class _ListingCard extends StatelessWidget {
                                   Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
                             )
                           : Container(
-                              color: theme.colorScheme.surfaceVariant,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
                             ),
                     ),

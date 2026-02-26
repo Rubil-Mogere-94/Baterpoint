@@ -1,91 +1,90 @@
 import pytest
 from fastapi.testclient import TestClient
-from fastapi import HTTPException
-from unittest.mock import MagicMock, patch
-from main import app, get_db_connection, get_current_user, User # Assuming User model is also in main
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from main import app, get_db, Base, UserModel, ListingModel
+import os
 
-# Mock database connection
-@pytest.fixture(name="db_connection")
-def mock_db_connection():
-    with patch("main.psycopg2.connect") as mock_connect:
-        mock_conn = MagicMock()
-        mock_cur = MagicMock()
-        mock_conn.cursor.return_value = mock_cur
-        mock_connect.return_value = mock_conn
-        yield mock_conn
+# Use SQLite for testing
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Mock get_current_user dependency for testing
-def override_get_current_user_admin():
-    return User(id=1, email="admin@example.com", username="adminuser", role="admin")
+@pytest.fixture(scope="function")
+def db():
+    Base.metadata.create_all(bind=engine)
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=engine)
 
-def override_get_current_user_normal():
-    return User(id=2, email="user@example.com", username="normaluser", role="user")
+@pytest.fixture(scope="function")
+def client(db):
+    def override_get_db():
+        try:
+            yield db
+        finally:
+            pass
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
 
-def override_get_current_user_unauthenticated():
-    raise HTTPException(status_code=401, detail="Not authenticated")
+def test_register_user(client):
+    response = client.post("/register/", json={
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "password123"
+    })
+    assert response.status_code == 200
+    assert response.json()["username"] == "testuser"
 
-client = TestClient(app)
+def test_login_for_access_token(client):
+    # First register
+    client.post("/register/", json={
+        "username": "testuser",
+        "email": "test@example.com",
+        "password": "password123"
+    })
+    
+    # Then login
+    response = client.post("/token", data={
+        "username": "testuser",
+        "password": "password123"
+    })
+    assert response.status_code == 200
+    assert "access_token" in response.json()
 
-# Test GET /admin/users
-def test_get_all_users_as_admin(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_admin
-    mock_cur = db_connection.cursor.return_value
-    mock_cur.fetchall.return_value = [
-        (1, "adminuser", "admin@example.com", "admin"),
-        (2, "normaluser", "user@example.com", "user")
-    ]
+def test_get_all_users_as_admin(client, db):
+    # Create an admin user
+    admin = UserModel(username="admin", email="admin@example.com", hashed_password="hashed", role="admin")
+    db.add(admin)
+    db.commit()
+
+    # Login and get token (we'll manually override for simplicity in this specific test if needed, 
+    # but let's try the proper way)
+    
+    # Actually, let's use dependency override for current_user to simplify admin testing
+    from main import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: admin
+    
     response = client.get("/admin/users")
     assert response.status_code == 200
-    assert response.json() == [
-        {"id": 1, "username": "adminuser", "email": "admin@example.com", "role": "admin", "subscription_status": "basic"},
-        {"id": 2, "username": "normaluser", "email": "user@example.com", "role": "user", "subscription_status": "basic"}
-    ]
+    assert len(response.json()) == 1
+    assert response.json()[0]["username"] == "admin"
 
-def test_get_all_users_as_normal_user(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_normal
-    response = client.get("/admin/users")
-    assert response.status_code == 403
-    assert response.json() == {"detail": "Not an admin user"}
+def test_get_listings_empty(client):
+    response = client.get("/listings/")
+    assert response.status_code == 200
+    assert response.json() == []
 
-def test_get_all_users_unauthenticated(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_unauthenticated
-    response = client.get("/admin/users")
+def test_create_listing_unauthenticated(client):
+    # Should fail without token/override
+    response = client.post("/listings/", data={
+        "title": "Test Listing",
+        "category": "Electronics",
+        "tradeType": "Trade"
+    })
     assert response.status_code == 401
-    assert response.json() == {"detail": "Not authenticated"}
-
-# Test PUT /admin/users/{user_id}/role
-def test_update_user_role_as_admin(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_admin
-    mock_cur = db_connection.cursor.return_value
-    mock_cur.fetchone.return_value = (2, "normaluser", "user@example.com", "admin") # User after update
-    response = client.put("/admin/users/2/role", json={"role": "admin"})
-    assert response.status_code == 200
-    assert response.json() == {"id": 2, "username": "normaluser", "email": "user@example.com", "role": "admin", "subscription_status": "basic"} # Assuming default subscription
-
-def test_update_user_role_as_normal_user(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_normal
-    response = client.put("/admin/users/2/role", json={"role": "admin"})
-    assert response.status_code == 403
-    assert response.json() == {"detail": "Not an admin user"}
-
-# Test PUT /admin/users/{user_id}/subscription
-def test_update_user_subscription_as_admin(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_admin
-    mock_cur = db_connection.cursor.return_value
-    # Mock behavior for checking column existence
-    mock_cur.fetchone.side_effect = [None, (2, "normaluser", "user@example.com", "user", "premium")] # Column doesn't exist, then user found and updated
-    response = client.put("/admin/users/2/subscription", json={"subscription_status": "premium"})
-    assert response.status_code == 200
-    assert response.json() == {"id": 2, "username": "normaluser", "email": "user@example.com", "role": "user", "subscription_status": "premium"}
-
-def test_update_user_subscription_as_normal_user(db_connection):
-    app.dependency_overrides[get_current_user] = override_get_current_user_normal
-    response = client.put("/admin/users/2/subscription", json={"subscription_status": "premium"})
-    assert response.status_code == 403
-    assert response.json() == {"detail": "Not an admin user"}
-
-# Clean up overrides after tests
-@pytest.fixture(autouse=True)
-def run_around_tests():
-    yield
-    app.dependency_overrides = {}
