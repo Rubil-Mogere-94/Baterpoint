@@ -95,4 +95,15 @@ class ListingService {
       throw Exception('Failed to create listing: $body');
     }
   }
+
+  Future<void> deleteListing(int listingId) async {
+    final token = await _authService.getToken();
+    final response = await http.delete(
+      Uri.parse('$apiUrl/listings/$listingId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete listing');
+    }
+  }
 }

@@ -1,6 +1,9 @@
 // frontend/lib/screens/listing_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/listing.dart';
+import '../providers/auth_provider.dart';
+import '../services/listing_service.dart';
 import 'chat_screen.dart';
 
 class ListingDetailScreen extends StatelessWidget {
@@ -11,6 +14,9 @@ class ListingDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isOwner = authProvider.currentUser?.id == listing.user_id;
+    final listingService = ListingService();
 
     return Scaffold(
       body: CustomScrollView(
@@ -41,6 +47,19 @@ class ListingDetailScreen extends StatelessWidget {
               ),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              if (isOwner)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white54,
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                      onPressed: () => _showDeleteDialog(context, listingService),
+                    ),
+                  ),
+                ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -151,21 +170,58 @@ class ListingDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChatScreen(tradeId: listing.id),
+      floatingActionButton: isOwner
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(tradeId: listing.id),
+                  ),
+                );
+              },
+              label: const Text('Make an Offer'),
+              icon: const Icon(Icons.chat_bubble_rounded),
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
             ),
-          );
-        },
-        label: const Text('Make an Offer'),
-        icon: const Icon(Icons.chat_bubble_rounded),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, ListingService listingService) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Listing'),
+        content: const Text('Are you sure you want to delete this listing? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              try {
+                await listingService.deleteListing(listing.id);
+                if (context.mounted) {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context, true); // Close detail screen and signal refresh
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error deleting listing: $e')),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
   }
 }
