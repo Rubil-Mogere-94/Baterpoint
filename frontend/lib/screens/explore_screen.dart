@@ -19,6 +19,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isLoading = true;
   String _searchQuery = '';
   String _selectedCategory = 'All';
+  String? _selectedTradeType;
   Timer? _debounce;
 
   final List<String> _categories = [
@@ -31,6 +32,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     'Services',
     'Other'
   ];
+
+  final List<String> _tradeTypes = ['Both', 'Cash Only', 'Barter Only'];
 
   @override
   void initState() {
@@ -50,6 +53,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final listings = await _listingService.fetchListings(
         search: _searchQuery,
         category: _selectedCategory,
+        tradeType: _selectedTradeType == 'Both' ? null : _selectedTradeType,
       );
       if (mounted) {
         setState(() {
@@ -135,7 +139,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       children: _categories.map((category) {
                         final isSelected = _selectedCategory == category;
@@ -167,6 +171,39 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                         );
                       }).toList(),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Text('Accepting:', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 12),
+                        ..._tradeTypes.map((type) {
+                          final isSelected = (_selectedTradeType ?? 'Both') == type;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(type, style: TextStyle(fontSize: 12)),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() {
+                                    _selectedTradeType = type;
+                                  });
+                                  _fetchListings();
+                                }
+                              },
+                              backgroundColor: Colors.white,
+                              selectedColor: theme.colorScheme.secondaryContainer,
+                              labelStyle: TextStyle(
+                                color: isSelected ? theme.colorScheme.secondary : Colors.grey.shade600,
+                              ),
+                              showCheckmark: false,
+                            ),
+                          );
+                        }).toList(),
+                      ],
                     ),
                   ),
                 ],
@@ -241,13 +278,17 @@ class _ListingCard extends StatelessWidget {
 
     return Card(
       child: InkWell(
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ListingDetailScreen(listing: listing),
             ),
           );
+          if (result == true) {
+            // Something changed (deleted or edited), so refresh explore
+            // In a better state management setup, this would be reactive
+          }
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
