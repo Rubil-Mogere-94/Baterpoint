@@ -475,6 +475,45 @@ def get_listings(
         for l in listings
     ]
 
+@app.get("/listings/{listing_id}", response_model=Listing)
+def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    return {
+        "id": listing.id, "title": listing.title, "description": listing.description, 
+        "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+        "tradeType": listing.trade_type, "category": listing.category, 
+        "imageUrl": listing.image_url, "user_id": listing.user_id
+    }
+
+@app.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_listing(
+    listing_id: int,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to delete this listing")
+    
+    # Delete image file if it exists
+    if listing.image_url:
+        try:
+            # Extract path from URL
+            path_parts = listing.image_url.split("/")
+            file_path = "/".join(path_parts[-3:]) # Assuming static/images/filename
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Error deleting image file: {e}")
+
+    db.delete(listing)
+    db.commit()
+    return None
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
