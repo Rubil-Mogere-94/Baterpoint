@@ -114,6 +114,19 @@ class UserRoleUpdate(BaseModel):
 class UserSubscriptionUpdate(BaseModel):
     subscription_status: str
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=8, max_length=72)
+
+class ListingUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    cashPrice: Optional[float] = None
+    exchangeItem: Optional[str] = None
+    category: Optional[str] = None
+    tradeType: Optional[str] = None
+
 # --- FastAPI App & Socket.IO ---
 
 app = FastAPI()
@@ -480,6 +493,65 @@ def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
+    return {
+        "id": listing.id, "title": listing.title, "description": listing.description, 
+        "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+        "tradeType": listing.trade_type, "category": listing.category, 
+        "imageUrl": listing.image_url, "user_id": listing.user_id
+    }
+
+@app.put("/users/me", response_model=User)
+async def update_user_me(
+    user_update: UserUpdate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    if user_update.username:
+        # Check if username already taken
+        existing = db.query(UserModel).filter(UserModel.username == user_update.username).first()
+        if existing and existing.id != current_user.id:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = user_update.username
+    
+    if user_update.email:
+        existing = db.query(UserModel).filter(UserModel.email == user_update.email).first()
+        if existing and existing.id != current_user.id:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        current_user.email = user_update.email
+    
+    if user_update.password:
+        current_user.hashed_password = get_password_hash(user_update.password)
+    
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@app.put("/listings/{listing_id}", response_model=Listing)
+def update_listing(
+    listing_id: int,
+    listing_update: ListingUpdate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized to update this listing")
+    
+    update_data = listing_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        if key == "cashPrice":
+            listing.price = value
+        elif key == "exchangeItem":
+            listing.exchange_item = value
+        elif key == "tradeType":
+            listing.trade_type = value
+        else:
+            setattr(listing, key, value)
+    
+    db.commit()
+    db.refresh(listing)
     return {
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 

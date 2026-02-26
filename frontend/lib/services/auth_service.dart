@@ -67,6 +67,28 @@ class AuthService {
     return prefs.getString(_tokenKey);
   }
 
+  Future<User> updateUser({String? username, String? email, String? password}) async {
+    final token = await getToken();
+    final response = await http.put(
+      Uri.parse('$apiUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        if (username != null) 'username': username,
+        if (email != null) 'email': email,
+        if (password != null) 'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return User.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to update profile: ${response.body}');
+    }
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);

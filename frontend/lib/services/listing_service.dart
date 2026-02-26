@@ -96,6 +96,36 @@ class ListingService {
     }
   }
 
+  Future<void> updateListing(int listingId, {
+    String? title,
+    String? description,
+    double? cashPrice,
+    String? exchangeItem,
+    String? tradeType,
+    String? category,
+  }) async {
+    final token = await _authService.getToken();
+    final response = await http.put(
+      Uri.parse('$apiUrl/listings/$listingId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        if (title != null) 'title': title,
+        if (description != null) 'description': description,
+        if (cashPrice != null) 'cashPrice': cashPrice,
+        if (exchangeItem != null) 'exchangeItem': exchangeItem,
+        if (tradeType != null) 'tradeType': tradeType,
+        if (category != null) 'category': category,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update listing: ${response.body}');
+    }
+  }
+
   Future<void> deleteListing(int listingId) async {
     final token = await _authService.getToken();
     final response = await http.delete(
