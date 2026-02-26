@@ -17,11 +17,21 @@ class _EditListingScreenState extends State<EditListingScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   late TextEditingController _exchangeController;
-  late TextEditingController _categoryController;
+  late String _selectedCategory;
   late String _tradeType;
   bool _isSubmitting = false;
 
   final ListingService _listingService = ListingService();
+
+  final List<String> _categories = [
+    'Electronics',
+    'Vehicles',
+    'Home',
+    'Fashion',
+    'Sports',
+    'Services',
+    'Other'
+  ];
 
   @override
   void initState() {
@@ -30,7 +40,7 @@ class _EditListingScreenState extends State<EditListingScreen> {
     _descriptionController = TextEditingController(text: widget.listing.description);
     _priceController = TextEditingController(text: widget.listing.cashPrice?.toString() ?? '');
     _exchangeController = TextEditingController(text: widget.listing.exchangeItem);
-    _categoryController = TextEditingController(text: widget.listing.category);
+    _selectedCategory = _categories.contains(widget.listing.category) ? widget.listing.category : 'Other';
     _tradeType = widget.listing.tradeType ?? 'Both';
   }
 
@@ -40,7 +50,6 @@ class _EditListingScreenState extends State<EditListingScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     _exchangeController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -111,13 +120,23 @@ class _EditListingScreenState extends State<EditListingScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _categoryController,
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category_rounded),
                 ),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                items: _categories
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategory = value!;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -149,7 +168,7 @@ class _EditListingScreenState extends State<EditListingScreen> {
                           cashPrice: double.tryParse(_priceController.text),
                           exchangeItem: _exchangeController.text,
                           tradeType: _tradeType,
-                          category: _categoryController.text,
+                          category: _selectedCategory,
                         );
                         if (context.mounted) {
                           Navigator.pop(context, true);

@@ -17,12 +17,22 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _exchangeController = TextEditingController();
-  final _categoryController = TextEditingController();
+  String _selectedCategory = 'Electronics';
   String _tradeType = 'Both';
   File? _image;
   bool _isSubmitting = false;
 
   final ListingService _listingService = ListingService();
+
+  final List<String> _categories = [
+    'Electronics',
+    'Vehicles',
+    'Home',
+    'Fashion',
+    'Sports',
+    'Services',
+    'Other'
+  ];
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -31,6 +41,15 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         _image = File(pickedFile.path);
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _exchangeController.dispose();
+    super.dispose();
   }
 
   @override
@@ -104,7 +123,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: _tradeType,
+                value: _tradeType,
                 decoration: const InputDecoration(
                   labelText: 'Accepting',
                   prefixIcon: Icon(Icons.swap_horiz_rounded),
@@ -146,13 +165,23 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _categoryController,
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category_rounded),
                 ),
-                validator: (v) => v!.isEmpty ? 'Required' : null,
+                items: _categories
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedCategory = value!;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -190,7 +219,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                           cashPrice: double.tryParse(_priceController.text) ?? 0,
                           exchangeItem: _exchangeController.text,
                           tradeType: _tradeType,
-                          category: _categoryController.text,
+                          category: _selectedCategory,
                           image: _image!,
                         );
                         if (context.mounted) {
