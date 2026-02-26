@@ -18,6 +18,8 @@ class ListingDetailScreen extends StatefulWidget {
 
 class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late Listing _currentListing;
+  bool _isLoading = false;
+  final ListingService _listingService = ListingService();
 
   @override
   void initState() {
@@ -25,15 +27,30 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     _currentListing = widget.listing;
   }
 
+  Future<void> _refreshListing() async {
+    setState(() => _isLoading = true);
+    try {
+      final updated = await _listingService.fetchListingById(_currentListing.id);
+      setState(() {
+        _currentListing = updated;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      // Handle error
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isOwner = authProvider.user?.id == _currentListing.userId;
-    final listingService = ListingService();
 
     return Scaffold(
-      body: CustomScrollView(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300.0,
@@ -59,7 +76,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 backgroundColor: Colors.white54,
                 child: Icon(Icons.arrow_back_rounded, color: Colors.black),
               ),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, true), // Signal refresh to parent
             ),
             actions: [
               if (isOwner) ...[
@@ -77,9 +94,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           ),
                         );
                         if (result == true) {
-                          // Ideally fetch updated listing here, but for now we signal back or just show placeholder
-                          // In a real app, you'd fetch by ID again
-                          Navigator.pop(context, true); 
+                          _refreshListing();
                         }
                       },
                     ),
@@ -91,7 +106,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     backgroundColor: Colors.white54,
                     child: IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                      onPressed: () => _showDeleteDialog(context, listingService),
+                      onPressed: () => _showDeleteDialog(context, _listingService),
                     ),
                   ),
                 ),

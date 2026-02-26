@@ -35,6 +35,15 @@ class ListingService {
     }
   }
 
+  Future<Listing> fetchListingById(int id) async {
+    final response = await http.get(Uri.parse('$apiUrl/listings/$id'));
+    if (response.statusCode == 200) {
+      return Listing.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Listing not found');
+    }
+  }
+
   Future<List<Listing>> fetchMyListings() async {
     final token = await _authService.getToken();
     final response = await http.get(
