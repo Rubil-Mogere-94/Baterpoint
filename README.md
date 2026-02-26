@@ -4,15 +4,17 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
 
 ## Project Structure
 
-- `backend/`: FastAPI application with PostgreSQL integration and Socket.IO for real-time communication.
+- `backend/`: FastAPI application with SQLAlchemy ORM and Socket.IO for real-time communication.
 - `frontend/`: Flutter application for Android, iOS, and Web.
 
 ## Features
 
 - **Authentication**: Secure JWT-based login and registration.
-- **Listings**: Create, view, and search for items to trade or sell.
+- **Listings**: Create, view, search, and delete items.
+- **Server-side Filtering**: Efficient search and category filtering powered by the backend.
 - **Real-time Chat**: Instant messaging for trade negotiations using Socket.IO.
-- **Image Support**: Upload and display item images.
+- **Image Support**: Upload and display item images with automatic cleanup on deletion.
+- **Modern UX**: Pull-to-refresh, search debouncing, and Hero animations.
 
 ## Getting Started
 
@@ -61,5 +63,15 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
 ## Tech Stack
 
 - **Frontend**: Flutter, Provider (State Management), Socket.io Client.
-- **Backend**: Python, FastAPI, SQLAlchemy/Psycopg2, Socket.io (python-socketio).
-- **Database**: PostgreSQL.
+- **Backend**: Python, FastAPI, SQLAlchemy, Socket.io (python-socketio).
+- **Database**: PostgreSQL (Production), SQLite (Testing).
+
+## Testing
+
+The backend includes a comprehensive test suite using `pytest`. Tests utilize an in-memory SQLite database for speed and isolation.
+
+To run tests:
+```bash
+cd backend
+pytest
+```
