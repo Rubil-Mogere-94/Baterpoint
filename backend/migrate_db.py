@@ -30,16 +30,9 @@ def migrate():
             END $$;
         """))
 
-        # 3. Rename chat_messages.trade_id to listing_id if needed
-        print("Checking if 'chat_messages.trade_id' needs to be renamed to 'listing_id'...")
-        conn.execute(text("""
-            DO $$ 
-            BEGIN 
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='trade_id') THEN
-                    ALTER TABLE chat_messages RENAME COLUMN trade_id TO listing_id;
-                END IF;
-            END $$;
-        """))
+        # 4. Add view_count to listings if it doesn't exist
+        print("Ensuring 'view_count' exists in 'listings' table...")
+        conn.execute(text("ALTER TABLE listings ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;"))
 
         conn.commit()
         print("Migration complete!")
