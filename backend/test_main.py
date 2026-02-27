@@ -161,8 +161,7 @@ def test_offers(client, db):
     buyer = UserModel(username="buyer", email="buyer@example.com", hashed_password="hashed")
     db.add_all([seller, buyer])
     db.commit()
-    
-    listing = ListingModel(title="Selling Object", category="Test", trade_type="Both", user_id=seller.id)
+    listing = ListingModel(title="Selling Object", category="Test", trade_type="Both", user_id=seller.id, view_count=0)
     db.add(listing)
     db.commit()
 
