@@ -629,7 +629,7 @@ def get_listings(
     ]
 
 @app.get("/listings/{listing_id}", response_model=Listing)
-def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
+def get_listing(listing_id: int, request: Request, db: Annotated[Session, Depends(get_db)]):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
