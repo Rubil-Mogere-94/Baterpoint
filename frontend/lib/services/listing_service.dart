@@ -178,4 +178,18 @@ class ListingService {
       throw Exception('Failed to delete listing');
     }
   }
+
+  Future<List<Listing>> fetchRecommendations({int limit = 10}) async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('$apiUrl/listings/recommendations?limit=$limit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      throw Exception('Failed to load recommendations');
+    }
+  }
 }

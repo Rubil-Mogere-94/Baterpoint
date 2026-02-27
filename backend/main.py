@@ -677,6 +677,46 @@ def get_user_favorites(
         for l in listings
     ]
 
+@app.get("/listings/recommendations", response_model=List[Listing])
+def get_recommendations(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = 10
+):
+    # 1. Get categories of user's favorites
+    fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+    fav_categories = [l.category for l in fav_listings]
+    
+    # 2. Get categories of user's own listings
+    own_categories = [l.category for l in current_user.listings]
+    
+    preferred_categories = list(set(fav_categories + own_categories))
+    
+    query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
+    
+    if preferred_categories:
+        query = query.filter(ListingModel.category.in_(preferred_categories))
+    
+    # Sort by view_count for "recommendation" quality
+    recommendations = query.order_by(desc(ListingModel.view_count)).limit(limit).all()
+    
+    # If not enough recommendations, fill with trending items
+    if len(recommendations) < limit:
+        additional_limit = limit - len(recommendations)
+        rec_ids = [r.id for r in recommendations]
+        trending = db.query(ListingModel).filter(
+            ListingModel.user_id != current_user.id,
+            ListingModel.id.not_in(rec_ids) if rec_ids else True
+        ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
+        recommendations.extend(trending)
+        
+    return [
+        {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+         "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+        for l in recommendations
+    ]
+
 # --- Offers Endpoints ---
 
 @app.post("/listings/{listing_id}/offers", response_model=Offer)

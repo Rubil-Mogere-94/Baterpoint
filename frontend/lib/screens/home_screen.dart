@@ -15,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ListingService _listingService = ListingService();
   late Future<List<Listing>> _trendingListingsFuture;
-  late Future<List<Listing>> _recentListingsFuture;
+  late Future<List<Listing>> _recommendationsFuture;
 
   final List<String> promoImages = [
     'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop',
@@ -31,10 +31,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _fetchData() {
     setState(() {
-      // Use view_count for trending, though the backend support might vary 
-      // based on the implementation of fetchListings
       _trendingListingsFuture = _listingService.fetchListings(sortBy: 'view_count', order: 'desc', limit: 10);
-      _recentListingsFuture = _listingService.fetchListings(sortBy: 'created_at', order: 'desc', limit: 10);
+      _recommendationsFuture = _listingService.fetchRecommendations(limit: 10).catchError((e) {
+        debugPrint('Recommendations error: $e');
+        // Fallback to recent listings if not logged in
+        return _listingService.fetchListings(sortBy: 'created_at', order: 'desc', limit: 10);
+      });
     });
   }
 
@@ -122,6 +124,54 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 24),
               
+              // Daily Deals / Special Offer Section (New)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.orange.shade400, Colors.red.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Deal of the Hour!',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '50% OFF on all Gadgets.\nEnding in 45:12',
+                              style: TextStyle(color: Colors.white, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.red.shade400,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Text('View Deal', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // Trending Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -175,13 +225,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 16),
               
-              // Recent Items Section
+              // Recommended Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Recommended for You', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('Picked for You', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {},
                       child: const Text('See All'),
@@ -191,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               
               FutureBuilder<List<Listing>>(
-                future: _recentListingsFuture,
+                future: _recommendationsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()));
