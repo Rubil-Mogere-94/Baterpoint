@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
+import '../services/offer_service.dart';
 import 'chat_screen.dart';
 import 'edit_listing_screen.dart';
 
@@ -20,6 +21,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late Listing _currentListing;
   bool _isLoading = false;
   final ListingService _listingService = ListingService();
+  final OfferService _offerService = OfferService();
 
   @override
   void initState() {
@@ -133,41 +135,82 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       ),
                       if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.green.shade50,
+                            color: theme.colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Text(
                             '\$${_currentListing.cashPrice}',
                             style: TextStyle(
-                              color: Colors.green.shade700,
+                              color: theme.colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.bold,
-                              fontSize: 20,
+                              fontSize: 22,
                             ),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _currentListing.category.toUpperCase(),
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _currentListing.category.toUpperCase(),
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.visibility_outlined, size: 16, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_currentListing.viewCount} views',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Seller Info Mock Block
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: theme.colorScheme.secondaryContainer,
+                          child: Icon(Icons.person, color: theme.colorScheme.onSecondaryContainer),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Seller', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+                              Text('Trusted Member', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.verified_rounded, color: Colors.blue.shade400),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  
+                  const SizedBox(height: 32),
                   if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
                     Text(
                       'Looking For:',
@@ -215,30 +258,182 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       height: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 100), // Spacer for FAB
+                  const SizedBox(height: 60), // Spacer
                 ],
               ),
             ),
           ),
         ],
       ),
-      floatingActionButton: isOwner
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(tradeId: _currentListing.id),
+      bottomNavigationBar: isOwner ? null : SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(tradeId: _currentListing.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: const Text('Chat'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                );
-              },
-              label: const Text('Make an Offer'),
-              icon: const Icon(Icons.chat_bubble_rounded),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton(
+                  onPressed: () => _showMakeOfferModal(context),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                  child: const Text('Make Offer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMakeOfferModal(BuildContext context) {
+    final priceController = TextEditingController();
+    final itemController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 24,
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Make an Offer', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: Colors.grey.shade600)),
+                  const SizedBox(height: 24),
+                  if (_currentListing.tradeType == 'Sale' || _currentListing.tradeType == 'Both') ...[
+                    TextFormField(
+                      controller: priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'Offer Price (\$)',
+                        prefixIcon: const Icon(Icons.attach_money),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      validator: (value) {
+                         if ((_currentListing.tradeType == 'Sale') && (value == null || value.isEmpty)) {
+                            return 'Please enter a price';
+                         }
+                         if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
+                         }
+                         return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_currentListing.tradeType == 'Trade' || _currentListing.tradeType == 'Both') ...[
+                    TextFormField(
+                      controller: itemController,
+                      decoration: InputDecoration(
+                        labelText: 'Offer Item',
+                        prefixIcon: const Icon(Icons.swap_horiz_rounded),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      validator: (value) {
+                         if ((_currentListing.tradeType == 'Trade') && (value == null || value.isEmpty)) {
+                            return 'Please offer an item';
+                         }
+                         return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : () async {
+                        if (formKey.currentState!.validate()) {
+                          // Require at least one if it's 'Both'
+                          if (_currentListing.tradeType == 'Both' && priceController.text.isEmpty && itemController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please offer a price or an item.')));
+                            return;
+                          }
+                          
+                          setModalState(() => isSubmitting = true);
+                          try {
+                            await _offerService.makeOffer(
+                              _currentListing.id,
+                              offeredPrice: priceController.text.isNotEmpty ? double.parse(priceController.text) : null,
+                              offeredItem: itemController.text.isNotEmpty ? itemController.text : null,
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent successfully!')));
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                            }
+                          } finally {
+                            if (mounted) setModalState(() => isSubmitting = false);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: isSubmitting 
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Submit Offer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ class Listing {
   final String category;
   final String? imageUrl;
   final int userId;
+  final int viewCount;
 
   Listing({
     required this.id,
@@ -20,6 +21,7 @@ class Listing {
     required this.category,
     this.imageUrl,
     required this.userId,
+    required this.viewCount,
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class Listing {
       category: json['category'],
       imageUrl: json['imageUrl'],
       userId: json['user_id'],
+      viewCount: json['view_count'] ?? 0,
     );
   }
 }

@@ -701,7 +701,20 @@ def create_offer(
     db.add(new_offer)
     db.commit()
     db.refresh(new_offer)
-    return new_offer
+    return {
+        "id": new_offer.id,
+        "buyer_id": new_offer.buyer_id,
+        "listing_id": new_offer.listing_id,
+        "offered_price": new_offer.offered_price,
+        "offered_item": new_offer.offered_item,
+        "status": new_offer.status,
+        "listing": {
+            "id": listing.id, "title": listing.title, "description": listing.description, 
+            "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+            "tradeType": listing.trade_type, "category": listing.category, 
+            "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+        }
+    }
 
 @app.get("/users/me/offers", response_model=List[Offer])
 def get_my_offers(
@@ -711,16 +724,27 @@ def get_my_offers(
     # Offers the current user has made
     offers = db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).all()
     # Eager load listing for rich display
+    result = []
     for offer in offers:
         l = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+        listing_dict = None
         if l:
-            offer.listing = {
+            listing_dict = {
                 "id": l.id, "title": l.title, "description": l.description, 
                 "cashPrice": l.price, "exchangeItem": l.exchange_item, 
                 "tradeType": l.trade_type, "category": l.category, 
                 "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count
             }
-    return offers
+        result.append({
+            "id": offer.id,
+            "buyer_id": offer.buyer_id,
+            "listing_id": offer.listing_id,
+            "offered_price": offer.offered_price,
+            "offered_item": offer.offered_item,
+            "status": offer.status,
+            "listing": listing_dict
+        })
+    return result
 
 @app.get("/users/me/received_offers", response_model=List[Offer])
 def get_received_offers(
@@ -729,16 +753,27 @@ def get_received_offers(
 ):
     # Offers made on the current user's listings
     offers = db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).all()
+    result = []
     for offer in offers:
         l = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+        listing_dict = None
         if l:
-            offer.listing = {
+            listing_dict = {
                 "id": l.id, "title": l.title, "description": l.description, 
                 "cashPrice": l.price, "exchangeItem": l.exchange_item, 
                 "tradeType": l.trade_type, "category": l.category, 
                 "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count
             }
-    return offers
+        result.append({
+            "id": offer.id,
+            "buyer_id": offer.buyer_id,
+            "listing_id": offer.listing_id,
+            "offered_price": offer.offered_price,
+            "offered_item": offer.offered_item,
+            "status": offer.status,
+            "listing": listing_dict
+        })
+    return result
 
 @app.put("/offers/{offer_id}", response_model=Offer)
 def update_offer_status(
@@ -761,14 +796,23 @@ def update_offer_status(
     offer.status = offer_update.status
     db.commit()
     db.refresh(offer)
+    listing_dict = None
     if listing:
-        offer.listing = {
+        listing_dict = {
             "id": listing.id, "title": listing.title, "description": listing.description, 
             "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
             "tradeType": listing.trade_type, "category": listing.category, 
             "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
         }
-    return offer
+    return {
+        "id": offer.id,
+        "buyer_id": offer.buyer_id,
+        "listing_id": offer.listing_id,
+        "offered_price": offer.offered_price,
+        "offered_item": offer.offered_item,
+        "status": offer.status,
+        "listing": listing_dict
+    }
 
 @app.get("/")
 def read_root():
