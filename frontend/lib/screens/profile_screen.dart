@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
+import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import 'edit_profile_screen.dart';
 import 'listing_detail_screen.dart';

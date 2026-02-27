@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
 import 'create_listing_screen.dart';
+import 'listing_detail_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -298,6 +299,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
               )
+            else
               SliverPadding(
                 padding: const EdgeInsets.all(16.0),
                 sliver: SliverGrid(
