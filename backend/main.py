@@ -50,6 +50,7 @@ class ListingModel(Base):
     category = Column(String)
     image_url = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
+    view_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("UserModel", back_populates="listings")
@@ -72,6 +73,19 @@ class FavoriteModel(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class OfferModel(Base):
+    __tablename__ = "offers"
+    id = Column(Integer, primary_key=True, index=True)
+    buyer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
+    offered_price = Column(Float, nullable=True)
+    offered_item = Column(String, nullable=True)
+    status = Column(String, default="pending")  # pending, accepted, rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    buyer = relationship("UserModel", foreign_keys=[buyer_id])
+    listing = relationship("ListingModel")
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -111,9 +125,29 @@ class Listing(BaseModel):
     tradeType: str
     imageUrl: Optional[str] = None
     user_id: int
+    view_count: int
 
     class Config:
         from_attributes = True
+
+class OfferCreate(BaseModel):
+    offered_price: Optional[float] = None
+    offered_item: Optional[str] = None
+
+class Offer(BaseModel):
+    id: int
+    buyer_id: int
+    listing_id: int
+    offered_price: Optional[float] = None
+    offered_item: Optional[str] = None
+    status: str
+    listing: Optional[Listing] = None
+
+    class Config:
+        from_attributes = True
+
+class OfferUpdate(BaseModel):
+    status: str
 
 class UserRoleUpdate(BaseModel):
     role: str
@@ -362,7 +396,7 @@ async def read_own_listings(current_user: Annotated[UserModel, Depends(get_curre
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
         for l in current_user.listings
     ]
 
@@ -378,7 +412,7 @@ async def read_user_chats(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
         for l in listings
     ]
 
@@ -456,7 +490,7 @@ def create_listing(
             "id": new_listing.id, "title": new_listing.title, "description": new_listing.description, 
             "cashPrice": new_listing.price, "exchangeItem": new_listing.exchange_item, 
             "tradeType": new_listing.trade_type, "category": new_listing.category, 
-            "imageUrl": new_listing.image_url, "user_id": new_listing.user_id
+            "imageUrl": new_listing.image_url, "user_id": new_listing.user_id, "view_count": new_listing.view_count
         }
     except Exception as e:
         db.rollback()
@@ -493,7 +527,7 @@ def get_listings(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
         for l in listings
     ]
 
@@ -502,11 +536,16 @@ def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
+    
+    listing.view_count += 1
+    db.commit()
+    db.refresh(listing)
+
     return {
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
-        "imageUrl": listing.image_url, "user_id": listing.user_id
+        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
     }
 
 @app.put("/users/me", response_model=User)
@@ -565,7 +604,7 @@ def update_listing(
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
-        "imageUrl": listing.image_url, "user_id": listing.user_id
+        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
     }
 
 @app.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -634,9 +673,102 @@ def get_user_favorites(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
         for l in listings
     ]
+
+# --- Offers Endpoints ---
+
+@app.post("/listings/{listing_id}/offers", response_model=Offer)
+def create_offer(
+    listing_id: int,
+    offer_data: OfferCreate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot make an offer on your own listing")
+    
+    new_offer = OfferModel(
+        buyer_id=current_user.id,
+        listing_id=listing_id,
+        offered_price=offer_data.offered_price,
+        offered_item=offer_data.offered_item
+    )
+    db.add(new_offer)
+    db.commit()
+    db.refresh(new_offer)
+    return new_offer
+
+@app.get("/users/me/offers", response_model=List[Offer])
+def get_my_offers(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    # Offers the current user has made
+    offers = db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).all()
+    # Eager load listing for rich display
+    for offer in offers:
+        l = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+        if l:
+            offer.listing = {
+                "id": l.id, "title": l.title, "description": l.description, 
+                "cashPrice": l.price, "exchangeItem": l.exchange_item, 
+                "tradeType": l.trade_type, "category": l.category, 
+                "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count
+            }
+    return offers
+
+@app.get("/users/me/received_offers", response_model=List[Offer])
+def get_received_offers(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    # Offers made on the current user's listings
+    offers = db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).all()
+    for offer in offers:
+        l = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+        if l:
+            offer.listing = {
+                "id": l.id, "title": l.title, "description": l.description, 
+                "cashPrice": l.price, "exchangeItem": l.exchange_item, 
+                "tradeType": l.trade_type, "category": l.category, 
+                "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count
+            }
+    return offers
+
+@app.put("/offers/{offer_id}", response_model=Offer)
+def update_offer_status(
+    offer_id: int,
+    offer_update: OfferUpdate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    
+    listing = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+    if listing.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to respond to this offer")
+    
+    if offer_update.status not in ["accepted", "rejected", "pending"]:
+         raise HTTPException(status_code=400, detail="Invalid status")
+         
+    offer.status = offer_update.status
+    db.commit()
+    db.refresh(offer)
+    if listing:
+        offer.listing = {
+            "id": listing.id, "title": listing.title, "description": listing.description, 
+            "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+            "tradeType": listing.trade_type, "category": listing.category, 
+            "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+        }
+    return offer
 
 @app.get("/")
 def read_root():

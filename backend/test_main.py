@@ -155,3 +155,64 @@ def test_favorites(client, db):
     
     app.dependency_overrides.pop(get_current_user, None)
 
+def test_offers(client, db):
+    # Setup users and listing
+    seller = UserModel(username="seller", email="seller@example.com", hashed_password="hashed")
+    buyer = UserModel(username="buyer", email="buyer@example.com", hashed_password="hashed")
+    db.add_all([seller, buyer])
+    db.commit()
+    
+    listing = ListingModel(title="Selling Object", category="Test", trade_type="Both", user_id=seller.id)
+    db.add(listing)
+    db.commit()
+
+    from main import get_current_user
+
+    # Test buyer making an offer
+    app.dependency_overrides[get_current_user] = lambda: buyer
+    response = client.post(f"/listings/{listing.id}/offers", json={
+        "offered_price": 50.0,
+        "offered_item": "Trade Item"
+    })
+    assert response.status_code == 200
+    offer_id = response.json()["id"]
+    assert response.json()["status"] == "pending"
+
+    # Test making offer on own listing fails
+    app.dependency_overrides[get_current_user] = lambda: seller
+    response = client.post(f"/listings/{listing.id}/offers", json={
+        "offered_price": 50.0
+    })
+    assert response.status_code == 400
+
+    # Test buyer viewing their offers
+    app.dependency_overrides[get_current_user] = lambda: buyer
+    response = client.get("/users/me/offers")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["id"] == offer_id
+
+    # Test seller viewing received offers
+    app.dependency_overrides[get_current_user] = lambda: seller
+    response = client.get("/users/me/received_offers")
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert response.json()[0]["id"] == offer_id
+
+    # Test buyer trying to accept their own offer (should fail)
+    app.dependency_overrides[get_current_user] = lambda: buyer
+    response = client.put(f"/offers/{offer_id}", json={
+        "status": "accepted"
+    })
+    assert response.status_code == 403
+
+    # Test seller accepting the offer
+    app.dependency_overrides[get_current_user] = lambda: seller
+    response = client.put(f"/offers/{offer_id}", json={
+        "status": "accepted"
+    })
+    assert response.status_code == 200
+    assert response.json()["status"] == "accepted"
+
+    app.dependency_overrides.pop(get_current_user, None)
+
