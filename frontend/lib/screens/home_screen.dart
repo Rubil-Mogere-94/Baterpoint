@@ -31,10 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _fetchData() {
     setState(() {
-      // Temporarily use getListings for both until we add a specific trending endpoint, 
-      // but ideally trending would sort by view_count on the backend.
-      _trendingListingsFuture = _listingService.getListings(skip: 0, limit: 10);
-      _recentListingsFuture = _listingService.getListings(skip: 0, limit: 10);
+      // Use view_count for trending, though the backend support might vary 
+      // based on the implementation of fetchListings
+      _trendingListingsFuture = _listingService.fetchListings(sortBy: 'view_count', order: 'desc', limit: 10);
+      _recentListingsFuture = _listingService.fetchListings(sortBy: 'created_at', order: 'desc', limit: 10);
     });
   }
 
@@ -164,14 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 4.0),
                             child: ListingCard(
                               listing: topTrending[index],
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ListingDetailScreen(listing: topTrending[index]),
-                                  ),
-                                );
-                              },
                             ),
                           ),
                         );
@@ -221,14 +213,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       return ListingCard(
                         listing: snapshot.data![index],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ListingDetailScreen(listing: snapshot.data![index]),
-                            ),
-                          );
-                        },
                       );
                     },
                   );
