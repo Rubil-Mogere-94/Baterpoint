@@ -7,6 +7,7 @@ import '../services/listing_service.dart';
 import '../services/offer_service.dart';
 import 'chat_screen.dart';
 import 'edit_listing_screen.dart';
+import 'checkout_screen.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Listing listing;
@@ -313,6 +314,31 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   child: const Text('Make Offer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ),
+              // Buy Now button, shown only if cash price is available
+              if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
+                const SizedBox(width: 8),
+              if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckoutScreen(listing: _currentListing),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text('Buy Now', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
             ],
           ),
         ),
