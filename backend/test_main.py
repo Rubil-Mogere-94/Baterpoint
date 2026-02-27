@@ -88,3 +88,70 @@ def test_create_listing_unauthenticated(client):
         "tradeType": "Trade"
     })
     assert response.status_code == 401
+
+def test_pagination(client, db):
+    # Create 25 listings
+    user = UserModel(username="testuser2", email="test2@example.com", hashed_password="hashed")
+    db.add(user)
+    db.commit()
+    for i in range(25):
+        listing = ListingModel(title=f"Listing {i}", category="Test", trade_type="Sale", user_id=user.id)
+        db.add(listing)
+    db.commit()
+
+    # Test limit=20 (default or explicit)
+    response = client.get("/listings/")
+    assert response.status_code == 200
+    assert len(response.json()) == 20
+
+    # Test limit=10
+    response = client.get("/listings/?limit=10")
+    assert response.status_code == 200
+    assert len(response.json()) == 10
+
+    # Test skip=20, expecting 5
+    response = client.get("/listings/?skip=20&limit=10")
+    assert response.status_code == 200
+    assert len(response.json()) == 5
+
+def test_favorites(client, db):
+    # Create user and listing
+    user = UserModel(username="favuser", email="fav@example.com", hashed_password="hashed")
+    db.add(user)
+    db.commit()
+    listing = ListingModel(title="Fav Listing", category="Test", trade_type="Sale", user_id=user.id)
+    db.add(listing)
+    db.commit()
+
+    from main import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    # Get empty favorites
+    response = client.get("/users/me/favorites")
+    assert response.status_code == 200
+    assert response.json() == []
+
+    # Add favorite
+    response = client.post(f"/listings/{listing.id}/favorite")
+    assert response.status_code == 200
+    assert response.json()["status"] == "favorited"
+
+    # Get favorites again
+    response = client.get("/users/me/favorites")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == listing.id
+
+    # Remove favorite
+    response = client.post(f"/listings/{listing.id}/favorite")
+    assert response.status_code == 200
+    assert response.json()["status"] == "unfavorited"
+
+    # Get favorites again
+    response = client.get("/users/me/favorites")
+    assert response.status_code == 200
+    assert response.json() == []
+    
+    app.dependency_overrides.pop(get_current_user, None)
+

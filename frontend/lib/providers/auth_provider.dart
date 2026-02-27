@@ -3,17 +3,44 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 
+import '../services/listing_service.dart';
+
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final ListingService _listingService = ListingService();
+  
   User? _user;
   bool _isLoading = false;
+  Set<int> _favoriteIds = {};
 
   User? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
+  Set<int> get favoriteIds => _favoriteIds;
 
   AuthProvider() {
     _checkAuth();
+  }
+
+  Future<void> _fetchFavorites() async {
+    if (!isAuthenticated) return;
+    try {
+      final favs = await _listingService.fetchFavorites();
+      _favoriteIds = favs.map((l) => l.id).toSet();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> toggleFavorite(int listingId) async {
+    try {
+      final isFav = await _listingService.toggleFavorite(listingId);
+      if (isFav) {
+        _favoriteIds.add(listingId);
+      } else {
+        _favoriteIds.remove(listingId);
+      }
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> _checkAuth() async {
@@ -21,6 +48,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _user = await _authService.getCurrentUser();
+      if (_user != null) {
+        await _fetchFavorites();
+      }
     } catch (e) {
       _user = null;
     } finally {
@@ -32,6 +62,9 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshUser() async {
     try {
       _user = await _authService.getCurrentUser();
+      if (_user != null) {
+        await _fetchFavorites();
+      }
       notifyListeners();
     } catch (e) {
       // Handle error if needed
@@ -45,6 +78,9 @@ class AuthProvider extends ChangeNotifier {
       final token = await _authService.login(username, password);
       if (token != null) {
         _user = await _authService.getCurrentUser();
+        if (_user != null) {
+          await _fetchFavorites();
+        }
       }
     } finally {
       _isLoading = false;
@@ -67,6 +103,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     await _authService.logout();
     _user = null;
+    _favoriteIds.clear();
     notifyListeners();
   }
 }
+

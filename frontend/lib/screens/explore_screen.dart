@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
 import 'create_listing_screen.dart';
-import 'listing_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -23,6 +24,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   String _sortBy = 'created_at';
   String _sortOrder = 'desc';
   Timer? _debounce;
+  
+  final ScrollController _scrollController = ScrollController();
+  int _skip = 0;
+  final int _limit = 20;
+  bool _hasMore = true;
+  bool _isFetchingMore = false;
 
   final List<String> _categories = [
     'All',
@@ -40,34 +47,66 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _fetchListings();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading && !_isFetchingMore && _hasMore) {
+      _fetchListings(reset: false);
+    }
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchListings() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchListings({bool reset = true}) async {
+    if (reset) {
+      setState(() {
+        _isLoading = true;
+        _skip = 0;
+        _hasMore = true;
+        _listings.clear();
+      });
+    } else {
+      if (_isFetchingMore || !_hasMore) return;
+      setState(() => _isFetchingMore = true);
+    }
+    
     try {
-      final listings = await _listingService.fetchListings(
+      final newListings = await _listingService.fetchListings(
         search: _searchQuery,
         category: _selectedCategory,
         tradeType: _selectedTradeType == 'Both' ? null : _selectedTradeType,
         sortBy: _sortBy,
         order: _sortOrder,
+        skip: _skip,
+        limit: _limit,
       );
       if (mounted) {
         setState(() {
-          _listings = listings;
+          if (reset) {
+            _listings = newListings;
+          } else {
+            _listings.addAll(newListings);
+          }
+          _skip += newListings.length;
+          _hasMore = newListings.length == _limit;
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isFetchingMore = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading listings: $e')),
         );
@@ -92,8 +131,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
-        onRefresh: _fetchListings,
+        onRefresh: () => _fetchListings(reset: true),
         child: CustomScrollView(
+          controller: _scrollController,
           slivers: [
             SliverAppBar(
               floating: true,
@@ -258,7 +298,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                 ),
               )
-            else
               SliverPadding(
                 padding: const EdgeInsets.all(16.0),
                 sliver: SliverGrid(
@@ -275,6 +314,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     },
                     childCount: _listings.length,
                   ),
+                ),
+              ),
+            if (_isFetchingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
               ),
           ],
@@ -357,6 +403,33 @@ class _ListingCard extends StatelessWidget {
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        if (!auth.isAuthenticated) return const SizedBox.shrink();
+                        final isFavorite = auth.favoriteIds.contains(listing.id);
+                        return GestureDetector(
+                          onTap: () {
+                            auth.toggleFavorite(listing.id);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.4),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                              color: isFavorite ? Colors.redAccent : Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

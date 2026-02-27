@@ -66,6 +66,13 @@ class ChatMessageModel(Base):
     listing = relationship("ListingModel", back_populates="messages")
     sender = relationship("UserModel", back_populates="sent_messages")
 
+class FavoriteModel(Base):
+    __tablename__ = "favorites"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -462,7 +469,9 @@ def get_listings(
     category: Optional[str] = None,
     tradeType: Optional[str] = None,
     sortBy: Optional[str] = None,
-    order: Optional[str] = 'desc'
+    order: Optional[str] = 'desc',
+    skip: int = 0,
+    limit: int = 20
 ):
     query = db.query(ListingModel)
 
@@ -480,7 +489,7 @@ def get_listings(
     else:
         query = query.order_by(desc(ListingModel.created_at) if order == 'desc' else ListingModel.created_at)
     
-    listings = query.all()
+    listings = query.offset(skip).limit(limit).all()
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
@@ -585,6 +594,49 @@ def delete_listing(
     db.delete(listing)
     db.commit()
     return None
+
+@app.post("/listings/{listing_id}/favorite", status_code=status.HTTP_200_OK)
+def toggle_favorite(
+    listing_id: int,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+        
+    favorite = db.query(FavoriteModel).filter(
+        FavoriteModel.user_id == current_user.id,
+        FavoriteModel.listing_id == listing_id
+    ).first()
+    
+    if favorite:
+        db.delete(favorite)
+        db.commit()
+        return {"status": "unfavorited"}
+    else:
+        new_fav = FavoriteModel(user_id=current_user.id, listing_id=listing_id)
+        db.add(new_fav)
+        db.commit()
+        return {"status": "favorited"}
+
+@app.get("/users/me/favorites", response_model=List[Listing])
+def get_user_favorites(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    favorites = db.query(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+    listing_ids = [fav.listing_id for fav in favorites]
+    if not listing_ids:
+        return []
+        
+    listings = db.query(ListingModel).filter(ListingModel.id.in_(listing_ids)).order_by(desc(ListingModel.created_at)).all()
+    return [
+        {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+         "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+         "imageUrl": l.image_url, "user_id": l.user_id}
+        for l in listings
+    ]
 
 @app.get("/")
 def read_root():

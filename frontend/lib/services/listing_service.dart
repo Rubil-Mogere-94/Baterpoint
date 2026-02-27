@@ -16,8 +16,13 @@ class ListingService {
     String? tradeType,
     String? sortBy,
     String? order,
+    int skip = 0,
+    int limit = 20,
   }) async {
-    final queryParams = <String, String>{};
+    final queryParams = <String, String>{
+      'skip': skip.toString(),
+      'limit': limit.toString(),
+    };
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (category != null && category != 'All') queryParams['category'] = category;
     if (tradeType != null) queryParams['tradeType'] = tradeType;
@@ -32,6 +37,34 @@ class ListingService {
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
       throw Exception('Failed to load listings');
+    }
+  }
+
+  Future<bool> toggleFavorite(int listingId) async {
+    final token = await _authService.getToken();
+    final response = await http.post(
+      Uri.parse('$apiUrl/listings/$listingId/favorite'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['status'] == 'favorited';
+    } else {
+      throw Exception('Failed to toggle favorite');
+    }
+  }
+
+  Future<List<Listing>> fetchFavorites() async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('$apiUrl/users/me/favorites'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      throw Exception('Failed to load favorites');
     }
   }
 
