@@ -12,9 +12,10 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi_socketio import SocketManager
-from sqlalchemy import create_engine, Column, Integer, String, Text, Float, ForeignKey, DateTime, Boolean, select, desc
+from sqlalchemy import create_engine, Column, Integer, String, Text, Float, ForeignKey, DateTime, Boolean, select, desc, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
+import random
 
 load_dotenv()
 
@@ -78,8 +79,8 @@ class ChatMessageModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     listing_id = Column(Integer, ForeignKey("listings.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
-    message = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    message_content = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
     sender = relationship("UserModel", back_populates="chat_messages")
 
@@ -99,10 +100,33 @@ class OfferModel(Base):
     listing_id = Column(Integer, ForeignKey("listings.id"))
     offered_price = Column(Float, nullable=True)
     offered_item = Column(String, nullable=True)
+    status = Column(String, default="pending") # "pending", "accepted", "rejected"
     created_at = Column(DateTime, default=datetime.utcnow)
     
     buyer = relationship("UserModel", foreign_keys=[buyer_id])
     listing = relationship("ListingModel")
+
+class QuestModel(Base):
+    __tablename__ = "quests"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    goal_type = Column(String, nullable=False) # e.g., "view", "favorite", "offer"
+    goal_value = Column(Integer, nullable=False)
+    points_reward = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class UserQuestModel(Base):
+    __tablename__ = "user_quests"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    quest_id = Column(Integer, ForeignKey("quests.id"))
+    progress = Column(Integer, default=0)
+    completed = Column(Boolean, default=False)
+    last_updated = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("UserModel", back_populates="quests")
+    quest = relationship("QuestModel")
 
 # Create tables
 Base.metadata.create_all(bind=engine)
