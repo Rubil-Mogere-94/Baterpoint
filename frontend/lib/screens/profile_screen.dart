@@ -85,6 +85,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
                       labelStyle: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 24),
+                    
+                    // Stats Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatItem(
+                          context,
+                          'Rating',
+                          '${user?.overallRating ?? 0.0}',
+                          Icons.star_rounded,
+                          Colors.amber,
+                        ),
+                        _buildStatItem(
+                          context,
+                          'Reviews',
+                          '${user?.totalReviews ?? 0}',
+                          Icons.reviews_rounded,
+                          Colors.blue,
+                        ),
+                        _buildStatItem(
+                          context,
+                          'Points',
+                          '${user?.loyaltyPoints ?? 0}',
+                          Icons.stars_rounded,
+                          Colors.orange,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -226,6 +255,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon, Color color) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+        ),
+      ],
     );
   }
 }

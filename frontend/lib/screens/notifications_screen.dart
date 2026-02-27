@@ -30,7 +30,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationModel(
       id: '1',
       title: 'New Offer Received',
-      body: 'You received a new offer of $150 for your "Vintage Camera".',
+      body: 'You received a new offer of \$150 for your "Vintage Camera".',
       timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
       icon: Icons.local_offer_rounded,
     ),

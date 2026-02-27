@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/listing.dart';
+import '../models/deal.dart';
 import '../constants.dart';
 import 'auth_service.dart';
 
@@ -190,6 +191,15 @@ class ListingService {
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
       throw Exception('Failed to load recommendations');
+    }
+  }
+
+  Future<Deal> fetchDealOfTheHour() async {
+    final response = await http.get(Uri.parse('$apiUrl/listings/deal-of-the-hour'));
+    if (response.statusCode == 200) {
+      return Deal.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load deal of the hour');
     }
   }
 }

@@ -37,54 +37,68 @@ class UserModel(Base):
     overall_rating = Column(Float, default=0.0)
     total_reviews = Column(Integer, default=0)
     loyalty_points = Column(Integer, default=0)
+    device_token = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     listings = relationship("ListingModel", back_populates="owner")
-    sent_messages = relationship("ChatMessageModel", back_populates="sender")
+    chat_messages = relationship("ChatMessageModel", back_populates="sender")
+    received_offers = relationship("OfferModel", back_populates="buyer")
+    quests = relationship("UserQuestModel", back_populates="user")
+
+class DealModel(Base):
+    __tablename__ = "deals"
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    discount_percentage = Column(Integer)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    
+    listing = relationship("ListingModel")
 
 class ListingModel(Base):
     __tablename__ = "listings"
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    description = Column(Text)
-    price = Column(Float)
-    exchange_item = Column(String)
-    trade_type = Column(String)
+    title = Column(String, index=True)
+    description = Column(String)
+    price = Column(Float, nullable=True) # cashPrice
+    exchange_item = Column(String, nullable=True) # exchangeItem
+    trade_type = Column(String) # "Barter", "Sale", or "Both"
     category = Column(String)
     image_url = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
     view_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    
     owner = relationship("UserModel", back_populates="listings")
-    messages = relationship("ChatMessageModel", back_populates="listing", cascade="all, delete-orphan")
+    favorites = relationship("FavoriteModel", back_populates="listing")
+    offers = relationship("OfferModel", back_populates="listing")
 
 class ChatMessageModel(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
-    listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"))
-    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    message_content = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    message = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    listing = relationship("ListingModel", back_populates="messages")
-    sender = relationship("UserModel", back_populates="sent_messages")
+    sender = relationship("UserModel", back_populates="chat_messages")
 
 class FavoriteModel(Base):
     __tablename__ = "favorites"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    
+    user = relationship("UserModel")
+    listing = relationship("ListingModel", back_populates="favorites")
 
 class OfferModel(Base):
     __tablename__ = "offers"
     id = Column(Integer, primary_key=True, index=True)
-    buyer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    listing_id = Column(Integer, ForeignKey("listings.id", ondelete="CASCADE"), nullable=False)
+    buyer_id = Column(Integer, ForeignKey("users.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"))
     offered_price = Column(Float, nullable=True)
     offered_item = Column(String, nullable=True)
-    status = Column(String, default="pending")  # pending, accepted, rejected
     created_at = Column(DateTime, default=datetime.utcnow)
     
     buyer = relationship("UserModel", foreign_keys=[buyer_id])
@@ -104,6 +118,7 @@ class User(BaseModel):
     overall_rating: Optional[float] = 0.0
     total_reviews: Optional[int] = 0
     loyalty_points: Optional[int] = 0
+    device_token: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -155,6 +170,38 @@ class Offer(BaseModel):
     class Config:
         from_attributes = True
 
+class Quest(BaseModel):
+    id: int
+    title: str
+    description: str
+    goal_type: str
+    goal_value: int
+    points_reward: int
+
+    class Config:
+        from_attributes = True
+
+class UserQuest(BaseModel):
+    id: int
+    quest_id: int
+    progress: int
+    completed: bool
+    quest: Quest
+
+    class Config:
+        from_attributes = True
+
+class Deal(BaseModel):
+    id: int
+    listing_id: int
+    discount_percentage: int
+    start_time: datetime
+    end_time: datetime
+    listing: Listing
+
+    class Config:
+        from_attributes = True
+
 class OfferUpdate(BaseModel):
     status: str
 
@@ -163,6 +210,9 @@ class UserRoleUpdate(BaseModel):
 
 class UserSubscriptionUpdate(BaseModel):
     subscription_status: str
+
+class DeviceTokenUpdate(BaseModel):
+    device_token: str
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
@@ -368,6 +418,16 @@ async def get_current_active_admin_user(current_user: Annotated[UserModel, Depen
 async def read_users_me(current_user: Annotated[UserModel, Depends(get_current_user)]):
     return current_user
 
+@app.post("/users/me/device-token")
+async def register_device_token(
+    update: DeviceTokenUpdate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    current_user.device_token = update.device_token
+    db.commit()
+    return {"message": "Success"}
+
 @app.post("/token", response_model=Token)
 def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
@@ -554,6 +614,21 @@ def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
     db.commit()
     db.refresh(listing)
 
+    # Optional: Update quest progress for viewing
+    # Note: current_user is needed, so let's add it as an optional dependency or handled by token if present
+    auth_header = request.headers.get("Authorization")
+    if auth_header:
+        try:
+            token = auth_header.split(" ")[1]
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            username: str = payload.get("sub")
+            if username:
+                user = db.query(UserModel).filter(UserModel.username == username).first()
+                if user:
+                    update_quest_progress(user.id, "view", db)
+        except:
+            pass
+
     return {
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
@@ -671,6 +746,7 @@ def toggle_favorite(
     else:
         new_fav = FavoriteModel(user_id=current_user.id, listing_id=listing_id)
         db.add(new_fav)
+        update_quest_progress(current_user.id, "favorite", db)
         db.commit()
         return {"status": "favorited"}
 
@@ -756,6 +832,7 @@ def create_offer(
         offered_item=offer_data.offered_item
     )
     db.add(new_offer)
+    update_quest_progress(current_user.id, "offer", db)
     db.commit()
     db.refresh(new_offer)
     return {
@@ -868,6 +945,108 @@ def update_offer_status(
         "offered_price": offer.offered_price,
         "offered_item": offer.offered_item,
         "status": offer.status,
+        "listing": listing_dict
+    }
+
+@app.get("/users/me/quests", response_model=List[UserQuest])
+def get_user_quests(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    # Initialize quests if user has none
+    user_quests = db.query(UserQuestModel).filter(UserQuestModel.user_id == current_user.id).all()
+    if not user_quests:
+        all_quests = db.query(QuestModel).all()
+        # Seed if no quests in DB at all
+        if not all_quests:
+            seed_quests = [
+                QuestModel(title="Explorer", description="View 5 different listings", goal_type="view", goal_value=5, points_reward=50),
+                QuestModel(title="Collector", description="Favorite 3 listings", goal_type="favorite", goal_value=3, points_reward=30),
+                QuestModel(title="Negotiator", description="Make 1 offer", goal_type="offer", goal_value=1, points_reward=100),
+            ]
+            db.add_all(seed_quests)
+            db.commit()
+            all_quests = seed_quests
+            
+        user_quests = [UserQuestModel(user_id=current_user.id, quest_id=q.id) for q in all_quests]
+        db.add_all(user_quests)
+        db.commit()
+        for uq in user_quests:
+            db.refresh(uq)
+            
+    return user_quests
+
+@app.post("/users/me/quests/{user_quest_id}/claim")
+def claim_quest_reward(
+    user_quest_id: int,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    uq = db.query(UserQuestModel).filter(UserQuestModel.id == user_quest_id, UserQuestModel.user_id == current_user.id).first()
+    if not uq:
+        raise HTTPException(status_code=404, detail="Quest not found")
+    if uq.completed:
+        raise HTTPException(status_code=400, detail="Quest already completed")
+    if uq.progress < uq.quest.goal_value:
+        raise HTTPException(status_code=400, detail="Quest progress not complete")
+        
+    uq.completed = True
+    current_user.loyalty_points += uq.quest.points_reward
+    db.commit()
+    return {"message": "Success", "points_awarded": uq.quest.points_reward, "total_points": current_user.loyalty_points}
+
+def update_quest_progress(user_id: int, goal_type: str, db: Session, amount: int = 1):
+    user_quests = db.query(UserQuestModel).join(QuestModel).filter(
+        UserQuestModel.user_id == user_id,
+        QuestModel.goal_type == goal_type,
+        UserQuestModel.completed == False
+    ).all()
+    
+    for uq in user_quests:
+        if uq.progress < uq.quest.goal_value:
+            uq.progress += amount
+            uq.last_updated = datetime.utcnow()
+    db.commit()
+
+@app.get("/listings/deal-of-the-hour", response_model=Deal)
+def get_deal_of_the_hour(
+    db: Annotated[Session, Depends(get_db)]
+):
+    now = datetime.utcnow()
+    deal = db.query(DealModel).filter(DealModel.end_time > now).first()
+    
+    if not deal:
+        # Create a new deal
+        # Pick a random listing with a price
+        listing = db.query(ListingModel).filter(ListingModel.price > 0).order_by(func.random()).first()
+        if not listing:
+             raise HTTPException(status_code=404, detail="No suitable listing for a deal")
+        
+        deal = DealModel(
+            listing_id=listing.id,
+            discount_percentage=random.choice([10, 15, 20, 25, 30, 50]),
+            start_time=now,
+            end_time=now + timedelta(hours=1)
+        )
+        db.add(deal)
+        db.commit()
+        db.refresh(deal)
+    
+    # Construct the rich listing dictionary
+    l = deal.listing
+    listing_dict = {
+        "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+        "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+        "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+        "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
+    }
+    
+    return {
+        "id": deal.id,
+        "listing_id": deal.listing_id,
+        "discount_percentage": deal.discount_percentage,
+        "start_time": deal.start_time,
+        "end_time": deal.end_time,
         "listing": listing_dict
     }
 

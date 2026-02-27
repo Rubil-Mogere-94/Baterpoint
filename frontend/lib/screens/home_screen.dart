@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../models/listing.dart';
+import '../models/deal.dart';
+import '../models/quest.dart';
 import '../services/listing_service.dart';
+import '../services/quest_service.dart';
 import '../widgets/listing_card.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
@@ -15,8 +18,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ListingService _listingService = ListingService();
+  final QuestService _questService = QuestService();
   late Future<List<Listing>> _trendingListingsFuture;
   late Future<List<Listing>> _recommendationsFuture;
+  late Future<List<UserQuest>> _questsFuture;
+  late Future<Deal> _dealFuture;
 
   final List<String> promoImages = [
     'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop',
@@ -38,6 +44,11 @@ class _HomeScreenState extends State<HomeScreen> {
         // Fallback to recent listings if not logged in
         return _listingService.fetchListings(sortBy: 'created_at', order: 'desc', limit: 10);
       });
+      _questsFuture = _questService.fetchQuests().catchError((e) {
+        debugPrint('Quests error: $e');
+        return <UserQuest>[];
+      });
+      _dealFuture = _listingService.fetchDealOfTheHour();
     });
   }
 
@@ -130,49 +141,181 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 24),
               
-              // Daily Deals / Special Offer Section (New)
+              // Daily Deals / Special Offer Section (Dynamic)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.orange.shade400, Colors.red.shade400],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Deal of the Hour!',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                child: FutureBuilder<Deal>(
+                  future: _dealFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    } else if (snapshot.hasError) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    final deal = snapshot.data!;
+                    final duration = deal.endTime.difference(DateTime.now());
+                    final minutes = duration.inMinutes % 60;
+                    final seconds = duration.inSeconds % 60;
+                    
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.orange.shade400, Colors.red.shade400],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Deal of the Hour!',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${deal.discountPercentage}% OFF on ${deal.listing.title}.\nEnding in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              '50% OFF on all Gadgets.\nEnding in 45:12',
-                              style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: deal.listing)),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.red.shade400,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                            ),
+                            child: const Text('View Deal', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              
+              // Daily Quests Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: FutureBuilder<List<UserQuest>>(
+                  future: _questsFuture,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+                    
+                    final activeQuests = snapshot.data!.where((q) => !q.completed).toList();
+                    if (activeQuests.isEmpty) return const SizedBox.shrink();
+                    
+                    final currentQuest = activeQuests.first;
+                    final progress = currentQuest.progress / currentQuest.quest.goalValue;
+                    
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Daily Quest',
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '+${currentQuest.quest.pointsReward} pts',
+                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(currentQuest.quest.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(currentQuest.quest.description, style: theme.textTheme.bodySmall),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor: Colors.grey.shade200,
+                                    color: theme.colorScheme.primary,
+                                    minHeight: 8,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${currentQuest.progress}/${currentQuest.quest.goalValue}',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                              ),
+                            ],
+                          ),
+                          if (currentQuest.progress >= currentQuest.quest.goalValue) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  try {
+                                    final result = await _questService.claimReward(currentQuest.id);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Reward Claimed! ${result['points_awarded']} points added.')),
+                                    );
+                                    _fetchData();
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(e.toString())),
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                                child: const Text('Claim Reward', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.red.shade400,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                        ),
-                        child: const Text('View Deal', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
 
