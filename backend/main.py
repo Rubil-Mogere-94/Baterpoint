@@ -34,6 +34,9 @@ class UserModel(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(String, default="user", nullable=False)
     subscription_status = Column(String, default="basic")
+    overall_rating = Column(Float, default=0.0)
+    total_reviews = Column(Integer, default=0)
+    loyalty_points = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     listings = relationship("ListingModel", back_populates="owner")
@@ -98,6 +101,9 @@ class User(BaseModel):
     username: str
     role: str
     subscription_status: Optional[str] = "basic"
+    overall_rating: Optional[float] = 0.0
+    total_reviews: Optional[int] = 0
+    loyalty_points: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -126,6 +132,9 @@ class Listing(BaseModel):
     imageUrl: Optional[str] = None
     user_id: int
     view_count: int
+    owner_username: Optional[str] = None
+    owner_rating: Optional[float] = 0.0
+    owner_reviews: Optional[int] = 0
 
     class Config:
         from_attributes = True
@@ -396,7 +405,8 @@ async def read_own_listings(current_user: Annotated[UserModel, Depends(get_curre
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+         "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews}
         for l in current_user.listings
     ]
 
@@ -412,7 +422,8 @@ async def read_user_chats(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
         for l in listings
     ]
 
@@ -490,7 +501,8 @@ def create_listing(
             "id": new_listing.id, "title": new_listing.title, "description": new_listing.description, 
             "cashPrice": new_listing.price, "exchangeItem": new_listing.exchange_item, 
             "tradeType": new_listing.trade_type, "category": new_listing.category, 
-            "imageUrl": new_listing.image_url, "user_id": new_listing.user_id, "view_count": new_listing.view_count
+            "imageUrl": new_listing.image_url, "user_id": new_listing.user_id, "view_count": new_listing.view_count,
+            "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews
         }
     except Exception as e:
         db.rollback()
@@ -527,7 +539,8 @@ def get_listings(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
         for l in listings
     ]
 
@@ -545,7 +558,8 @@ def get_listing(listing_id: int, db: Annotated[Session, Depends(get_db)]):
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
-        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
+        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews
     }
 
 @app.put("/users/me", response_model=User)
@@ -604,7 +618,8 @@ def update_listing(
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
-        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
+        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews
     }
 
 @app.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -673,7 +688,8 @@ def get_user_favorites(
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
         for l in listings
     ]
 
@@ -706,14 +722,15 @@ def get_recommendations(
         rec_ids = [r.id for r in recommendations]
         trending = db.query(ListingModel).filter(
             ListingModel.user_id != current_user.id,
-            ListingModel.id.not_in(rec_ids) if rec_ids else True
+            ~ListingModel.id.in_(rec_ids) if rec_ids else True
         ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
         recommendations.extend(trending)
         
     return [
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count}
+         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
         for l in recommendations
     ]
 

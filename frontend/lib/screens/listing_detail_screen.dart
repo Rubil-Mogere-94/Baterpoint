@@ -182,7 +182,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 32),
                   
-                  // Seller Info Mock Block
+                  // Seller Info Block
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -194,19 +194,49 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       children: [
                         CircleAvatar(
                           backgroundColor: theme.colorScheme.secondaryContainer,
-                          child: Icon(Icons.person, color: theme.colorScheme.onSecondaryContainer),
+                          child: Text(
+                            (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
+                            style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Seller', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-                              Text('Trusted Member', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              Row(
+                                children: [
+                                  Text(
+                                    _currentListing.ownerUsername ?? 'User',
+                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  ...List.generate(5, (index) {
+                                    return Icon(
+                                      index < _currentListing.ownerRating.floor() 
+                                        ? Icons.star_rounded 
+                                        : (index < _currentListing.ownerRating ? Icons.star_half_rounded : Icons.star_outline_rounded),
+                                      color: Colors.amber,
+                                      size: 16,
+                                    );
+                                  }),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${_currentListing.ownerRating} (${_currentListing.ownerReviews} reviews)',
+                                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
                         ),
-                        Icon(Icons.verified_rounded, color: Colors.blue.shade400),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.grey),
                       ],
                     ),
                   ),

@@ -10,6 +10,9 @@ class Listing {
   final String? imageUrl;
   final int userId;
   final int viewCount;
+  final String? ownerUsername;
+  final double ownerRating;
+  final int ownerReviews;
 
   Listing({
     required this.id,
@@ -22,6 +25,9 @@ class Listing {
     this.imageUrl,
     required this.userId,
     required this.viewCount,
+    this.ownerUsername,
+    this.ownerRating = 0.0,
+    this.ownerReviews = 0,
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
@@ -36,6 +42,9 @@ class Listing {
       imageUrl: json['imageUrl'],
       userId: json['user_id'],
       viewCount: json['view_count'] ?? 0,
+      ownerUsername: json['owner_username'],
+      ownerRating: (json['owner_rating'] ?? 0.0).toDouble(),
+      ownerReviews: json['owner_reviews'] ?? 0,
     );
   }
 }
