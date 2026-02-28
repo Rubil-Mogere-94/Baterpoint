@@ -986,10 +986,12 @@ def create_offer(
 @app.get("/users/me/offers", response_model=List[Offer])
 def get_my_offers(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 10
 ):
     # Offers the current user has made
-    offers = db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).all()
+    offers = db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).offset(skip).limit(limit).all()
     # Eager load listing for rich display
     result = []
     for offer in offers:
@@ -1016,10 +1018,12 @@ def get_my_offers(
 @app.get("/users/me/received_offers", response_model=List[Offer])
 def get_received_offers(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 10
 ):
     # Offers made on the current user's listings
-    offers = db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).all()
+    offers = db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).offset(skip).limit(limit).all()
     result = []
     for offer in offers:
         l = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
