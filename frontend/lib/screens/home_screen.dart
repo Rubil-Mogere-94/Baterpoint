@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../models/listing.dart';
@@ -23,6 +24,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Listing>> _recommendationsFuture;
   late Future<List<UserQuest>> _questsFuture;
   late Future<Deal> _dealFuture;
+  Timer? _dealTimer;
+  Duration _dealRemaining = Duration.zero;
 
   final List<String> promoImages = [
     'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop',
@@ -50,6 +53,33 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _dealFuture = _listingService.fetchDealOfTheHour();
     });
+    
+    _dealFuture.then((deal) {
+      if (mounted) {
+        setState(() {
+          _dealRemaining = deal.endTime.difference(DateTime.now());
+        });
+        _dealTimer?.cancel();
+        _dealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (mounted) {
+            setState(() {
+              _dealRemaining = deal.endTime.difference(DateTime.now());
+              if (_dealRemaining.isNegative) {
+                _dealRemaining = Duration.zero;
+                timer.cancel();
+                _fetchData(); // Fetch new deal
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dealTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -161,9 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                     
                     final deal = snapshot.data!;
-                    final duration = deal.endTime.difference(DateTime.now());
-                    final minutes = duration.inMinutes % 60;
-                    final seconds = duration.inSeconds % 60;
+                    final minutes = _dealRemaining.inMinutes % 60;
+                    final seconds = _dealRemaining.inSeconds % 60;
                     
                     return Container(
                       padding: const EdgeInsets.all(16),

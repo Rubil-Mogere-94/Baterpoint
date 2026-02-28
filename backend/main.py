@@ -29,7 +29,9 @@ if not DATABASE_URL:
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    # pool_pre_ping=True helps with "SSL connection has been closed unexpectedly" errors
+    # by verifying the connection is still alive before using it.
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -48,6 +50,8 @@ class UserModel(Base):
     total_reviews = Column(Integer, default=0)
     loyalty_points = Column(Integer, default=0)
     device_token = Column(String, nullable=True)
+    successful_trades = Column(Integer, default=0)
+    trade_reputation = Column(Float, default=5.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     listings = relationship("ListingModel", back_populates="owner")
@@ -109,7 +113,9 @@ class OfferModel(Base):
     listing_id = Column(Integer, ForeignKey("listings.id"))
     offered_price = Column(Float, nullable=True)
     offered_item = Column(String, nullable=True)
-    status = Column(String, default="pending") # "pending", "accepted", "rejected"
+    status = Column(String, default="pending") # "pending", "accepted", "rejected", "completed"
+    buyer_confirmed = Column(Boolean, default=False)
+    seller_confirmed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     buyer = relationship("UserModel", foreign_keys=[buyer_id])
@@ -137,6 +143,33 @@ class UserQuestModel(Base):
     user = relationship("UserModel", back_populates="quests")
     quest = relationship("QuestModel")
 
+class RewardModel(Base):
+    __tablename__ = "rewards"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    points_cost = Column(Integer, nullable=False)
+    reward_type = Column(String, default="badge") # e.g., badge, status, discount
+
+class UserRewardModel(Base):
+    __tablename__ = "user_rewards"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    reward_id = Column(Integer, ForeignKey("rewards.id"))
+    redeemed_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("UserModel")
+    reward = relationship("RewardModel")
+
+class NotificationModel(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String)
+    message = Column(String)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -152,6 +185,8 @@ class User(BaseModel):
     total_reviews: Optional[int] = 0
     loyalty_points: Optional[int] = 0
     device_token: Optional[str] = None
+    successful_trades: Optional[int] = 0
+    trade_reputation: Optional[float] = 5.0
 
     class Config:
         from_attributes = True
@@ -198,6 +233,8 @@ class Offer(BaseModel):
     offered_price: Optional[float] = None
     offered_item: Optional[str] = None
     status: str
+    buyer_confirmed: bool = False
+    seller_confirmed: bool = False
     listing: Optional[Listing] = None
 
     class Config:
@@ -220,6 +257,35 @@ class UserQuest(BaseModel):
     progress: int
     completed: bool
     quest: Quest
+
+    class Config:
+        from_attributes = True
+
+class Reward(BaseModel):
+    id: int
+    title: str
+    description: str
+    points_cost: int
+    reward_type: str
+
+    class Config:
+        from_attributes = True
+
+class UserReward(BaseModel):
+    id: int
+    reward_id: int
+    redeemed_at: datetime
+    reward: Reward
+
+    class Config:
+        from_attributes = True
+
+class Notification(BaseModel):
+    id: int
+    title: str
+    message: str
+    is_read: bool
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -382,6 +448,9 @@ async def send_message(sid, data):
         new_msg = ChatMessageModel(listing_id=trade_id, sender_id=sender_id, message_content=message_content)
         db.add(new_msg)
         db.commit()
+
+        # Update quest progress for chat
+        update_quest_progress(sender_id, "chat", db)
 
         await app.sio.emit(
             "message",
@@ -1002,6 +1071,7 @@ def get_user_quests(
                 QuestModel(title="Explorer", description="View 5 different listings", goal_type="view", goal_value=5, points_reward=50),
                 QuestModel(title="Collector", description="Favorite 3 listings", goal_type="favorite", goal_value=3, points_reward=30),
                 QuestModel(title="Negotiator", description="Make 1 offer", goal_type="offer", goal_value=1, points_reward=100),
+                QuestModel(title="Chat Master", description="Send 5 chat messages", goal_type="chat", goal_value=5, points_reward=50),
             ]
             db.add_all(seed_quests)
             db.commit()
@@ -1088,6 +1158,83 @@ def get_deal_of_the_hour(
         "end_time": deal.end_time,
         "listing": listing_dict
     }
+
+# --- Loyalty Shop Endpoints ---
+
+@app.get("/rewards/", response_model=List[Reward])
+def get_rewards(db: Annotated[Session, Depends(get_db)]):
+    rewards = db.query(RewardModel).all()
+    if not rewards:
+        # Seed rewards
+        seed = [
+            RewardModel(title="Premium Status", description="Get a premium badge and 24h featured listings", points_cost=500, reward_type="status"),
+            RewardModel(title="Verified Badge", description="Show a green checkmark on your profile", points_cost=200, reward_type="badge"),
+            RewardModel(title="Deal Hunter", description="Receive notifications for ultra-deals 5 mins earlier", points_cost=300, reward_type="badge"),
+        ]
+        db.add_all(seed)
+        db.commit()
+        rewards = db.query(RewardModel).all()
+    return rewards
+
+@app.post("/rewards/{reward_id}/redeem", response_model=UserReward)
+def redeem_reward(
+    reward_id: int,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    reward = db.query(RewardModel).filter(RewardModel.id == reward_id).first()
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+    
+    if current_user.loyalty_points < reward.points_cost:
+        raise HTTPException(status_code=400, detail="Not enough loyalty points")
+    
+    # Check if already redeemed (optional, depending on type)
+    if reward.reward_type == "badge":
+        existing = db.query(UserRewardModel).filter(
+            UserRewardModel.user_id == current_user.id,
+            UserRewardModel.reward_id == reward_id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Reward already redeemed")
+
+    # Deduct points
+    current_user.loyalty_points -= reward.points_cost
+    
+    # Update status if applicable
+    if reward.reward_type == "status" and reward.title == "Premium Status":
+        current_user.subscription_status = "premium"
+
+    user_reward = UserRewardModel(user_id=current_user.id, reward_id=reward.id)
+    db.add(user_reward)
+    db.commit()
+    db.refresh(user_reward)
+    
+    # Send notification
+    send_push_notification(current_user.id, "Reward Redeemed!", f"You've successfully redeemed {reward.title}.", db)
+    
+    return user_reward
+
+@app.get("/users/me/notifications", response_model=List[Notification])
+def get_my_notifications(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    return db.query(NotificationModel).filter(NotificationModel.user_id == current_user.id).order_by(desc(NotificationModel.created_at)).all()
+
+def send_push_notification(user_id: int, title: str, message: str, db: Session):
+    # Mocking FCM/APNS: Log to console and save to DB
+    print(f"[PUSH NOTIFICATION] To User {user_id}: {title} - {message}")
+    
+    new_notif = NotificationModel(user_id=user_id, title=title, message=message)
+    db.add(new_notif)
+    db.commit()
+    
+    # In a real app, you'd trigger FCM here using user's device_token
+    user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    if user and user.device_token:
+        # mock_fcm.send(user.device_token, title, message)
+        pass
 
 @app.get("/")
 def read_root():

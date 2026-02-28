@@ -215,3 +215,59 @@ def test_offers(client, db):
 
     app.dependency_overrides.pop(get_current_user, None)
 
+def test_recommendations(client, db):
+    user = UserModel(username="recuser", email="rec@example.com", hashed_password="hashed")
+    other_user = UserModel(username="other", email="other@example.com", hashed_password="hashed")
+    db.add_all([user, other_user])
+    db.commit()
+    
+    listing = ListingModel(title="Rec Listing", category="Tech", trade_type="Sale", user_id=other_user.id, view_count=100)
+    db.add(listing)
+    db.commit()
+
+    from main import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: user
+    
+    response = client.get("/listings/recommendations")
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+    assert response.json()[0]["id"] == listing.id
+
+def test_loyalty_shop(client, db):
+    user = UserModel(username="shopuser", email="shop@example.com", hashed_password="hashed", loyalty_points=1000)
+    db.add(user)
+    db.commit()
+
+    from main import get_current_user
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    # Get rewards
+    response = client.get("/rewards/")
+    assert response.status_code == 200
+    rewards = response.json()
+    assert len(rewards) > 0
+    premium_reward = next(r for r in rewards if "Premium" in r["title"])
+
+    # Redeem
+    response = client.post(f"/rewards/{premium_reward['id']}/redeem")
+    assert response.status_code == 200
+    assert response.json()["reward"]["title"] == premium_reward["title"]
+
+    # Verify points deducted
+    db.refresh(user)
+    assert user.loyalty_points == 1000 - premium_reward["points_cost"]
+    assert user.subscription_status == "premium"
+
+def test_deal_of_the_hour(client, db):
+    user = UserModel(username="seller2", email="seller2@example.com", hashed_password="hashed")
+    db.add(user)
+    db.commit()
+    listing = ListingModel(title="Deal Item", category="Tech", price=100.0, user_id=user.id)
+    db.add(listing)
+    db.commit()
+
+    response = client.get("/listings/deal-of-the-hour")
+    assert response.status_code == 200
+    assert "discount_percentage" in response.json()
+    assert response.json()["listing"]["id"] == listing.id
+

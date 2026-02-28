@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import 'edit_profile_screen.dart';
 import 'listing_detail_screen.dart';
+import 'loyalty_shop_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -113,6 +114,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Colors.orange,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Loyalty Shop Entry
+                    Card(
+                      elevation: 0,
+                      color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.1)),
+                      ),
+                      child: ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.shopping_basket_rounded, color: Colors.orange),
+                        ),
+                        title: const Text('Loyalty Shop', style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text('Redeem your points for premium rewards'),
+                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoyaltyShopScreen()),
+                          ).then((_) => auth.refreshUser());
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SwitchListTile(
