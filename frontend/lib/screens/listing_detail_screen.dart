@@ -412,6 +412,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             child: Form(
               key: formKey,
               child: Builder(builder: (context) {
+                final theme = Theme.of(context);
                 final tType = _currentListing.tradeType?.toLowerCase() ?? '';
                 return Column(
                   mainAxisSize: MainAxisSize.min,
@@ -492,7 +493,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+                                      color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
                                       width: isSelected ? 2 : 1,
                                     ),
                                   ),
@@ -512,11 +513,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                           )
                                         else
                                           const Icon(Icons.image, color: Colors.grey),
-                                        if (isSelected)
-                                          Container(
-                                            color: theme.colorScheme.primary.withOpacity(0.3),
-                                            child: const Icon(Icons.check_circle, color: Colors.white),
-                                          ),
+                                          if (isSelected)
+                                            Container(
+                                              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                              child: const Icon(Icons.check_circle, color: Colors.white),
+                                            ),
                                       ],
                                     ),
                                   ),
