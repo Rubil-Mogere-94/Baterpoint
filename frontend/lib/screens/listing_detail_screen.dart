@@ -61,7 +61,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         child: _isLoading 
           ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator())
           : CustomScrollView(
-          key: const ValueKey('content'),
+              key: const ValueKey('content'),
         slivers: [
           SliverAppBar(
             expandedHeight: 300.0,
@@ -303,10 +303,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 60), // Spacer
                 ],
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: isOwner ? null : SafeArea(
         child: Container(
@@ -412,16 +411,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             ),
             child: Form(
               key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Make an Offer', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: Colors.grey.shade600)),
-                  const SizedBox(height: 24),
-                  final tType = _currentListing.tradeType?.toLowerCase() ?? '';
-                  if (tType.contains('sale') || tType.contains('cash') || tType == 'both') ...[
+              child: Builder(builder: (context) {
+                final tType = _currentListing.tradeType?.toLowerCase() ?? '';
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Make an Offer', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: Colors.grey.shade600)),
+                    const SizedBox(height: 24),
+                    if (tType.contains('sale') || tType.contains('cash') || tType == 'both') ...[
                     TextFormField(
                       controller: priceController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -588,8 +588,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                 ],
-              ),
-            ),
+              );
+            }),
+          ),
           );
         },
       ),

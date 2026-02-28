@@ -28,7 +28,7 @@ class QuestService {
   Future<Map<String, dynamic>> claimReward(int userQuestId) async {
     final token = await _authService.getToken();
     final response = await http.post(
-      Uri.parse('$apiUrl/users/me/quests/$userQuestId/claim'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/quests/$userQuestId/claim'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -41,7 +41,7 @@ class QuestService {
   }
 
   Future<List<Reward>> fetchRewards() async {
-    final response = await http.get(Uri.parse('$apiUrl/rewards/'));
+    final response = await http.get(Uri.parse('${EnvironmentConfig.apiUrl}/rewards/'));
     if (response.statusCode == 200) {
       Iterable l = json.decode(response.body);
       return List<Reward>.from(l.map((model) => Reward.fromJson(model)));
@@ -53,7 +53,7 @@ class QuestService {
   Future<UserReward> redeemReward(int rewardId) async {
     final token = await _authService.getToken();
     final response = await http.post(
-      Uri.parse('$apiUrl/rewards/$rewardId/redeem'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/rewards/$rewardId/redeem'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -68,7 +68,7 @@ class QuestService {
   Future<List<AppNotification>> fetchNotifications() async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/notifications'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/notifications'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

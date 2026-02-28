@@ -233,10 +233,11 @@ class _LoyaltyShopScreenState extends State<LoyaltyShopScreen> {
                       ),
                     );
                   },
-                );
+                ),
               },
             ),
           ),
+        ),
         ],
       ),
     );

@@ -35,7 +35,7 @@ class OfferService {
 
   Future<List<Offer>> getMyOffers() async {
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/offers'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/offers'),
       headers: await _getHeaders(),
     );
 
@@ -50,7 +50,7 @@ class OfferService {
 
   Future<List<Offer>> getReceivedOffers() async {
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/received_offers'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/received_offers'),
       headers: await _getHeaders(),
     );
 
@@ -65,7 +65,7 @@ class OfferService {
 
   Future<Offer> updateOfferStatus(int offerId, String status) async {
     final response = await http.put(
-      Uri.parse('$apiUrl/offers/$offerId'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/offers/$offerId'),
       headers: await _getHeaders(),
       body: jsonEncode({'status': status}),
     );
@@ -80,7 +80,7 @@ class OfferService {
 
   Future<Offer> confirmTrade(int offerId) async {
     final response = await http.post(
-      Uri.parse('$apiUrl/offers/$offerId/confirm'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/offers/$offerId/confirm'),
       headers: await _getHeaders(),
     );
 
