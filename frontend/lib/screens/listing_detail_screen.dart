@@ -303,10 +303,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ),
                   const SizedBox(height: 60), // Spacer
                 ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    ),
       bottomNavigationBar: isOwner ? null : SafeArea(
         child: Container(
           padding: const EdgeInsets.all(16),
