@@ -9,6 +9,7 @@ python-jose[cryptography]
 python-socketio
 fastapi-socketio
 pytest
+slowapi
 httpx
 email-validator
 python-multipart

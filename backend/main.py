@@ -16,9 +16,26 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, Float, Fore
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 import random
+import logging
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+
+# Configure Structured Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] [%(name)s] [request_id=%(request_id)s] %(message)s",
+)
+logger = logging.getLogger("baterpoint")
+
+# Custom log filter to inject request_id
+class RequestIdFilter(logging.Filter):
+    def filter(self, record):
+        record.request_id = getattr(logging.thread_local, "request_id", "N/A")
+        return True
+
+logger.addFilter(RequestIdFilter())
+logging.thread_local = type('obj', (object,), {'request_id': 'N/A'})
 
 load_dotenv()
 
@@ -341,7 +358,21 @@ class ListingUpdate(BaseModel):
 
 # --- FastAPI App & Socket.IO ---
 
-app = FastAPI()
+app = FastAPI(
+    title="Baterpoint API",
+    description="Premium Barter & E-commerce Platform API",
+    version="1.0.0"
+)
+
+# Request ID Middleware
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    logging.thread_local.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
 sio = SocketManager(app=app)
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "a_super_secret_key_that_should_be_in_env")

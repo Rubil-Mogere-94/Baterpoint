@@ -62,253 +62,253 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator())
           : CustomScrollView(
               key: const ValueKey('content'),
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 300.0,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: 'listing_image_${_currentListing.id}',
-                child: _currentListing.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: _currentListing.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey.shade200,
-                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image, size: 64)),
-                      )
-                    : Container(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(Icons.image_not_supported, size: 64, color: theme.colorScheme.onSurfaceVariant),
-                      ),
-              ),
-            ),
-            leading: IconButton(
-              icon: const CircleAvatar(
-                backgroundColor: Colors.white54,
-                child: Icon(Icons.arrow_back_rounded, color: Colors.black),
-              ),
-              onPressed: () => Navigator.pop(context, true), // Signal refresh to parent
-            ),
-            actions: [
-              if (isOwner) ...[
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white54,
-                    child: IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditListingScreen(listing: _currentListing),
-                          ),
-                        );
-                        if (result == true) {
-                          _refreshListing();
-                        }
-                      },
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 300.0,
+                  pinned: true,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Hero(
+                      tag: 'listing_image_${_currentListing.id}',
+                      child: _currentListing.imageUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: _currentListing.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey.shade200,
+                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image, size: 64)),
+                            )
+                          : Container(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: Icon(Icons.image_not_supported, size: 64, color: theme.colorScheme.onSurfaceVariant),
+                            ),
                     ),
                   ),
+                  leading: IconButton(
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.white54,
+                      child: Icon(Icons.arrow_back_rounded, color: Colors.black),
+                    ),
+                    onPressed: () => Navigator.pop(context, true), // Signal refresh to parent
+                  ),
+                  actions: [
+                    if (isOwner) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.white54,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: Colors.blue),
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditListingScreen(listing: _currentListing),
+                                ),
+                              );
+                              if (result == true) {
+                                _refreshListing();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.white54,
+                          child: IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                            onPressed: () => _showDeleteDialog(context, _listingService),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white54,
-                    child: IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                      onPressed: () => _showDeleteDialog(context, _listingService),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _currentListing.title,
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '\$${_currentListing.cashPrice}',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _currentListing.category.toUpperCase(),
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Icon(Icons.visibility_outlined, size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${_currentListing.viewCount} views',
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // Seller Info Block
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundColor: theme.colorScheme.secondaryContainer,
+                                child: Text(
+                                  (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
+                                  style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          _currentListing.ownerUsername ?? 'User',
+                                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        ...List.generate(5, (index) {
+                                          return Icon(
+                                            index < _currentListing.ownerRating.floor() 
+                                              ? Icons.star_rounded 
+                                              : (index < _currentListing.ownerRating ? Icons.star_half_rounded : Icons.star_outline_rounded),
+                                            color: Colors.amber,
+                                            size: 16,
+                                          );
+                                        }),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '${_currentListing.ownerRating} (${_currentListing.ownerReviews} reviews)',
+                                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
+                          Text(
+                            'Looking For:',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: theme.colorScheme.secondary.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.swap_horiz_rounded, color: theme.colorScheme.secondary),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _currentListing.exchangeItem!,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: theme.colorScheme.secondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                        Text(
+                          'Description',
+                          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _currentListing.description ?? 'No description provided.',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: Colors.grey.shade700,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 60), // Spacer
+                      ],
                     ),
                   ),
                 ),
               ],
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _currentListing.title,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '\$${_currentListing.cashPrice}',
-                            style: TextStyle(
-                              color: theme.colorScheme.onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _currentListing.category.toUpperCase(),
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Icon(Icons.visibility_outlined, size: 16, color: Colors.grey.shade600),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${_currentListing.viewCount} views',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Seller Info Block
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.dividerColor),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: theme.colorScheme.secondaryContainer,
-                          child: Text(
-                            (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
-                            style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    _currentListing.ownerUsername ?? 'User',
-                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  ...List.generate(5, (index) {
-                                    return Icon(
-                                      index < _currentListing.ownerRating.floor() 
-                                        ? Icons.star_rounded 
-                                        : (index < _currentListing.ownerRating ? Icons.star_half_rounded : Icons.star_outline_rounded),
-                                      color: Colors.amber,
-                                      size: 16,
-                                    );
-                                  }),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${_currentListing.ownerRating} (${_currentListing.ownerReviews} reviews)',
-                                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
-                    Text(
-                      'Looking For:',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: theme.colorScheme.secondary.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.swap_horiz_rounded, color: theme.colorScheme.secondary),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _currentListing.exchangeItem!,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: theme.colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  Text(
-                    'Description',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _currentListing.description ?? 'No description provided.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade700,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 60), // Spacer
-                ],
-              ),
             ),
-          ),
-        ],
       ),
-    ),
       bottomNavigationBar: isOwner ? null : SafeArea(
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -425,175 +425,169 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: Colors.grey.shade600)),
                     const SizedBox(height: 24),
                     if (tType.contains('sale') || tType.contains('cash') || tType == 'both') ...[
-                    TextFormField(
-                      controller: priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        labelText: 'Offer Price (\$)',
-                        prefixIcon: const Icon(Icons.attach_money),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) {
-                         if ((tType.contains('sale') || tType.contains('cash')) && (value == null || value.isEmpty)) {
+                      TextFormField(
+                        controller: priceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Offer Price (\$)',
+                          prefixIcon: const Icon(Icons.attach_money),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (value) {
+                          if ((tType.contains('sale') || tType.contains('cash')) && (value == null || value.isEmpty)) {
                             return 'Please enter a price';
-                         }
-                         if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
+                          }
+                          if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
                             return 'Please enter a valid number';
-                         }
-                         return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (tType.contains('trade') || tType.contains('barter') || tType == 'both') ...[
-                    const Text('Select items from your inventory:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    const SizedBox(height: 12),
-                    FutureBuilder<List<Listing>>(
-                      future: _listingService.fetchMyListings(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(strokeWidth: 2)));
-                        }
-                        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                          return Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
-                            child: const Text('No items in your inventory to trade.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          );
-                        }
-                        final myListings = snapshot.data!;
-                        return SizedBox(
-                          height: 100,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: myListings.length,
-                            itemBuilder: (context, index) {
-                              final item = myListings[index];
-                              // Skip if it is the current listing (though unlikely)
-                              if (item.id == _currentListing.id) return const SizedBox();
-                              
-                              final isSelected = itemController.text.contains(item.title);
-                              
-                              return GestureDetector(
-                                onTap: () {
-                                  setModalState(() {
-                                    List<String> selectedItems = itemController.text.isEmpty 
-                                        ? [] 
-                                        : itemController.text.split(', ').where((s) => s.isNotEmpty).toList();
-                                    
-                                    if (isSelected) {
-                                      selectedItems.remove(item.title);
-                                    } else {
-                                      selectedItems.add(item.title);
-                                    }
-                                    itemController.text = selectedItems.join(', ');
-                                  });
-                                },
-                                child: Container(
-                                  width: 80,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
-                                      width: isSelected ? 2 : 1,
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (tType.contains('trade') || tType.contains('barter') || tType == 'both') ...[
+                      const Text('Select items from your inventory:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 12),
+                      FutureBuilder<List<Listing>>(
+                        future: _listingService.fetchMyListings(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(strokeWidth: 2)));
+                          }
+                          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+                              child: const Text('No items in your inventory to trade.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            );
+                          }
+                          final myListings = snapshot.data!;
+                          return SizedBox(
+                            height: 100,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: myListings.length,
+                              itemBuilder: (context, index) {
+                                final item = myListings[index];
+                                if (item.id == _currentListing.id) return const SizedBox();
+                                final isSelected = itemController.text.contains(item.title);
+                                return GestureDetector(
+                                  onTap: () {
+                                    setModalState(() {
+                                      List<String> selectedItems = itemController.text.isEmpty 
+                                          ? [] 
+                                          : itemController.text.split(', ').where((s) => s.isNotEmpty).toList();
+                                      if (isSelected) {
+                                        selectedItems.remove(item.title);
+                                      } else {
+                                        selectedItems.add(item.title);
+                                      }
+                                      itemController.text = selectedItems.join(', ');
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 80,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+                                        width: isSelected ? 2 : 1,
+                                      ),
                                     ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Stack(
-                                      fit: StackFit.expand,
-                                      children: [
-                                        if (item.imageUrl != null)
-                                          CachedNetworkImage(
-                                            imageUrl: item.imageUrl!,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) => Container(
-                                              color: Colors.grey.shade100,
-                                              child: const Center(child: CircularProgressIndicator(strokeWidth: 1)),
-                                            ),
-                                          )
-                                        else
-                                          const Icon(Icons.image, color: Colors.grey),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          if (item.imageUrl != null)
+                                            CachedNetworkImage(
+                                              imageUrl: item.imageUrl!,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => Container(
+                                                color: Colors.grey.shade100,
+                                                child: const Center(child: CircularProgressIndicator(strokeWidth: 1)),
+                                              ),
+                                            )
+                                          else
+                                            const Icon(Icons.image, color: Colors.grey),
                                           if (isSelected)
                                             Container(
                                               color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                                               child: const Icon(Icons.check_circle, color: Colors.white),
                                             ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: itemController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: 'Trading Bundle Items',
-                        hintText: 'Items selected above will appear here...',
-                        prefixIcon: const Icon(Icons.inventory_2_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
-                      validator: (value) {
-                         if ((tType.contains('trade') || tType.contains('barter')) && (value == null || value.isEmpty)) {
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: itemController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          labelText: 'Trading Bundle Items',
+                          hintText: 'Items selected above will appear here...',
+                          prefixIcon: const Icon(Icons.inventory_2_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        validator: (value) {
+                          if ((tType.contains('trade') || tType.contains('barter')) && (value == null || value.isEmpty)) {
                             return 'Please select or type an item bundle';
-                         }
-                         return null;
-                      },
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isSubmitting ? null : () async {
+                          if (formKey.currentState!.validate()) {
+                            if (tType == 'both' && priceController.text.isEmpty && itemController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please offer a price or an item.')));
+                              return;
+                            }
+                            setModalState(() => isSubmitting = true);
+                            try {
+                              await _offerService.makeOffer(
+                                _currentListing.id,
+                                offeredPrice: priceController.text.isNotEmpty ? double.parse(priceController.text) : null,
+                                offeredItem: itemController.text.isNotEmpty ? itemController.text : null,
+                              );
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent successfully!')));
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                              }
+                            } finally {
+                              if (mounted) setModalState(() => isSubmitting = false);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: isSubmitting 
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('Submit Offer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isSubmitting ? null : () async {
-                        if (formKey.currentState!.validate()) {
-                          // Require at least one if it's 'Both'
-                          if (tType == 'both' && priceController.text.isEmpty && itemController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please offer a price or an item.')));
-                            return;
-                          }
-                          
-                          setModalState(() => isSubmitting = true);
-                          try {
-                            await _offerService.makeOffer(
-                              _currentListing.id,
-                              offeredPrice: priceController.text.isNotEmpty ? double.parse(priceController.text) : null,
-                              offeredItem: itemController.text.isNotEmpty ? itemController.text : null,
-                            );
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent successfully!')));
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                            }
-                          } finally {
-                            if (mounted) setModalState(() => isSubmitting = false);
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: isSubmitting 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Submit Offer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              );
-            }),
-          ),
+                );
+              }),
+            ),
           );
         },
       ),
@@ -616,8 +610,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               try {
                 await listingService.deleteListing(_currentListing.id);
                 if (context.mounted) {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context, true); // Close detail screen and signal refresh
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 }
               } catch (e) {
                 if (context.mounted) {

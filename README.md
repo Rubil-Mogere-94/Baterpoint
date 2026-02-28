@@ -11,10 +11,12 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
 
 - **Authentication**: Secure JWT-based login and registration.
 - **Listings**: Create, view, search, and delete items.
-- **Server-side Filtering**: Efficient search and category filtering powered by the backend.
-- **Real-time Chat**: Instant messaging for trade negotiations using Socket.IO.
-- **Image Support**: Upload and display item images with automatic cleanup on deletion.
-- **Modern UX**: Pull-to-refresh, search debouncing, and Hero animations.
+- **Barter Focus**: Bundle trading (multiple items in offers) and Trade Handshake system.
+- **Loyalty Shop**: Redeem points earned from quests for premium badges and status.
+- **Gamified Quests**: Real-time tracking of viewing, favoriting, and chatting activities.
+- **Deal of the Hour**: Time-limited discounts on premium listings.
+- **Modern UI**: Glassmorphism, Shimmer effects, Confetti celebrations, and Haptic feedback.
+- **Production Ready**: Rate limiting, Request ID tracing, structured logging, and Environment management.
 
 ## Getting Started
 
@@ -27,17 +29,17 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
 2.  **Create and activate a virtual environment**:
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    source venv/bin/activate  # On Windows: venv\\Scripts\\activate
     ```
 3.  **Install dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
 4.  **Environment Variables**:
-    Create a `.env` file with the following:
+    Create a `.env` file in the `backend/` directory:
     ```env
     DATABASE_URL=postgresql://user:password@localhost:5432/baterpoint
-    SECRET_KEY=your_secret_key
+    SECRET_KEY=your_secure_key
     ```
 5.  **Run the server**:
     ```bash
@@ -50,27 +52,29 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
     ```bash
     cd frontend
     ```
-2.  **Install dependencies**:
+2.  **Environment Setup**:
+    Create a `.env` file in the `frontend/` directory:
+    ```env
+    API_URL=http://localhost:8000
+    ```
+3.  **Install dependencies**:
     ```bash
     flutter pub get
     ```
-3.  **Run the application**:
+4.  **Run the application**:
     ```bash
     flutter run
     ```
-    *Note: For Android/iOS, ensure the `apiUrl` in `lib/constants.dart` points to your machine's local IP address instead of `localhost`.*
 
 ## Tech Stack
 
-- **Frontend**: Flutter, Provider (State Management), Socket.io Client.
-- **Backend**: Python, FastAPI, SQLAlchemy, Socket.io (python-socketio).
-- **Database**: PostgreSQL (Production), SQLite (Testing).
+- **Frontend**: Flutter 3.x, Provider, Socket.io, Lottie (Animations), Confetti.
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy, Socket.io, SlowAPI (Rate Limiting).
+- **DevOps**: GitHub Actions CI/CD.
 
 ## Testing
 
-The backend includes a comprehensive test suite using `pytest`. Tests utilize an in-memory SQLite database for speed and isolation.
-
-To run tests:
+The backend includes a comprehensive test suite using `pytest`.
 ```bash
 cd backend
 pytest
