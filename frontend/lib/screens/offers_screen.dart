@@ -192,7 +192,88 @@ class _OfferCard extends StatelessWidget {
                 ],
               ),
             
-            if (isReceived && offer.status == 'pending') ...[
+            if (offer.status == 'accepted') ...[
+              const SizedBox(height: 16),
+              if (isReceived) ...[
+                // Seller View
+                if (!offer.sellerConfirmed)
+                  ElevatedButton.icon(
+                    onPressed: () => _confirmHandshake(context),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text("I've Handed Over Item"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 45),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Text("You've confirmed handover", style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                if (!offer.buyerConfirmed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Center(
+                      child: Text("Waiting for buyer to confirm receipt...", style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                    ),
+                  ),
+              ] else ...[
+                // Buyer View
+                if (!offer.buyerConfirmed)
+                  ElevatedButton.icon(
+                    onPressed: () => _confirmHandshake(context),
+                    icon: const Icon(Icons.shopping_bag_outlined),
+                    label: const Text("I've Received Item"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 45),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.blue.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Text("You've confirmed receipt", style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                if (!offer.sellerConfirmed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Center(
+                      child: Text("Waiting for seller to confirm handover...", style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
+                    ),
+                  ),
+              ],
+            ] else if (isReceived && offer.status == 'pending') ...[
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -221,6 +302,27 @@ class _OfferCard extends StatelessWidget {
                   ),
                 ],
               )
+            ] else if (offer.status == 'completed') ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [Colors.green.shade400, Colors.teal.shade400]),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.handshake_rounded, color: Colors.white, size: 32),
+                    SizedBox(height: 4),
+                    Text(
+                      "TRADE COMPLETED",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    ),
+                  ],
+                ),
+              ),
             ]
           ],
         ),
@@ -234,6 +336,23 @@ class _OfferCard extends StatelessWidget {
       onStatusUpdated();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Offer $newStatus')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _confirmHandshake(BuildContext context) async {
+    try {
+      await offerService.confirmTrade(offer.id);
+      onStatusUpdated();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Trade confirmation successful!'),
+          backgroundColor: Colors.green,
+        ));
       }
     } catch (e) {
       if (context.mounted) {

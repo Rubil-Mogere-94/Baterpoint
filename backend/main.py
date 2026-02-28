@@ -1053,6 +1053,71 @@ def update_offer_status(
         "offered_price": offer.offered_price,
         "offered_item": offer.offered_item,
         "status": offer.status,
+        "buyer_confirmed": offer.buyer_confirmed,
+        "seller_confirmed": offer.seller_confirmed,
+        "listing": listing_dict
+    }
+
+@app.post("/offers/{offer_id}/confirm", response_model=Offer)
+def confirm_trade(
+    offer_id: int,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+    if offer.status != "accepted":
+        raise HTTPException(status_code=400, detail="Trade must be accepted before confirmation")
+    
+    listing = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+    
+    if current_user.id == offer.buyer_id:
+        offer.buyer_confirmed = True
+    elif current_user.id == listing.user_id:
+        offer.seller_confirmed = True
+    else:
+        raise HTTPException(status_code=403, detail="Not authorized to confirm this trade")
+    
+    if offer.buyer_confirmed and offer.seller_confirmed:
+        offer.status = "completed"
+        # Update stats
+        buyer = db.query(UserModel).filter(UserModel.id == offer.buyer_id).first()
+        seller = db.query(UserModel).filter(UserModel.id == listing.user_id).first()
+        
+        buyer.successful_trades += 1
+        seller.successful_trades += 1
+        
+        # Simple reputation boost
+        buyer.trade_reputation = min(5.0, (buyer.trade_reputation or 5.0) + 0.1)
+        seller.trade_reputation = min(5.0, (seller.trade_reputation or 5.0) + 0.1)
+        
+        # Reward loyalty points
+        buyer.loyalty_points += 50
+        seller.loyalty_points += 50
+        
+        send_push_notification(buyer.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.")
+        send_push_notification(seller.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.")
+    
+    db.commit()
+    db.refresh(offer)
+    
+    listing_dict = {
+        "id": listing.id, "title": listing.title, "description": listing.description, 
+        "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+        "tradeType": listing.trade_type, "category": listing.category, 
+        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+    }
+    
+    return {
+        "id": offer.id,
+        "buyer_id": offer.buyer_id,
+        "listing_id": offer.listing_id,
+        "offered_price": offer.offered_price,
+        "offered_item": offer.offered_item,
+        "status": offer.status,
+        "buyer_confirmed": offer.buyer_confirmed,
+        "seller_confirmed": offer.seller_confirmed,
         "listing": listing_dict
     }
 

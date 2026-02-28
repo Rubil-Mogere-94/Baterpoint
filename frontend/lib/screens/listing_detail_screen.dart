@@ -429,14 +429,16 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   if (_currentListing.tradeType == 'Trade' || _currentListing.tradeType == 'Both') ...[
                     TextFormField(
                       controller: itemController,
+                      maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: 'Offer Item',
-                        prefixIcon: const Icon(Icons.swap_horiz_rounded),
+                        labelText: 'Offer Item(s)',
+                        hintText: 'Bundle multiple items here (e.g. iPhone + Watch)',
+                        prefixIcon: const Icon(Icons.inventory_2_outlined),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (value) {
                          if ((_currentListing.tradeType == 'Trade') && (value == null || value.isEmpty)) {
-                            return 'Please offer an item';
+                            return 'Please offer an item bundle';
                          }
                          return null;
                       },

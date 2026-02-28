@@ -18,7 +18,12 @@ class User {
     this.overallRating = 0.0,
     this.totalReviews = 0,
     this.loyaltyPoints = 0,
+    this.successfulTrades = 0,
+    this.tradeReputation = 5.0,
   });
+
+  final int successfulTrades;
+  final double tradeReputation;
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -30,6 +35,8 @@ class User {
       overallRating: (json['overall_rating'] ?? 0.0).toDouble(),
       totalReviews: json['total_reviews'] ?? 0,
       loyaltyPoints: json['loyalty_points'] ?? 0,
+      successfulTrades: json['successful_trades'] ?? 0,
+      tradeReputation: (json['trade_reputation'] ?? 5.0).toDouble(),
     );
   }
 }

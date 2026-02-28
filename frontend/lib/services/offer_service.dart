@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/offer.dart';
+import '../constants.dart';
 import 'auth_service.dart';
 
 class OfferService {
-  static const String baseUrl = 'http://127.0.0.1:8000';
   final AuthService _authService = AuthService();
 
   Future<Map<String, String>> _getHeaders() async {
@@ -17,7 +17,7 @@ class OfferService {
 
   Future<Offer> makeOffer(int listingId, {double? offeredPrice, String? offeredItem}) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/listings/$listingId/offers'),
+      Uri.parse('$apiUrl/listings/$listingId/offers'),
       headers: await _getHeaders(),
       body: jsonEncode({
         if (offeredPrice != null) 'offered_price': offeredPrice,
@@ -34,7 +34,7 @@ class OfferService {
 
   Future<List<Offer>> getMyOffers() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/users/me/offers'),
+      Uri.parse('$apiUrl/users/me/offers'),
       headers: await _getHeaders(),
     );
 
@@ -48,7 +48,7 @@ class OfferService {
 
   Future<List<Offer>> getReceivedOffers() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/users/me/received_offers'),
+      Uri.parse('$apiUrl/users/me/received_offers'),
       headers: await _getHeaders(),
     );
 
@@ -62,7 +62,7 @@ class OfferService {
 
   Future<Offer> updateOfferStatus(int offerId, String status) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/offers/$offerId'),
+      Uri.parse('$apiUrl/offers/$offerId'),
       headers: await _getHeaders(),
       body: jsonEncode({'status': status}),
     );
@@ -71,6 +71,20 @@ class OfferService {
       return Offer.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to update offer: ${response.body}');
+    }
+  }
+
+  Future<Offer> confirmTrade(int offerId) async {
+    final response = await http.post(
+      Uri.parse('$apiUrl/offers/$offerId/confirm'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      return Offer.fromJson(jsonDecode(response.body));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to confirm trade');
     }
   }
 }
