@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../constants.dart';
+import 'environment_config.dart';
 import '../models/user.dart';
 
 class AuthService {
@@ -10,7 +10,7 @@ class AuthService {
 
   Future<String?> login(String username, String password) async {
     final response = await http.post(
-      Uri.parse('$apiUrl/token'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/token'),
       body: {
         'username': username,
         'password': password,
@@ -30,7 +30,7 @@ class AuthService {
 
   Future<User> register(String username, String email, String password) async {
     final response = await http.post(
-      Uri.parse('$apiUrl/register/'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/register/'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': username,
@@ -52,7 +52,7 @@ class AuthService {
     if (token == null) return null;
 
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -70,7 +70,7 @@ class AuthService {
   Future<User> updateUser({String? username, String? email, String? password}) async {
     final token = await getToken();
     final response = await http.put(
-      Uri.parse('$apiUrl/users/me'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

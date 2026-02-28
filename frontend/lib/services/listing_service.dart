@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/listing.dart';
 import '../models/deal.dart';
-import '../constants.dart';
+import 'environment_config.dart';
 import 'auth_service.dart';
 
 class ListingService {
@@ -30,7 +30,7 @@ class ListingService {
     if (sortBy != null) queryParams['sortBy'] = sortBy;
     if (order != null) queryParams['order'] = order;
 
-    final uri = Uri.parse('$apiUrl/listings/').replace(queryParameters: queryParams);
+    final uri = Uri.parse('${EnvironmentConfig.apiUrl}/listings/').replace(queryParameters: queryParams);
     final response = await http.get(uri);
     
     if (response.statusCode == 200) {
@@ -45,7 +45,7 @@ class ListingService {
   Future<bool> toggleFavorite(int listingId) async {
     final token = await _authService.getToken();
     final response = await http.post(
-      Uri.parse('$apiUrl/listings/$listingId/favorite'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/$listingId/favorite'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -60,7 +60,7 @@ class ListingService {
   Future<List<Listing>> fetchFavorites() async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/favorites'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/favorites'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -73,7 +73,7 @@ class ListingService {
   }
 
   Future<Listing> fetchListingById(int id) async {
-    final response = await http.get(Uri.parse('$apiUrl/listings/$id'));
+    final response = await http.get(Uri.parse('${EnvironmentConfig.apiUrl}/listings/$id'));
     if (response.statusCode == 200) {
       return Listing.fromJson(jsonDecode(response.body));
     } else {
@@ -85,7 +85,7 @@ class ListingService {
   Future<List<Listing>> fetchMyListings() async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/listings'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/listings'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -100,7 +100,7 @@ class ListingService {
   Future<List<Listing>> fetchMyChats() async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/chats'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/chats'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -122,7 +122,7 @@ class ListingService {
     required File image,
   }) async {
     final token = await _authService.getToken();
-    var request = http.MultipartRequest('POST', Uri.parse('$apiUrl/listings/'));
+    var request = http.MultipartRequest('POST', Uri.parse('${EnvironmentConfig.apiUrl}/listings/'));
     
     request.headers['Authorization'] = 'Bearer $token';
     request.fields['title'] = title;
@@ -155,7 +155,7 @@ class ListingService {
   }) async {
     final token = await _authService.getToken();
     final response = await http.put(
-      Uri.parse('$apiUrl/listings/$listingId'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/$listingId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ class ListingService {
   Future<void> deleteListing(int listingId) async {
     final token = await _authService.getToken();
     final response = await http.delete(
-      Uri.parse('$apiUrl/listings/$listingId'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/$listingId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 204) {
@@ -190,7 +190,7 @@ class ListingService {
   Future<List<Listing>> fetchRecommendations({int limit = 10}) async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/listings/recommendations?limit=$limit'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/recommendations?limit=$limit'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
@@ -203,7 +203,7 @@ class ListingService {
   }
 
   Future<Deal> fetchDealOfTheHour() async {
-    final response = await http.get(Uri.parse('$apiUrl/listings/deal-of-the-hour'));
+    final response = await http.get(Uri.parse('${EnvironmentConfig.apiUrl}/listings/deal-of-the-hour'));
     if (response.statusCode == 200) {
       return Deal.fromJson(jsonDecode(response.body));
     } else {

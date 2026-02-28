@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/offer.dart';
-import '../constants.dart';
+import 'environment_config.dart';
 import 'auth_service.dart';
 
 class OfferService {
@@ -17,7 +17,7 @@ class OfferService {
 
   Future<Offer> makeOffer(int listingId, {double? offeredPrice, String? offeredItem}) async {
     final response = await http.post(
-      Uri.parse('$apiUrl/listings/$listingId/offers'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/$listingId/offers'),
       headers: await _getHeaders(),
       body: jsonEncode({
         if (offeredPrice != null) 'offered_price': offeredPrice,

@@ -16,6 +16,9 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, Float, Fore
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
 import random
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 load_dotenv()
 
@@ -27,7 +30,12 @@ if not DATABASE_URL:
 
 # SQLite needs specific connect_args for multithreading
 if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(
+        DATABASE_URL, 
+        connect_args={"check_same_thread": False},
+        pool_pre_ping=True,
+        pool_recycle=3600
+    )
 else:
     # pool_pre_ping=True helps with "SSL connection has been closed unexpectedly" errors
     # by verifying the connection is still alive before using it.
@@ -35,6 +43,11 @@ else:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # --- SQLAlchemy Models ---
 
@@ -531,7 +544,9 @@ async def register_device_token(
     return {"message": "Success"}
 
 @app.post("/token", response_model=Token)
+@limiter.limit("5/minute")
 def login_for_access_token(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
     db: Annotated[Session, Depends(get_db)]
 ):
@@ -546,7 +561,8 @@ def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/register/", response_model=User)
-def register_user(user: UserCreate, db: Annotated[Session, Depends(get_db)]):
+@limiter.limit("3/minute")
+def register_user(request: Request, user: UserCreate, db: Annotated[Session, Depends(get_db)]):
     db_user = db.query(UserModel).filter((UserModel.username == user.username) | (UserModel.email == user.email)).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username or email already registered")
@@ -1337,9 +1353,21 @@ def send_push_notification(user_id: int, title: str, message: str, db: Session):
         # mock_fcm.send(user.device_token, title, message)
         pass
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(select(1))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": str(e)}
+
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(select(1))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": str(e)}
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

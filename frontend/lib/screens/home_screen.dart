@@ -9,6 +9,7 @@ import '../services/quest_service.dart';
 import '../widgets/listing_card.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
+import '../widgets/shimmer_loading.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -178,14 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   future: _dealFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Container(
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
+                      return const ShimmerLoading.rectangular(height: 100);
                     } else if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
@@ -371,7 +365,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   future: _trendingListingsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        itemCount: 5,
+                        itemBuilder: (context, index) => const SizedBox(
+                          width: 200,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ListingCardShimmer(),
+                          ),
+                        ),
+                      );
                     } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(child: Text('No trending items found.'));
                     }
@@ -422,7 +427,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 future: _recommendationsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()));
+                    return GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.7,
+                      ),
+                      itemCount: 4,
+                      itemBuilder: (context, index) => const ListingCardShimmer(),
+                    );
                   } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('No recommendations found.')));
                   }

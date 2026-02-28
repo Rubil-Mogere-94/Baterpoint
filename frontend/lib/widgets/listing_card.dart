@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../screens/listing_detail_screen.dart';
@@ -37,10 +38,14 @@ class ListingCard extends StatelessWidget {
                     child: Hero(
                       tag: 'listing_image_${listing.id}',
                       child: listing.imageUrl != null
-                          ? Image.network(
-                              listing.imageUrl!,
+                          ? CachedNetworkImage(
+                              imageUrl: listing.imageUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey.shade200,
+                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                              ),
+                              errorWidget: (context, url, error) =>
                                   Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image)),
                             )
                           : Container(

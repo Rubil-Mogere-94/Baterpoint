@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/reward.dart';
 import '../services/quest_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/shimmer_loading.dart';
 
 class LoyaltyShopScreen extends StatefulWidget {
   const LoyaltyShopScreen({super.key});
@@ -34,6 +36,7 @@ class _LoyaltyShopScreenState extends State<LoyaltyShopScreen> {
 
     setState(() => _isRedeeming = true);
     try {
+      HapticFeedback.selectionClick();
       await _questService.redeemReward(reward.id);
       await auth.refreshUser(); // Update points on UI
       if (mounted) {
@@ -96,11 +99,18 @@ class _LoyaltyShopScreenState extends State<LoyaltyShopScreen> {
           ),
           
           Expanded(
-            child: FutureBuilder<List<Reward>>(
-              future: _rewardsFuture,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: FutureBuilder<List<Reward>>(
+                key: ValueKey(_rewardsFuture),
+                future: _rewardsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 5,
+                    itemBuilder: (context, index) => const ShimmerLoading.rectangular(height: 100),
+                  );
                 } else if (snapshot.hasError) {
                   return Center(
                     child: Column(

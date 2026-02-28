@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/offer.dart';
 import '../services/offer_service.dart';
+import '../widgets/shimmer_loading.dart';
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({super.key});
@@ -69,7 +71,11 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: 5,
+            itemBuilder: (context, index) => const ShimmerLoading.rectangular(height: 120),
+          );
         } else if (snapshot.hasError) {
           return Center(
             child: Column(
@@ -160,7 +166,19 @@ class _OfferCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: offer.listing?.imageUrl != null
-                      ? Image.network(offer.listing!.imageUrl!, width: 60, height: 60, fit: BoxFit.cover)
+                      ? CachedNetworkImage(
+                          imageUrl: offer.listing!.imageUrl!,
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey.shade100,
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (context, url, error) => Container(width: 60, height: 60, color: Colors.grey.shade200, child: const Icon(Icons.image, color: Colors.grey)),
+                        )
                       : Container(width: 60, height: 60, color: Colors.grey.shade200, child: const Icon(Icons.image, color: Colors.grey)),
                 ),
                 const SizedBox(width: 16),

@@ -1,6 +1,7 @@
-// frontend/lib/screens/listing_detail_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
@@ -55,9 +56,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final isOwner = authProvider.user?.id == _currentListing.userId;
 
     return Scaffold(
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : CustomScrollView(
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _isLoading 
+          ? const Center(key: ValueKey('loading'), child: CircularProgressIndicator())
+          : CustomScrollView(
+          key: const ValueKey('content'),
         slivers: [
           SliverAppBar(
             expandedHeight: 300.0,
@@ -66,10 +70,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               background: Hero(
                 tag: 'listing_image_${_currentListing.id}',
                 child: _currentListing.imageUrl != null
-                    ? Image.network(
-                        _currentListing.imageUrl!,
+                    ? CachedNetworkImage(
+                        imageUrl: _currentListing.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey.shade200,
+                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        ),
+                        errorWidget: (context, url, error) =>
                             Container(color: Colors.grey.shade300, child: const Icon(Icons.broken_image, size: 64)),
                       )
                     : Container(
@@ -337,7 +345,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
-                  onPressed: () => _showMakeOfferModal(context),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _showMakeOfferModal(context);
+                  },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: theme.colorScheme.primary,
@@ -491,7 +502,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                       fit: StackFit.expand,
                                       children: [
                                         if (item.imageUrl != null)
-                                          Image.network(item.imageUrl!, fit: BoxFit.cover)
+                                          CachedNetworkImage(
+                                            imageUrl: item.imageUrl!,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) => Container(
+                                              color: Colors.grey.shade100,
+                                              child: const Center(child: CircularProgressIndicator(strokeWidth: 1)),
+                                            ),
+                                          )
                                         else
                                           const Icon(Icons.image, color: Colors.grey),
                                         if (isSelected)

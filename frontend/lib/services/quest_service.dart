@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/quest.dart';
 import '../models/reward.dart';
-import '../constants.dart';
+import 'environment_config.dart';
 import 'auth_service.dart';
 
 class QuestService {
@@ -12,7 +12,7 @@ class QuestService {
   Future<List<UserQuest>> fetchQuests() async {
     final token = await _authService.getToken();
     final response = await http.get(
-      Uri.parse('$apiUrl/users/me/quests'),
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/me/quests'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

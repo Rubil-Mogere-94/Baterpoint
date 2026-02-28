@@ -1,5 +1,5 @@
-// frontend/lib/providers/auth_provider.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 
@@ -33,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> toggleFavorite(int listingId) async {
     try {
+      HapticFeedback.lightImpact();
       final isFav = await _listingService.toggleFavorite(listingId);
       if (isFav) {
         _favoriteIds.add(listingId);
