@@ -1,68 +1,69 @@
 # Baterpoint
 
-Baterpoint is a modern peer-to-peer trading and listing platform. It features a robust FastAPI backend and a cross-platform Flutter frontend, supporting real-time chat, listing management, and user authentication.
-
-## Project Structure
-
-- `backend/`: FastAPI application with SQLAlchemy ORM and Socket.IO for real-time communication.
-- `frontend/`: Flutter application for Android, iOS, and Web.
+Baterpoint is a premium, peer-to-peer trading and listing platform. It features a robust FastAPI backend and a cross-platform Flutter frontend, supporting real-time chat, listing management, and a gamified loyalty system.
 
 ## Features
 
 - **Authentication**: Secure JWT-based login and registration.
-- **Listings**: Create, view, search, and delete items.
-- **Barter Focus**: Bundle trading (multiple items in offers) and Trade Handshake system.
-- **Loyalty Shop**: Redeem points earned from quests for premium badges and status.
-- **Gamified Quests**: Real-time tracking of viewing, favoriting, and chatting activities.
-- **Deal of the Hour**: Time-limited discounts on premium listings.
-- **Modern UI**: Glassmorphism, Shimmer effects, Confetti celebrations, and Haptic feedback.
-- **Production Ready**: Rate limiting, Request ID tracing, structured logging, and Environment management.
+- **Barter Focus**: Multi-item bundle trading and a "Handshake" confirmation system.
+- **Loyalty Shop**: Redeem points for exclusive profile badges and status upgrades.
+- **Gamified Quests**: Real-time progress tracking for listing views, favorites, and chat engagement.
+- **Deal of the Hour**: Dynamic discounts on highlighted listings to drive platform activity.
+- **Modern UI**: Polished glassmorphism design, shimmer loading, confetti celebrations, and haptic feedback.
+- **Production Ready**: Rate limiting (SlowAPI), Request ID tracing, structured logging, and robust environment management.
+
+## Prerequisites & Troubleshooting
+
+### Linux Build Error: Missing Linker
+If you encounter this error during `flutter run`:
+`ERROR: Target dart_build failed: Error: Failed to find any of [ld.lld, ld] in LocalDirectory: '/usr/lib/llvm-18/bin'`
+
+**Fix:** Install the missing LLVM 18 linker and compiler:
+```bash
+sudo apt update && sudo apt install -y lld-18 clang-18
+```
+If the error persists after installation, manually link the binary:
+```bash
+sudo ln -s /usr/bin/ld.lld-18 /usr/lib/llvm-18/bin/ld.lld
+```
 
 ## Getting Started
 
-### Backend Setup
+### Backend Setup (FastAPI)
 
-1.  **Navigate to backend directory**:
+1.  **Environment Activation**:
     ```bash
     cd backend
-    ```
-2.  **Create and activate a virtual environment**:
-    ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows: venv\\Scripts\\activate
     ```
-3.  **Install dependencies**:
+2.  **Install Dependencies**:
     ```bash
     pip install -r requirements.txt
     ```
-4.  **Environment Variables**:
+3.  **Local Configuration**:
     Create a `.env` file in the `backend/` directory:
     ```env
-    DATABASE_URL=postgresql://user:password@localhost:5432/baterpoint
-    SECRET_KEY=your_secure_key
+    DATABASE_URL=sqlite:///./test.db # or your PostgreSQL URL
+    SECRET_KEY=generate_a_secure_random_key_here
     ```
-5.  **Run the server**:
+4.  **Launch API**:
     ```bash
     uvicorn main:app --reload
     ```
 
 ### Frontend Setup (Flutter)
 
-1.  **Navigate to frontend directory**:
-    ```bash
-    cd frontend
-    ```
-2.  **Environment Setup**:
+1.  **Environment Configuration**:
     Create a `.env` file in the `frontend/` directory:
     ```env
     API_URL=http://localhost:8000
     ```
-3.  **Install dependencies**:
+    *Note: Use your machine's local IP (e.g., 10.0.2.2 for Android emulator or 192.168.1.x for physical devices) instead of localhost.*
+
+2.  **Dependencies & Run**:
     ```bash
     flutter pub get
-    ```
-4.  **Run the application**:
-    ```bash
     flutter run
     ```
 
@@ -70,7 +71,8 @@ Baterpoint is a modern peer-to-peer trading and listing platform. It features a 
 
 - **Frontend**: Flutter 3.x, Provider, Socket.io, Lottie (Animations), Confetti.
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy, Socket.io, SlowAPI (Rate Limiting).
-- **DevOps**: GitHub Actions CI/CD.
+- **Observability**: Structured Logging with UUID Request ID tracing.
+- **DevOps**: GitHub Actions (Backend CI).
 
 ## Testing
 
