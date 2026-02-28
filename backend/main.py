@@ -19,9 +19,18 @@ import random
 
 load_dotenv()
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:password@host:port/dbname")
+# Default to SQLite for easier local development if DATABASE_URL is not set
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./test.db"
+    print("WARNING: DATABASE_URL not set, defaulting to SQLite: sqlite:///./test.db")
 
-engine = create_engine(DATABASE_URL)
+# SQLite needs specific connect_args for multithreading
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -562,6 +571,12 @@ def create_listing(
     image: UploadFile = File(...)
 ):
     try:
+        # Handle empty strings from form data for float conversion
+        try:
+            float_price = float(cashPrice) if cashPrice and str(cashPrice).strip() != "" else None
+        except (ValueError, TypeError):
+            float_price = None
+
         file_extension = image.filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
         file_path = f"static/images/{unique_filename}"
@@ -574,7 +589,7 @@ def create_listing(
         image_url = f"{base_url}/{file_path}"
 
         new_listing = ListingModel(
-            title=title, description=description, price=cashPrice, exchange_item=exchangeItem,
+            title=title, description=description, price=float_price, exchange_item=exchangeItem,
             trade_type=tradeType, category=category, image_url=image_url, user_id=current_user.id
         )
         db.add(new_listing)
@@ -1087,3 +1102,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

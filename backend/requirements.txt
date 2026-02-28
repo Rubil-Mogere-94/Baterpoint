@@ -11,3 +11,4 @@ fastapi-socketio
 pytest
 httpx
 email-validator
+python-multipart
