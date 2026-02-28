@@ -28,7 +28,8 @@ class OfferService {
     if (response.statusCode == 200) {
       return Offer.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to make offer: ${response.body}');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to make offer');
     }
   }
 
@@ -42,7 +43,8 @@ class OfferService {
       final List data = jsonDecode(response.body);
       return data.map((e) => Offer.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to load my offers: ${response.body}');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load my offers');
     }
   }
 
@@ -56,7 +58,8 @@ class OfferService {
       final List data = jsonDecode(response.body);
       return data.map((e) => Offer.fromJson(e)).toList();
     } else {
-      throw Exception('Failed to load received offers: ${response.body}');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load received offers');
     }
   }
 
@@ -70,7 +73,8 @@ class OfferService {
     if (response.statusCode == 200) {
       return Offer.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to update offer: ${response.body}');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to update offer');
     }
   }
 

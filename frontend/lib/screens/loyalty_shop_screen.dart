@@ -102,9 +102,38 @@ class _LoyaltyShopScreenState extends State<LoyaltyShopScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Failed to load rewards', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => setState(() { _rewardsFuture = _questService.fetchRewards(); }),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No rewards available yet.'));
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text('No rewards available yet.'),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => setState(() { _rewardsFuture = _questService.fetchRewards(); }),
+                          child: const Text('Refresh'),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 return ListView.builder(

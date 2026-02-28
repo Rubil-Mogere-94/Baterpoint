@@ -883,40 +883,43 @@ def get_recommendations(
     db: Annotated[Session, Depends(get_db)],
     limit: int = 10
 ):
-    # 1. Get categories of user's favorites
-    fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
-    fav_categories = [l.category for l in fav_listings]
-    
-    # 2. Get categories of user's own listings
-    own_categories = [l.category for l in current_user.listings]
-    
-    preferred_categories = list(set(fav_categories + own_categories))
-    
-    query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
-    
-    if preferred_categories:
-        query = query.filter(ListingModel.category.in_(preferred_categories))
-    
-    # Sort by view_count for "recommendation" quality
-    recommendations = query.order_by(desc(ListingModel.view_count)).limit(limit).all()
-    
-    # If not enough recommendations, fill with trending items
-    if len(recommendations) < limit:
-        additional_limit = limit - len(recommendations)
-        rec_ids = [r.id for r in recommendations]
-        trending = db.query(ListingModel).filter(
-            ListingModel.user_id != current_user.id,
-            ~ListingModel.id.in_(rec_ids) if rec_ids else True
-        ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
-        recommendations.extend(trending)
+    try:
+        # 1. Get categories of user's favorites
+        fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+        fav_categories = [l.category for l in fav_listings]
         
-    return [
-        {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
-         "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
-        for l in recommendations
-    ]
+        # 2. Get categories of user's own listings
+        own_categories = [l.category for l in current_user.listings]
+        
+        preferred_categories = list(set(fav_categories + own_categories))
+        
+        query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
+        
+        if preferred_categories:
+            query = query.filter(ListingModel.category.in_(preferred_categories))
+        
+        # Sort by view_count for "recommendation" quality
+        recommendations = query.order_by(desc(ListingModel.view_count)).limit(limit).all()
+        
+        # If not enough recommendations, fill with trending items
+        if len(recommendations) < limit:
+            additional_limit = limit - len(recommendations)
+            rec_ids = [r.id for r in recommendations]
+            trending = db.query(ListingModel).filter(
+                ListingModel.user_id != current_user.id,
+                ~ListingModel.id.in_(rec_ids) if rec_ids else True
+            ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
+            recommendations.extend(trending)
+            
+        return [
+            {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+             "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+             "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+             "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
+            for l in recommendations
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching recommendations: {str(e)}")
 
 # --- Offers Endpoints ---
 
@@ -927,36 +930,42 @@ def create_offer(
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if listing.user_id == current_user.id:
-        raise HTTPException(status_code=400, detail="Cannot make an offer on your own listing")
-    
-    new_offer = OfferModel(
-        buyer_id=current_user.id,
-        listing_id=listing_id,
-        offered_price=offer_data.offered_price,
-        offered_item=offer_data.offered_item
-    )
-    db.add(new_offer)
-    update_quest_progress(current_user.id, "offer", db)
-    db.commit()
-    db.refresh(new_offer)
-    return {
-        "id": new_offer.id,
-        "buyer_id": new_offer.buyer_id,
-        "listing_id": new_offer.listing_id,
-        "offered_price": new_offer.offered_price,
-        "offered_item": new_offer.offered_item,
-        "status": new_offer.status,
-        "listing": {
-            "id": listing.id, "title": listing.title, "description": listing.description, 
-            "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
-            "tradeType": listing.trade_type, "category": listing.category, 
-            "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+    try:
+        listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+        if listing.user_id == current_user.id:
+            raise HTTPException(status_code=400, detail="Cannot make an offer on your own listing")
+        
+        new_offer = OfferModel(
+            buyer_id=current_user.id,
+            listing_id=listing_id,
+            offered_price=offer_data.offered_price,
+            offered_item=offer_data.offered_item
+        )
+        db.add(new_offer)
+        update_quest_progress(current_user.id, "offer", db)
+        db.commit()
+        db.refresh(new_offer)
+        return {
+            "id": new_offer.id,
+            "buyer_id": new_offer.buyer_id,
+            "listing_id": new_offer.listing_id,
+            "offered_price": new_offer.offered_price,
+            "offered_item": new_offer.offered_item,
+            "status": new_offer.status,
+            "listing": {
+                "id": listing.id, "title": listing.title, "description": listing.description, 
+                "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+                "tradeType": listing.trade_type, "category": listing.category, 
+                "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+            }
         }
-    }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating offer: {str(e)}")
 
 @app.get("/users/me/offers", response_model=List[Offer])
 def get_my_offers(
@@ -1064,62 +1073,68 @@ def confirm_trade(
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer not found")
-    if offer.status != "accepted":
-        raise HTTPException(status_code=400, detail="Trade must be accepted before confirmation")
-    
-    listing = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
-    
-    if current_user.id == offer.buyer_id:
-        offer.buyer_confirmed = True
-    elif current_user.id == listing.user_id:
-        offer.seller_confirmed = True
-    else:
-        raise HTTPException(status_code=403, detail="Not authorized to confirm this trade")
-    
-    if offer.buyer_confirmed and offer.seller_confirmed:
-        offer.status = "completed"
-        # Update stats
-        buyer = db.query(UserModel).filter(UserModel.id == offer.buyer_id).first()
-        seller = db.query(UserModel).filter(UserModel.id == listing.user_id).first()
+    try:
+        offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
+        if not offer:
+            raise HTTPException(status_code=404, detail="Offer not found")
+        if offer.status != "accepted":
+            raise HTTPException(status_code=400, detail="Trade must be accepted before confirmation")
         
-        buyer.successful_trades += 1
-        seller.successful_trades += 1
+        listing = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
         
-        # Simple reputation boost
-        buyer.trade_reputation = min(5.0, (buyer.trade_reputation or 5.0) + 0.1)
-        seller.trade_reputation = min(5.0, (seller.trade_reputation or 5.0) + 0.1)
+        if current_user.id == offer.buyer_id:
+            offer.buyer_confirmed = True
+        elif current_user.id == listing.user_id:
+            offer.seller_confirmed = True
+        else:
+            raise HTTPException(status_code=403, detail="Not authorized to confirm this trade")
         
-        # Reward loyalty points
-        buyer.loyalty_points += 50
-        seller.loyalty_points += 50
+        if offer.buyer_confirmed and offer.seller_confirmed:
+            offer.status = "completed"
+            # Update stats
+            buyer = db.query(UserModel).filter(UserModel.id == offer.buyer_id).first()
+            seller = db.query(UserModel).filter(UserModel.id == listing.user_id).first()
+            
+            buyer.successful_trades = (buyer.successful_trades or 0) + 1
+            seller.successful_trades = (seller.successful_trades or 0) + 1
+            
+            # Simple reputation boost
+            buyer.trade_reputation = min(5.0, (buyer.trade_reputation or 5.0) + 0.1)
+            seller.trade_reputation = min(5.0, (seller.trade_reputation or 5.0) + 0.1)
+            
+            # Reward loyalty points
+            buyer.loyalty_points += 50
+            seller.loyalty_points += 50
+            
+            send_push_notification(buyer.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.", db)
+            send_push_notification(seller.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.", db)
         
-        send_push_notification(buyer.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.")
-        send_push_notification(seller.id, "🤝 Trade Completed!", f"Your exchange for '{listing.title}' is officially complete.")
-    
-    db.commit()
-    db.refresh(offer)
-    
-    listing_dict = {
-        "id": listing.id, "title": listing.title, "description": listing.description, 
-        "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
-        "tradeType": listing.trade_type, "category": listing.category, 
-        "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
-    }
-    
-    return {
-        "id": offer.id,
-        "buyer_id": offer.buyer_id,
-        "listing_id": offer.listing_id,
-        "offered_price": offer.offered_price,
-        "offered_item": offer.offered_item,
-        "status": offer.status,
-        "buyer_confirmed": offer.buyer_confirmed,
-        "seller_confirmed": offer.seller_confirmed,
-        "listing": listing_dict
-    }
+        db.commit()
+        db.refresh(offer)
+        
+        listing_dict = {
+            "id": listing.id, "title": listing.title, "description": listing.description, 
+            "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
+            "tradeType": listing.trade_type, "category": listing.category, 
+            "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count
+        }
+        
+        return {
+            "id": offer.id,
+            "buyer_id": offer.buyer_id,
+            "listing_id": offer.listing_id,
+            "offered_price": offer.offered_price,
+            "offered_item": offer.offered_item,
+            "status": offer.status,
+            "buyer_confirmed": offer.buyer_confirmed,
+            "seller_confirmed": offer.seller_confirmed,
+            "listing": listing_dict
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error confirming trade: {str(e)}")
 
 @app.get("/users/me/quests", response_model=List[UserQuest])
 def get_user_quests(
@@ -1156,18 +1171,24 @@ def claim_quest_reward(
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    uq = db.query(UserQuestModel).filter(UserQuestModel.id == user_quest_id, UserQuestModel.user_id == current_user.id).first()
-    if not uq:
-        raise HTTPException(status_code=404, detail="Quest not found")
-    if uq.completed:
-        raise HTTPException(status_code=400, detail="Quest already completed")
-    if uq.progress < uq.quest.goal_value:
-        raise HTTPException(status_code=400, detail="Quest progress not complete")
-        
-    uq.completed = True
-    current_user.loyalty_points += uq.quest.points_reward
-    db.commit()
-    return {"message": "Success", "points_awarded": uq.quest.points_reward, "total_points": current_user.loyalty_points}
+    try:
+        uq = db.query(UserQuestModel).filter(UserQuestModel.id == user_quest_id, UserQuestModel.user_id == current_user.id).first()
+        if not uq:
+            raise HTTPException(status_code=404, detail="Quest not found")
+        if uq.completed:
+            raise HTTPException(status_code=400, detail="Quest already completed")
+        if uq.progress < uq.quest.goal_value:
+            raise HTTPException(status_code=400, detail="Quest progress not complete")
+            
+        uq.completed = True
+        current_user.loyalty_points += uq.quest.points_reward
+        db.commit()
+        return {"message": "Success", "points_awarded": uq.quest.points_reward, "total_points": current_user.loyalty_points}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error claiming quest reward: {str(e)}")
 
 def update_quest_progress(user_id: int, goal_type: str, db: Session, amount: int = 1):
     user_quests = db.query(UserQuestModel).join(QuestModel).filter(
@@ -1186,43 +1207,49 @@ def update_quest_progress(user_id: int, goal_type: str, db: Session, amount: int
 def get_deal_of_the_hour(
     db: Annotated[Session, Depends(get_db)]
 ):
-    now = datetime.utcnow()
-    deal = db.query(DealModel).filter(DealModel.end_time > now).first()
-    
-    if not deal:
-        # Create a new deal
-        # Pick a random listing with a price
-        listing = db.query(ListingModel).filter(ListingModel.price > 0).order_by(func.random()).first()
-        if not listing:
-             raise HTTPException(status_code=404, detail="No suitable listing for a deal")
+    try:
+        now = datetime.utcnow()
+        deal = db.query(DealModel).filter(DealModel.end_time > now).first()
         
-        deal = DealModel(
-            listing_id=listing.id,
-            discount_percentage=random.choice([10, 15, 20, 25, 30, 50]),
-            start_time=now,
-            end_time=now + timedelta(hours=1)
-        )
-        db.add(deal)
-        db.commit()
-        db.refresh(deal)
-    
-    # Construct the rich listing dictionary
-    l = deal.listing
-    listing_dict = {
-        "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
-        "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-        "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-        "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
-    }
-    
-    return {
-        "id": deal.id,
-        "listing_id": deal.listing_id,
-        "discount_percentage": deal.discount_percentage,
-        "start_time": deal.start_time,
-        "end_time": deal.end_time,
-        "listing": listing_dict
-    }
+        if not deal:
+            # Create a new deal
+            # Pick a random listing with a price
+            listing = db.query(ListingModel).filter(ListingModel.price > 0).order_by(func.random()).first()
+            if not listing:
+                 raise HTTPException(status_code=404, detail="No suitable listing for a deal")
+            
+            deal = DealModel(
+                listing_id=listing.id,
+                discount_percentage=random.choice([10, 15, 20, 25, 30, 50]),
+                start_time=now,
+                end_time=now + timedelta(hours=1)
+            )
+            db.add(deal)
+            db.commit()
+            db.refresh(deal)
+        
+        # Construct the rich listing dictionary
+        l = deal.listing
+        listing_dict = {
+            "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+            "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+            "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
+        }
+        
+        return {
+            "id": deal.id,
+            "listing_id": deal.listing_id,
+            "discount_percentage": deal.discount_percentage,
+            "start_time": deal.start_time,
+            "end_time": deal.end_time,
+            "listing": listing_dict
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error processing deal of the hour: {str(e)}")
 
 # --- Loyalty Shop Endpoints ---
 
@@ -1247,45 +1274,54 @@ def redeem_reward(
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    reward = db.query(RewardModel).filter(RewardModel.id == reward_id).first()
-    if not reward:
-        raise HTTPException(status_code=404, detail="Reward not found")
+    try:
+        reward = db.query(RewardModel).filter(RewardModel.id == reward_id).first()
+        if not reward:
+            raise HTTPException(status_code=404, detail="Reward not found")
+        
+        if current_user.loyalty_points < reward.points_cost:
+            raise HTTPException(status_code=400, detail="Not enough loyalty points")
+        
+        # Check if already redeemed (optional, depending on type)
+        if reward.reward_type == "badge":
+            existing = db.query(UserRewardModel).filter(
+                UserRewardModel.user_id == current_user.id,
+                UserRewardModel.reward_id == reward_id
+            ).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="Reward already redeemed")
     
-    if current_user.loyalty_points < reward.points_cost:
-        raise HTTPException(status_code=400, detail="Not enough loyalty points")
+        # Deduct points
+        current_user.loyalty_points -= reward.points_cost
+        
+        # Update status if applicable
+        if reward.reward_type == "status" and reward.title == "Premium Status":
+            current_user.subscription_status = "premium"
     
-    # Check if already redeemed (optional, depending on type)
-    if reward.reward_type == "badge":
-        existing = db.query(UserRewardModel).filter(
-            UserRewardModel.user_id == current_user.id,
-            UserRewardModel.reward_id == reward_id
-        ).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="Reward already redeemed")
-
-    # Deduct points
-    current_user.loyalty_points -= reward.points_cost
-    
-    # Update status if applicable
-    if reward.reward_type == "status" and reward.title == "Premium Status":
-        current_user.subscription_status = "premium"
-
-    user_reward = UserRewardModel(user_id=current_user.id, reward_id=reward.id)
-    db.add(user_reward)
-    db.commit()
-    db.refresh(user_reward)
-    
-    # Send notification
-    send_push_notification(current_user.id, "Reward Redeemed!", f"You've successfully redeemed {reward.title}.", db)
-    
-    return user_reward
+        user_reward = UserRewardModel(user_id=current_user.id, reward_id=reward.id)
+        db.add(user_reward)
+        db.commit()
+        db.refresh(user_reward)
+        
+        # Send notification
+        send_push_notification(current_user.id, "Reward Redeemed!", f"You've successfully redeemed {reward.title}.", db)
+        
+        return user_reward
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error redeeming reward: {str(e)}")
 
 @app.get("/users/me/notifications", response_model=List[Notification])
 def get_my_notifications(
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    return db.query(NotificationModel).filter(NotificationModel.user_id == current_user.id).order_by(desc(NotificationModel.created_at)).all()
+    try:
+        return db.query(NotificationModel).filter(NotificationModel.user_id == current_user.id).order_by(desc(NotificationModel.created_at)).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching notifications: {str(e)}")
 
 def send_push_notification(user_id: int, title: str, message: str, db: Session):
     # Mocking FCM/APNS: Log to console and save to DB

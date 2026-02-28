@@ -39,8 +39,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
-      // Handle error
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to refresh listing: $e')),
+        );
+      }
     }
   }
 
@@ -405,7 +409,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   const SizedBox(height: 8),
                   Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: Colors.grey.shade600)),
                   const SizedBox(height: 24),
-                  if (_currentListing.tradeType == 'Sale' || _currentListing.tradeType == 'Both') ...[
+                  final tType = _currentListing.tradeType?.toLowerCase() ?? '';
+                  if (tType.contains('sale') || tType.contains('cash') || tType == 'both') ...[
                     TextFormField(
                       controller: priceController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -415,7 +420,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (value) {
-                         if ((_currentListing.tradeType == 'Sale') && (value == null || value.isEmpty)) {
+                         if ((tType.contains('sale') || tType.contains('cash')) && (value == null || value.isEmpty)) {
                             return 'Please enter a price';
                          }
                          if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
@@ -426,19 +431,97 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  if (_currentListing.tradeType == 'Trade' || _currentListing.tradeType == 'Both') ...[
+                  if (tType.contains('trade') || tType.contains('barter') || tType == 'both') ...[
+                    const Text('Select items from your inventory:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 12),
+                    FutureBuilder<List<Listing>>(
+                      future: _listingService.fetchMyListings(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator(strokeWidth: 2)));
+                        }
+                        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+                            child: const Text('No items in your inventory to trade.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          );
+                        }
+                        final myListings = snapshot.data!;
+                        return SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: myListings.length,
+                            itemBuilder: (context, index) {
+                              final item = myListings[index];
+                              // Skip if it is the current listing (though unlikely)
+                              if (item.id == _currentListing.id) return const SizedBox();
+                              
+                              final isSelected = itemController.text.contains(item.title);
+                              
+                              return GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    List<String> selectedItems = itemController.text.isEmpty 
+                                        ? [] 
+                                        : itemController.text.split(', ').where((s) => s.isNotEmpty).toList();
+                                    
+                                    if (isSelected) {
+                                      selectedItems.remove(item.title);
+                                    } else {
+                                      selectedItems.add(item.title);
+                                    }
+                                    itemController.text = selectedItems.join(', ');
+                                  });
+                                },
+                                child: Container(
+                                  width: 80,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        if (item.imageUrl != null)
+                                          Image.network(item.imageUrl!, fit: BoxFit.cover)
+                                        else
+                                          const Icon(Icons.image, color: Colors.grey),
+                                        if (isSelected)
+                                          Container(
+                                            color: theme.colorScheme.primary.withOpacity(0.3),
+                                            child: const Icon(Icons.check_circle, color: Colors.white),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: itemController,
-                      maxLines: 3,
+                      maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: 'Offer Item(s)',
-                        hintText: 'Bundle multiple items here (e.g. iPhone + Watch)',
+                        labelText: 'Trading Bundle Items',
+                        hintText: 'Items selected above will appear here...',
                         prefixIcon: const Icon(Icons.inventory_2_outlined),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       validator: (value) {
-                         if ((_currentListing.tradeType == 'Trade') && (value == null || value.isEmpty)) {
-                            return 'Please offer an item bundle';
+                         if ((tType.contains('trade') || tType.contains('barter')) && (value == null || value.isEmpty)) {
+                            return 'Please select or type an item bundle';
                          }
                          return null;
                       },
@@ -451,7 +534,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       onPressed: isSubmitting ? null : () async {
                         if (formKey.currentState!.validate()) {
                           // Require at least one if it's 'Both'
-                          if (_currentListing.tradeType == 'Both' && priceController.text.isEmpty && itemController.text.isEmpty) {
+                          if (tType == 'both' && priceController.text.isEmpty && itemController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please offer a price or an item.')));
                             return;
                           }

@@ -37,7 +37,8 @@ class ListingService {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
-      throw Exception('Failed to load listings');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load listings');
     }
   }
 
@@ -51,7 +52,8 @@ class ListingService {
       final data = jsonDecode(response.body);
       return data['status'] == 'favorited';
     } else {
-      throw Exception('Failed to toggle favorite');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to toggle favorite');
     }
   }
 
@@ -65,7 +67,8 @@ class ListingService {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
-      throw Exception('Failed to load favorites');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load favorites');
     }
   }
 
@@ -74,7 +77,8 @@ class ListingService {
     if (response.statusCode == 200) {
       return Listing.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Listing not found');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Listing not found');
     }
   }
 
@@ -88,7 +92,8 @@ class ListingService {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
-      throw Exception('Failed to load your listings');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load your listings');
     }
   }
 
@@ -102,7 +107,8 @@ class ListingService {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
-      throw Exception('Failed to load your chats');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load your chats');
     }
   }
 
@@ -176,7 +182,8 @@ class ListingService {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 204) {
-      throw Exception('Failed to delete listing');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to delete listing');
     }
   }
 
@@ -190,7 +197,8 @@ class ListingService {
       Iterable l = json.decode(response.body);
       return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
     } else {
-      throw Exception('Failed to load recommendations');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load recommendations');
     }
   }
 
@@ -199,7 +207,8 @@ class ListingService {
     if (response.statusCode == 200) {
       return Deal.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to load deal of the hour');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load deal of the hour');
     }
   }
 }

@@ -20,7 +20,8 @@ class QuestService {
       Iterable l = json.decode(response.body);
       return List<UserQuest>.from(l.map((model) => UserQuest.fromJson(model)));
     } else {
-      throw Exception('Failed to load quests');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load quests');
     }
   }
 
