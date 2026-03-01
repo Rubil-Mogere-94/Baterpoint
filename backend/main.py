@@ -123,6 +123,8 @@ class ChatMessageModel(Base):
     listing_id = Column(Integer, ForeignKey("listings.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
     message_content = Column(String)
+    image_url = Column(String, nullable=True)
+    is_read = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     sender = relationship("UserModel", back_populates="chat_messages")
@@ -460,8 +462,11 @@ async def join_trade_chat(sid, data):
             await app.sio.emit(
                 "message",
                 {
+                    "id": msg.id,
                     "sender": msg.sender.username,
                     "message": msg.message_content,
+                    "image_url": msg.image_url,
+                    "is_read": msg.is_read,
                     "timestamp": msg.timestamp.isoformat(),
                     "trade_id": trade_id
                 },
@@ -489,9 +494,15 @@ async def send_message(sid, data):
 
     db = SessionLocal()
     try:
-        new_msg = ChatMessageModel(listing_id=trade_id, sender_id=sender_id, message_content=message_content)
+        new_msg = ChatMessageModel(
+            listing_id=trade_id, 
+            sender_id=sender_id, 
+            message_content=message_content,
+            image_url=data.get("image_url")
+        )
         db.add(new_msg)
         db.commit()
+        db.refresh(new_msg)
 
         # Update quest progress for chat
         update_quest_progress(sender_id, "chat", db)
@@ -499,9 +510,12 @@ async def send_message(sid, data):
         await app.sio.emit(
             "message",
             {
+                "id": new_msg.id,
                 "sender": sender_username,
                 "message": message_content,
-                "timestamp": datetime.utcnow().isoformat(),
+                "image_url": new_msg.image_url,
+                "is_read": False,
+                "timestamp": new_msg.timestamp.isoformat(),
                 "trade_id": trade_id
             },
             room=f"trade_{trade_id}"
@@ -509,6 +523,44 @@ async def send_message(sid, data):
     except Exception as e:
         print(f"Error saving or broadcasting message for trade {trade_id}: {e}")
         await app.sio.emit("chat_error", {"detail": "Server error during message sending"}, room=sid)
+    finally:
+        db.close()
+
+@app.sio.on("typing")
+async def handle_typing(sid, data):
+    if sid not in active_sids or 'trade_id' not in active_sids[sid]:
+        return
+    
+    trade_id = active_sids[sid]['trade_id']
+    username = active_sids[sid]['username']
+    is_typing = data.get("is_typing", False)
+    
+    await app.sio.emit(
+        "typing", 
+        {"username": username, "is_typing": is_typing}, 
+        room=f"trade_{trade_id}", 
+        skip_sid=sid
+    )
+
+@app.sio.on("mark_as_read")
+async def mark_as_read(sid, data):
+    if sid not in active_sids:
+        return
+        
+    message_ids = data.get("message_ids", [])
+    if not message_ids:
+        return
+        
+    db = SessionLocal()
+    try:
+        db.query(ChatMessageModel).filter(ChatMessageModel.id.in_(message_ids)).update({"is_read": True}, synchronize_session=False)
+        db.commit()
+        
+        trade_id = active_sids[sid].get('trade_id')
+        if trade_id:
+            await app.sio.emit("messages_read", {"message_ids": message_ids}, room=f"trade_{trade_id}", skip_sid=sid)
+    except Exception as e:
+        print(f"Error marking messages as read: {e}")
     finally:
         db.close()
 
@@ -722,6 +774,28 @@ def create_listing(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Error creating listing: {e}")
+
+@app.post("/chat/upload", status_code=status.HTTP_201_CREATED)
+async def upload_chat_image(
+    request: Request,
+    image: UploadFile = File(...),
+    current_user: Annotated[UserModel, Depends(get_current_user)] = None
+):
+    try:
+        file_extension = image.filename.split(".")[-1]
+        unique_filename = f"chat_{uuid.uuid4()}.{file_extension}"
+        file_path = f"static/chat_images/{unique_filename}"
+        
+        os.makedirs("static/chat_images", exist_ok=True)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+            
+        base_url = str(request.base_url).rstrip("/")
+        image_url = f"{base_url}/{file_path}"
+        
+        return {"image_url": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error uploading image: {e}")
 
 @app.get("/listings/", response_model=List[Listing])
 def get_listings(
