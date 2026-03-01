@@ -82,6 +82,7 @@ class UserModel(Base):
     device_token = Column(String, nullable=True)
     successful_trades = Column(Integer, default=0)
     trade_reputation = Column(Float, default=5.0)
+    avatar_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     listings = relationship("ListingModel", back_populates="owner")
@@ -225,6 +226,7 @@ class User(BaseModel):
     device_token: Optional[str] = None
     successful_trades: Optional[int] = 0
     trade_reputation: Optional[float] = 5.0
+    avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -256,6 +258,7 @@ class Listing(BaseModel):
     owner_username: Optional[str] = None
     owner_rating: Optional[float] = 0.0
     owner_reviews: Optional[int] = 0
+    owner_avatar: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -332,6 +335,7 @@ class InboxItem(BaseModel):
     other_user_id: int
     other_user_email: str
     other_user_username: str
+    other_user_avatar: Optional[str] = None
     last_message: str
     last_message_time: datetime
     unread_count: int
@@ -375,6 +379,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(None, min_length=8, max_length=72)
+    avatar_url: Optional[str] = None
 
 class ListingUpdate(BaseModel):
     title: Optional[str] = None
