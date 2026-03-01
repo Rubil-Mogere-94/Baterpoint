@@ -161,12 +161,12 @@ class ListingService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        if (title != null) 'title': title,
-        if (description != null) 'description': description,
-        if (cashPrice != null) 'cashPrice': cashPrice,
-        if (exchangeItem != null) 'exchangeItem': exchangeItem,
-        if (tradeType != null) 'tradeType': tradeType,
-        if (category != null) 'category': category,
+        'title': ?title,
+        'description': ?description,
+        'cashPrice': ?cashPrice,
+        'exchangeItem': ?exchangeItem,
+        'tradeType': ?tradeType,
+        'category': ?category,
       }),
     );
 

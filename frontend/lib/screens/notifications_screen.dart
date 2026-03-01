@@ -91,7 +91,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: notification.isRead 
-                      ? theme.colorScheme.surfaceVariant 
+                      ? theme.colorScheme.surfaceContainerHighest 
                       : theme.colorScheme.primary.withOpacity(0.1),
                     child: Icon(
                       notification.icon, 

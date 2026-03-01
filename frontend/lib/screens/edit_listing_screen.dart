@@ -79,7 +79,7 @@ class _EditListingScreenState extends State<EditListingScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _tradeType,
+                initialValue: _tradeType,
                 decoration: const InputDecoration(
                   labelText: 'Accepting',
                   prefixIcon: Icon(Icons.swap_horiz_rounded),
@@ -121,7 +121,7 @@ class _EditListingScreenState extends State<EditListingScreen> {
               ],
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   prefixIcon: Icon(Icons.category_rounded),

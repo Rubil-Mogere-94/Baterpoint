@@ -106,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _buildStatItem(
                           context,
                           'Reputation',
-                          '${user?.tradeReputation?.toStringAsFixed(1) ?? '5.0'}',
+                          user?.tradeReputation.toStringAsFixed(1) ?? '5.0',
                           Icons.shield_rounded,
                           Colors.green,
                         ),

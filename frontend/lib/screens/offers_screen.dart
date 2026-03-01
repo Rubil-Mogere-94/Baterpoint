@@ -149,8 +149,9 @@ class _OfferCard extends StatelessWidget {
     final theme = Theme.of(context);
     
     Color statusColor;
-    if (offer.status == 'accepted') statusColor = Colors.green;
-    else if (offer.status == 'rejected') statusColor = Colors.red;
+    if (offer.status == 'accepted') {
+      statusColor = Colors.green;
+    } else if (offer.status == 'rejected') statusColor = Colors.red;
     else statusColor = Colors.orange;
 
     return Card(

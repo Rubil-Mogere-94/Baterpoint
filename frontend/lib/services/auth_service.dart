@@ -76,9 +76,9 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        if (username != null) 'username': username,
-        if (email != null) 'email': email,
-        if (password != null) 'password': password,
+        'username': ?username,
+        'email': ?email,
+        'password': ?password,
       }),
     );
 

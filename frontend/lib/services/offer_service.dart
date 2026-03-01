@@ -20,8 +20,8 @@ class OfferService {
       Uri.parse('${EnvironmentConfig.apiUrl}/listings/$listingId/offers'),
       headers: await _getHeaders(),
       body: jsonEncode({
-        if (offeredPrice != null) 'offered_price': offeredPrice,
-        if (offeredItem != null) 'offered_item': offeredItem,
+        'offered_price': ?offeredPrice,
+        'offered_item': ?offeredItem,
       }),
     );
 

@@ -273,7 +273,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               showCheckmark: false,
                             ),
                           );
-                        }).toList(),
+                        }),
                       ],
                     ),
                   ),
