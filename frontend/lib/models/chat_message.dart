@@ -6,7 +6,7 @@ class ChatMessage {
   final String? imageUrl;
   final bool isRead;
   final DateTime timestamp;
-  final int tradeId;
+  final int? tradeId;
 
   ChatMessage({
     this.id,
@@ -15,7 +15,7 @@ class ChatMessage {
     this.imageUrl,
     this.isRead = false,
     required this.timestamp,
-    required this.tradeId,
+    this.tradeId,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {

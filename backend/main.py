@@ -766,8 +766,8 @@ async def get_inbox(
 
 @app.get("/forum/messages", response_model=List[ForumMessage])
 async def get_forum_messages(
-    category: Optional[str] = None,
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    category: Optional[str] = None
 ):
     query = db.query(ChatMessageModel).filter(ChatMessageModel.is_forum == True)
     if category:
