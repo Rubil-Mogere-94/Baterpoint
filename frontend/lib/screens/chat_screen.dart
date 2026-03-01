@@ -9,8 +9,20 @@ import '../models/chat_message.dart';
 import '../providers/auth_provider.dart';
 
 class ChatScreen extends StatefulWidget {
-  final int tradeId;
-  const ChatScreen({super.key, required this.tradeId});
+  final int? tradeId;
+  final int? recipientId;
+  final String? recipientEmail;
+  final String? forumCategory;
+  final String? recipientName;
+
+  const ChatScreen({
+    super.key, 
+    this.tradeId,
+    this.recipientId,
+    this.recipientEmail,
+    this.forumCategory,
+    this.recipientName,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -26,17 +38,29 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _typingUser;
   Timer? _typingTimer;
   bool _isSendingImage = false;
+  bool _isForum = false;
 
   @override
   void initState() {
     super.initState();
+    _isForum = widget.forumCategory != null;
+
     _chatService.onMessageReceived = (message) {
       if (mounted) {
         setState(() {
           _messages.add(message);
         });
         _scrollToBottom();
-        _markMessagesAsRead();
+        if (!_isForum) _markMessagesAsRead();
+      }
+    };
+
+    _chatService.onForumMessageReceived = (message) {
+      if (mounted && _isForum) {
+        setState(() {
+          _messages.add(message);
+        });
+        _scrollToBottom();
       }
     };
     
@@ -70,8 +94,25 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     };
 
-    _chatService.connect(widget.tradeId);
-    _markMessagesAsRead();
+    if (_isForum) {
+      _loadForumHistory();
+      _chatService.connect(forumCategory: widget.forumCategory);
+    } else {
+      _chatService.connect(tradeId: widget.tradeId);
+      _markMessagesAsRead();
+    }
+  }
+
+  Future<void> _loadForumHistory() async {
+    if (widget.forumCategory != null) {
+      final history = await _chatService.getForumMessages(widget.forumCategory!);
+      if (mounted) {
+        setState(() {
+          _messages.addAll(history);
+        });
+        _scrollToBottom();
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -87,6 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _markMessagesAsRead() {
+    if (_isForum) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final unreadIds = _messages
         .where((m) => m.sender != auth.user?.username && !m.isRead && m.id != null)
@@ -116,6 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onTextChanged(String value) {
+    if (_isForum) return;
     if (_typingTimer?.isActive ?? false) _typingTimer?.cancel();
     
     _chatService.sendTypingStatus(true);
@@ -132,11 +175,25 @@ class _ChatScreenState extends State<ChatScreen> {
       try {
         final imageUrl = await _chatService.uploadImage(File(image.path));
         if (imageUrl != null) {
-          _chatService.sendMessage(widget.tradeId, "", imageUrl: imageUrl);
+          _sendMessage("", imageUrl: imageUrl);
         }
       } finally {
         setState(() => _isSendingImage = false);
       }
+    }
+  }
+
+  void _sendMessage(String text, {String? imageUrl}) {
+    if (_isForum) {
+      _chatService.sendForumMessage(widget.forumCategory!, text, imageUrl: imageUrl);
+    } else {
+      _chatService.sendMessage(
+        text,
+        tradeId: widget.tradeId,
+        recipientId: widget.recipientId,
+        recipientEmail: widget.recipientEmail,
+        imageUrl: imageUrl,
+      );
     }
   }
 
@@ -155,14 +212,29 @@ class _ChatScreenState extends State<ChatScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUsername = auth.user?.username;
 
+    String appBarTitle = 'Chat';
+    String appBarSubtitle = '';
+
+    if (_isForum) {
+      appBarTitle = 'Community Forum';
+      appBarSubtitle = widget.forumCategory ?? 'General';
+    } else if (widget.recipientName != null) {
+      appBarTitle = widget.recipientName!;
+      appBarSubtitle = widget.recipientEmail ?? '';
+    } else if (widget.tradeId != null) {
+      appBarTitle = 'Negotiation Chat';
+      appBarSubtitle = 'Trade #${widget.tradeId}';
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Negotiation Chat', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text('Trade #${widget.tradeId}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
+            Text(appBarTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            if (appBarSubtitle.isNotEmpty)
+              Text(appBarSubtitle, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal)),
           ],
         ),
         backgroundColor: Colors.white,
@@ -256,9 +328,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           icon: const Icon(Icons.send_rounded, color: Colors.white),
                           onPressed: () {
                             if (_messageController.text.trim().isNotEmpty) {
-                              _chatService.sendMessage(widget.tradeId, _messageController.text.trim());
+                              _sendMessage(_messageController.text.trim());
                               _messageController.clear();
-                              _chatService.sendTypingStatus(false);
+                              if (!_isForum) _chatService.sendTypingStatus(false);
                             }
                           },
                         ),
@@ -272,6 +344,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
 
 class _ChatBubble extends StatelessWidget {
   final String message;

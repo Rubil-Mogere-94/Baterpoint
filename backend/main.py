@@ -85,7 +85,8 @@ class UserModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     listings = relationship("ListingModel", back_populates="owner")
-    chat_messages = relationship("ChatMessageModel", back_populates="sender")
+    sent_messages = relationship("ChatMessageModel", foreign_keys="[ChatMessageModel.sender_id]", back_populates="sender")
+    received_messages = relationship("ChatMessageModel", foreign_keys="[ChatMessageModel.recipient_id]", back_populates="recipient")
     received_offers = relationship("OfferModel", back_populates="buyer")
     quests = relationship("UserQuestModel", back_populates="user")
 
@@ -120,14 +121,19 @@ class ListingModel(Base):
 class ChatMessageModel(Base):
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
-    listing_id = Column(Integer, ForeignKey("listings.id"))
-    sender_id = Column(Integer, ForeignKey("users.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"), nullable=True)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     message_content = Column(String)
     image_url = Column(String, nullable=True)
     is_read = Column(Boolean, default=False)
+    is_forum = Column(Boolean, default=False)
+    forum_category = Column(String, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-    sender = relationship("UserModel", back_populates="chat_messages")
+    sender = relationship("UserModel", foreign_keys=[sender_id], back_populates="sent_messages")
+    recipient = relationship("UserModel", foreign_keys=[recipient_id], back_populates="received_messages")
+    listing = relationship("ListingModel")
 
 class FavoriteModel(Base):
     __tablename__ = "favorites"
@@ -322,6 +328,26 @@ class Notification(BaseModel):
     class Config:
         from_attributes = True
 
+class InboxItem(BaseModel):
+    other_user_id: int
+    other_user_email: str
+    other_user_username: str
+    last_message: str
+    last_message_time: datetime
+    unread_count: int
+    listing_id: Optional[int] = None
+
+class ForumMessage(BaseModel):
+    id: int
+    sender_id: int
+    sender_username: str
+    message_content: str
+    image_url: Optional[str] = None
+    forum_category: str
+    timestamp: datetime
+    class Config:
+        from_attributes = True
+
 class Deal(BaseModel):
     id: int
     listing_id: int
@@ -478,25 +504,41 @@ async def join_trade_chat(sid, data):
     finally:
         db.close()
 
+@app.sio.on("join_forum")
+async def join_forum(sid, data):
+    if sid not in active_sids:
+        await app.sio.emit("auth_error", {"detail": "Not authenticated"}, room=sid)
+        return
+    category = data.get("category", "general")
+    room = f"forum_{category}"
+    app.sio.enter_room(sid, room)
+    await app.sio.emit("joined_forum", {"category": category, "room": room}, room=sid)
+
 @app.sio.on("send_message")
 async def send_message(sid, data):
-    if sid not in active_sids or 'user_id' not in active_sids[sid] or 'trade_id' not in active_sids[sid]:
-        await app.sio.emit("auth_error", {"detail": "Not authenticated or not in a trade chat"}, room=sid)
+    if sid not in active_sids or 'user_id' not in active_sids[sid]:
+        await app.sio.emit("auth_error", {"detail": "Not authenticated"}, room=sid)
         return
 
     message_content = data.get("message")
-    trade_id = active_sids[sid]['trade_id']
     sender_id = active_sids[sid]['user_id']
     sender_username = active_sids[sid]['username']
-
-    if not message_content:
-        return
+    
+    recipient_id = data.get("recipient_id")
+    recipient_email = data.get("recipient_email")
+    trade_id = data.get("trade_id") or active_sids[sid].get('trade_id')
 
     db = SessionLocal()
     try:
+        if recipient_email and not recipient_id:
+            recipient = db.query(UserModel).filter(UserModel.email == recipient_email).first()
+            if recipient:
+                recipient_id = recipient.id
+        
         new_msg = ChatMessageModel(
             listing_id=trade_id, 
-            sender_id=sender_id, 
+            sender_id=sender_id,
+            recipient_id=recipient_id,
             message_content=message_content,
             image_url=data.get("image_url")
         )
@@ -504,27 +546,75 @@ async def send_message(sid, data):
         db.commit()
         db.refresh(new_msg)
 
-        # Update quest progress for chat
         update_quest_progress(sender_id, "chat", db)
 
-        await app.sio.emit(
-            "message",
-            {
-                "id": new_msg.id,
-                "sender": sender_username,
-                "message": message_content,
-                "image_url": new_msg.image_url,
-                "is_read": False,
-                "timestamp": new_msg.timestamp.isoformat(),
-                "trade_id": trade_id
-            },
-            room=f"trade_{trade_id}"
-        )
+        msg_payload = {
+            "id": new_msg.id,
+            "sender": sender_username,
+            "message": message_content,
+            "image_url": new_msg.image_url,
+            "is_read": False,
+            "timestamp": new_msg.timestamp.isoformat(),
+            "trade_id": trade_id,
+            "recipient_id": recipient_id
+        }
+
+        # Emit to trade room if exists
+        if trade_id:
+            await app.sio.emit("message", msg_payload, room=f"trade_{trade_id}")
+        
+        # Also emit to recipient directly if they are connected
+        for target_sid, info in active_sids.items():
+            if info.get('user_id') == recipient_id:
+                await app.sio.emit("message", msg_payload, room=target_sid)
+        
+        # And emit back to sender
+        await app.sio.emit("message", msg_payload, room=sid)
+
     except Exception as e:
-        print(f"Error saving or broadcasting message for trade {trade_id}: {e}")
+        print(f"Error saving or broadcasting message: {e}")
         await app.sio.emit("chat_error", {"detail": "Server error during message sending"}, room=sid)
     finally:
         db.close()
+
+@app.sio.on("send_forum_message")
+async def send_forum_message(sid, data):
+    if sid not in active_sids:
+        await app.sio.emit("auth_error", {"detail": "Not authenticated"}, room=sid)
+        return
+    
+    category = data.get("category", "general")
+    message_content = data.get("message")
+    sender_id = active_sids[sid]['user_id']
+    sender_username = active_sids[sid]['username']
+    
+    db = SessionLocal()
+    try:
+        new_msg = ChatMessageModel(
+            sender_id=sender_id,
+            message_content=message_content,
+            is_forum=True,
+            forum_category=category,
+            image_url=data.get("image_url")
+        )
+        db.add(new_msg)
+        db.commit()
+        db.refresh(new_msg)
+        
+        await app.sio.emit("forum_message", {
+            "id": new_msg.id,
+            "sender": sender_username,
+            "message": message_content,
+            "image_url": new_msg.image_url,
+            "forum_category": category,
+            "timestamp": new_msg.timestamp.isoformat()
+        }, room=f"forum_{category}")
+    except Exception as e:
+        print(f"Error sending forum message: {e}")
+        await app.sio.emit("chat_error", {"detail": "Server error during forum message sending"}, room=sid)
+    finally:
+        db.close()
+
 
 @app.sio.on("typing")
 async def handle_typing(sid, data):
@@ -616,6 +706,16 @@ async def get_current_active_admin_user(current_user: Annotated[UserModel, Depen
 async def read_users_me(current_user: Annotated[UserModel, Depends(get_current_user)]):
     return current_user
 
+@app.get("/users/by-email/{email}", response_model=User)
+async def get_user_by_email(
+    email: str,
+    db: Annotated[Session, Depends(get_db)]
+):
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 @app.post("/users/me/device-token")
 async def register_device_token(
     update: DeviceTokenUpdate,
@@ -625,6 +725,67 @@ async def register_device_token(
     current_user.device_token = update.device_token
     db.commit()
     return {"message": "Success"}
+
+@app.get("/chat/inbox", response_model=List[InboxItem])
+async def get_inbox(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    # Query for user-to-user messages (where is_forum is false)
+    sent = db.query(ChatMessageModel).filter(ChatMessageModel.sender_id == current_user.id, ChatMessageModel.is_forum == False)
+    received = db.query(ChatMessageModel).filter(ChatMessageModel.recipient_id == current_user.id, ChatMessageModel.is_forum == False)
+    
+    all_msgs = sent.union(received).order_by(desc(ChatMessageModel.timestamp)).all()
+    
+    inbox = {}
+    for msg in all_msgs:
+        other_user_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id
+        if other_user_id is None: continue 
+        
+        if other_user_id not in inbox:
+            other_user = db.query(UserModel).filter(UserModel.id == other_user_id).first()
+            if not other_user: continue
+            
+            unread_count = db.query(ChatMessageModel).filter(
+                ChatMessageModel.sender_id == other_user_id,
+                ChatMessageModel.recipient_id == current_user.id,
+                ChatMessageModel.is_read == False
+            ).count()
+            
+            inbox[other_user_id] = {
+                "other_user_id": other_user.id,
+                "other_user_email": other_user.email,
+                "other_user_username": other_user.username,
+                "last_message": msg.message_content or "[Image]",
+                "last_message_time": msg.timestamp,
+                "unread_count": unread_count,
+                "listing_id": msg.listing_id
+            }
+            
+    return list(inbox.values())
+
+@app.get("/forum/messages", response_model=List[ForumMessage])
+async def get_forum_messages(
+    category: Optional[str] = None,
+    db: Annotated[Session, Depends(get_db)]
+):
+    query = db.query(ChatMessageModel).filter(ChatMessageModel.is_forum == True)
+    if category:
+        query = query.filter(ChatMessageModel.forum_category == category)
+    
+    messages = query.order_by(ChatMessageModel.timestamp).all()
+    return [
+        ForumMessage(
+            id=m.id,
+            sender_id=m.sender_id,
+            sender_username=m.sender.username,
+            message_content=m.message_content,
+            image_url=m.image_url,
+            forum_category=m.forum_category or "general",
+            timestamp=m.timestamp
+        ) for m in messages
+    ]
+
 
 @app.post("/token", response_model=Token)
 @limiter.limit("5/minute")

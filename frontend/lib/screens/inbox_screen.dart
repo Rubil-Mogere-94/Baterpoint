@@ -1,8 +1,8 @@
-// frontend/lib/screens/inbox_screen.dart
 import 'package:flutter/material.dart';
-import '../models/listing.dart';
-import '../services/listing_service.dart';
+import 'package:intl/intl.dart';
+import '../services/chat_service.dart';
 import 'chat_screen.dart';
+import 'community_forum_screen.dart';
 
 class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});
@@ -12,91 +12,206 @@ class InboxScreen extends StatefulWidget {
 }
 
 class _InboxScreenState extends State<InboxScreen> {
-  final ListingService _listingService = ListingService();
-  late Future<List<Listing>> _chatsFuture;
+  final ChatService _chatService = ChatService();
+  List<dynamic> _inboxItems = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _chatsFuture = _listingService.fetchMyChats();
+    _loadInbox();
+  }
+
+  Future<void> _loadInbox() async {
+    setState(() => _isLoading = true);
+    try {
+      final items = await _chatService.getInbox();
+      if (mounted) {
+        setState(() {
+          _inboxItems = items;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _startNewChat() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final emailController = TextEditingController();
+        return AlertDialog(
+          title: const Text('Start New Chat'),
+          content: TextField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              hintText: 'Enter user email',
+              labelText: 'Email',
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  final user = await _chatService.getUserByEmail(email);
+                  if (user != null) {
+                    if (mounted) {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            recipientId: user['id'],
+                            recipientEmail: user['email'],
+                            recipientName: user['username'],
+                          ),
+                        ),
+                      ).then((_) => _loadInbox());
+                    }
+                  } else {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('User not found')),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Start'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Trades'),
+        title: const Text('Inbox', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.people_alt_outlined, color: Colors.blue),
+            tooltip: 'Community Forum',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CommunityForumScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.black87),
+            onPressed: _loadInbox,
+          ),
+        ],
       ),
-      body: FutureBuilder<List<Listing>>(
-        future: _chatsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.chat_bubble_outline_rounded, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No active trades yet',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final listings = snapshot.data!;
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: listings.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final listing = listings[index];
-              return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: listing.imageUrl != null
-                        ? Image.network(listing.imageUrl!, width: 60, height: 60, fit: BoxFit.cover)
-                        : Container(width: 60, height: 60, color: Colors.grey.shade200, child: const Icon(Icons.image)),
-                  ),
-                  title: Text(listing.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _inboxItems.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 4),
-                      Text(listing.description ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (listing.cashPrice != null && listing.cashPrice! > 0)
-                            Text('\$${listing.cashPrice} ', style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold)),
-                          if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty)
-                            Expanded(child: Text('↔ ${listing.exchangeItem}', style: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                        ],
+                      Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey.shade300),
+                      const SizedBox(height: 16),
+                      Text('No messages yet', style: TextStyle(color: Colors.grey.shade500)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _startNewChat,
+                        child: const Text('Start a Conversation'),
                       ),
                     ],
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ChatScreen(tradeId: listing.id)),
+                )
+              : ListView.separated(
+                  itemCount: _inboxItems.length,
+                  separatorBuilder: (context, index) => Divider(height: 1, color: Colors.grey.shade200),
+                  itemBuilder: (context, index) {
+                    final item = _inboxItems[index];
+                    final time = DateTime.parse(item['last_message_time']);
+                    final formattedTime = DateFormat.jm().format(time.toLocal());
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      leading: CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.blue.shade100,
+                        child: Text(
+                          item['other_user_username'][0].toUpperCase(),
+                          style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            item['other_user_username'],
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          Text(
+                            formattedTime,
+                            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item['last_message'],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ),
+                            if (item['unread_count'] > 0)
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '${item['unread_count']}',
+                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              recipientId: item['other_user_id'],
+                              recipientEmail: item['other_user_email'],
+                              recipientName: item['other_user_username'],
+                              tradeId: item['listing_id'],
+                            ),
+                          ),
+                        ).then((_) => _loadInbox());
+                      },
                     );
                   },
                 ),
-              );
-            },
-          );
-        },
+      floatingActionButton: FloatingActionButton(
+        onPressed: _startNewChat,
+        child: const Icon(Icons.message),
       ),
     );
   }
