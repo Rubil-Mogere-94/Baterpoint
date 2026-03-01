@@ -1,6 +1,7 @@
 // frontend/lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
@@ -27,112 +28,150 @@ class BaterpointApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
-    // Professional Brand Colors
-    const primaryIndigo = Color(0xFF4F46E5);
-    const secondaryMint = Color(0xFF10B981);
-    const surfaceLight = Color(0xFFF8FAFC);
-    const textDark = Color(0xFF0F172A);
-    const textMuted = Color(0xFF64748B);
+
+    // Modern Vibrant Color Palette
+    const primaryColor = Color(0xFF6366F1); // Indigo 500
+    const secondaryColor = Color(0xFFEC4899); // Pink 500
+    const tertiaryColor = Color(0xFF14B8A6); // Teal 500
+    const surfaceLight = Color(0xFFF8FAFC); // Slate 50
+    const textDark = Color(0xFF0F172A); // Slate 900
+    const textMuted = Color(0xFF64748B); // Slate 500
+
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(
+      Theme.of(context).textTheme,
+    );
 
     return MaterialApp(
       title: 'Baterpoint',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryIndigo,
+          seedColor: primaryColor,
           brightness: Brightness.light,
-          primary: primaryIndigo,
-          secondary: secondaryMint,
+          primary: primaryColor,
+          secondary: secondaryColor,
+          tertiary: tertiaryColor,
           surface: surfaceLight,
+          onSurface: textDark,
           outline: const Color(0xFFE2E8F0),
         ),
         scaffoldBackgroundColor: surfaceLight,
-        appBarTheme: const AppBarTheme(
+        textTheme: textTheme.copyWith(
+          headlineLarge: textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: textDark,
+            letterSpacing: -1.0,
+          ),
+          headlineMedium: textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: textDark,
+            letterSpacing: -0.5,
+          ),
+          titleLarge: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: textDark,
+          ),
+          bodyLarge: textTheme.bodyLarge?.copyWith(
+            color: const Color(0xFF334155),
+            fontSize: 16,
+            height: 1.5,
+          ),
+          bodyMedium: textTheme.bodyMedium?.copyWith(
+            color: textMuted,
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
-          backgroundColor: Colors.white,
-          scrolledUnderElevation: 0.5,
-          titleTextStyle: TextStyle(
+          backgroundColor: surfaceLight,
+          scrolledUnderElevation: 0,
+          titleTextStyle: GoogleFonts.plusJakartaSans(
             color: textDark,
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
-          iconTheme: IconThemeData(color: textDark, size: 24),
+          iconTheme: const IconThemeData(color: textDark, size: 24),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             elevation: 0,
-            backgroundColor: primaryIndigo,
+            backgroundColor: primaryColor,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            textStyle: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: primaryIndigo, width: 2),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryColor, width: 2),
           ),
-          labelStyle: const TextStyle(color: textMuted, fontWeight: FontWeight.w500),
+          labelStyle: TextStyle(color: textMuted, fontWeight: FontWeight.w500),
           hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+          floatingLabelBehavior: FloatingLabelBehavior.always,
         ),
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             side: const BorderSide(color: Color(0xFFF1F5F9)),
           ),
           clipBehavior: Clip.antiAlias,
           color: Colors.white,
-        ),
-        textTheme: const TextTheme(
-          headlineMedium: TextStyle(color: textDark, fontWeight: FontWeight.w800, fontSize: 28, letterSpacing: -1),
-          titleLarge: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 20),
-          bodyLarge: TextStyle(color: Color(0xFF334155), fontSize: 16, height: 1.5),
-          bodyMedium: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
+          shadowColor: Colors.black.withOpacity(0.05),
         ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF818CF8),
           brightness: Brightness.dark,
           primary: const Color(0xFF818CF8),
-          secondary: const Color(0xFF34D399),
+          secondary: const Color(0xFFEC4899),
+          tertiary: const Color(0xFF2DD4BF),
           surface: const Color(0xFF0F172A),
+          background: const Color(0xFF020617),
         ),
         scaffoldBackgroundColor: const Color(0xFF020617),
-        appBarTheme: const AppBarTheme(
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
+        appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
-          backgroundColor: Color(0xFF0F172A),
-          titleTextStyle: TextStyle(
+          backgroundColor: const Color(0xFF020617),
+          scrolledUnderElevation: 0,
+          titleTextStyle: GoogleFonts.plusJakartaSans(
             color: Colors.white,
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             side: const BorderSide(color: Color(0xFF1E293B)),
           ),
           color: const Color(0xFF0F172A),
