@@ -761,6 +761,7 @@ async def get_inbox(
                 "other_user_id": other_user.id,
                 "other_user_email": other_user.email,
                 "other_user_username": other_user.username,
+                "other_user_avatar": other_user.avatar_url,
                 "last_message": msg.message_content or "[Image]",
                 "last_message_time": msg.timestamp,
                 "unread_count": unread_count,
@@ -833,7 +834,7 @@ async def read_own_listings(current_user: Annotated[UserModel, Depends(get_curre
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
          "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-         "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews}
+         "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url}
         for l in current_user.listings
     ]
 
@@ -850,7 +851,7 @@ async def read_user_chats(
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
          "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
         for l in listings
     ]
 
@@ -935,7 +936,7 @@ def create_listing(
             "cashPrice": new_listing.price, "exchangeItem": new_listing.exchange_item, 
             "tradeType": new_listing.trade_type, "category": new_listing.category, 
             "imageUrl": new_listing.image_url, "user_id": new_listing.user_id, "view_count": new_listing.view_count,
-            "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews
+            "owner_username": current_user.username, "owner_rating": current_user.overall_rating, "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url
         }
     except Exception as e:
         db.rollback()
@@ -995,7 +996,7 @@ def get_listings(
         {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
          "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
+         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
         for l in listings
     ]
 
@@ -1037,7 +1038,7 @@ def get_recommendations(
             {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
              "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
              "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-             "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
+             "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
             for l in recommendations
         ]
     except Exception as e:
@@ -1074,7 +1075,7 @@ def get_deal_of_the_hour(
             "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
             "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
             "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url
         }
         
         return {
@@ -1121,7 +1122,7 @@ def get_listing(listing_id: int, request: Request, db: Annotated[Session, Depend
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
         "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
-        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews
+        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url
     }
 
 @app.put("/users/me", response_model=User)
@@ -1145,6 +1146,9 @@ async def update_user_me(
     
     if user_update.password:
         current_user.hashed_password = get_password_hash(user_update.password)
+    
+    if user_update.avatar_url:
+        current_user.avatar_url = user_update.avatar_url
     
     db.commit()
     db.refresh(current_user)
@@ -1181,7 +1185,7 @@ def update_listing(
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
         "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
-        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews
+        "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url
     }
 
 @app.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
