@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
 import '../models/listing.dart';
 import '../models/deal.dart';
 import '../models/quest.dart';
@@ -87,49 +88,74 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.shopping_bag_rounded, color: theme.colorScheme.primary, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Text('Baterpoint', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.black87),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: colorScheme.surface,
       body: RefreshIndicator(
         onRefresh: () async => _fetchData(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        color: colorScheme.primary,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              pinned: true,
+              snap: false,
+              backgroundColor: colorScheme.surface.withOpacity(0.9),
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              expandedHeight: 60,
+              flexibleSpace: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: FlexibleSpaceBar(
+                    background: Container(color: Colors.transparent),
+                  ),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [colorScheme.primary, colorScheme.secondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Baterpoint',
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -138,33 +164,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
+                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search_rounded, color: Colors.grey.shade600),
+                        Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 12),
-                        Text('Search for items, categories...', style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
+                        Text(
+                          'Search for items, categories...',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 15,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
+            ),
 
-              // Hero Promo Carousel
-              CarouselSlider(
+            SliverToBoxAdapter(
+              child: CarouselSlider(
                 options: CarouselOptions(
-                  height: 180.0,
+                  height: 200.0,
                   autoPlay: true,
                   enlargeCenterPage: true,
-                  viewportFraction: 0.92,
-                  aspectRatio: 2.0,
+                  viewportFraction: 0.9,
+                  aspectRatio: 16/9,
                   initialPage: 0,
-                  autoPlayInterval: const Duration(seconds: 5),
+                  autoPlayInterval: const Duration(seconds: 6),
                 ),
                 items: promoImages.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -175,63 +208,80 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (BuildContext context) {
                       return Container(
                         width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.shadow.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                           image: DecorationImage(
                             image: CachedNetworkImageProvider(imageUrl),
                             fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
                           ),
                         ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              bottom: 20,
-                              left: 20,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.shade700,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'LIMITED TIME',
-                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    labels[index % labels.length],
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
+                              stops: const [0.6, 1.0],
                             ),
-                          ],
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.secondary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'LIMITED TIME',
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                labels[index % labels.length],
+                                style: textTheme.headlineSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
                   );
                 }).toList(),
               ),
-              
-              const SizedBox(height: 24),
-              
-              // Daily Deals / Special Offer Section (Dynamic)
-              Padding(
+            ),
+            
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            
+            // Deal of the Hour
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: FutureBuilder<Deal>(
                   future: _dealFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ShimmerLoading.rectangular(height: 100);
+                      return const ShimmerLoading.rectangular(height: 120);
                     } else if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
@@ -241,16 +291,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     final seconds = _dealRemaining.inSeconds % 60;
                     
                     return Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.indigo.shade700, Colors.blue.shade600],
+                          colors: [colorScheme.primary, colorScheme.tertiary],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
-                          BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
                         ],
                       ),
                       child: Row(
@@ -259,47 +313,94 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Row(
+                                Row(
                                   children: [
-                                    Icon(Icons.bolt_rounded, color: Colors.amber, size: 20),
-                                    SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.bolt_rounded, color: Colors.amber, size: 16),
+                                    ),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'DEAL OF THE HOUR',
-                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2),
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Text(
-                                  '${deal.discountPercentage}% OFF on ${deal.listing.title}',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  '${deal.discountPercentage}% OFF',
+                                  style: textTheme.headlineMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.0,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Ends in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
+                                  deal.listing.title,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Ends in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontFamily: 'monospace',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () {
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: deal.listing)),
                               );
                             },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.indigo.shade700,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              elevation: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'Grab It',
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            child: const Text('Grab It', style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -307,11 +408,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   }
                 ),
               ),
+            ),
 
-              const SizedBox(height: 24),
-              
-              // Daily Quests Section
-              Padding(
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            
+            // Daily Quests
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: FutureBuilder<List<UserQuest>>(
                   future: _questsFuture,
@@ -325,11 +428,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     final progress = currentQuest.progress / currentQuest.quest.goalValue;
                     
                     return Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.green.shade100),
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,54 +449,69 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.stars_rounded, color: Colors.green.shade700, size: 20),
-                                  const SizedBox(width: 8),
+                                  Icon(Icons.stars_rounded, color: colorScheme.primary, size: 24),
+                                  const SizedBox(width: 12),
                                   Text(
                                     'Daily Quest',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade800, fontSize: 15),
+                                    style: textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: colorScheme.onSurface,
+                                    ),
                                   ),
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.shade600,
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   '+${currentQuest.quest.pointsReward} pts',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(currentQuest.quest.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          const SizedBox(height: 16),
+                          Text(
+                            currentQuest.quest.title,
+                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                          ),
                           const SizedBox(height: 4),
-                          Text(currentQuest.quest.description, style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                          Text(
+                            currentQuest.quest.description,
+                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(8),
                                   child: LinearProgressIndicator(
                                     value: progress,
-                                    backgroundColor: Colors.white,
-                                    color: Colors.green.shade600,
-                                    minHeight: 10,
+                                    backgroundColor: colorScheme.surfaceContainerHighest,
+                                    color: colorScheme.primary,
+                                    minHeight: 8,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Text(
                                 '${currentQuest.progress}/${currentQuest.quest.goalValue}',
-                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade800),
+                                style: textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
                               ),
                             ],
                           ),
                           if (currentQuest.progress >= currentQuest.quest.goalValue) ...[
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -397,7 +522,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text('Reward Claimed! ${result['points_awarded']} points added.'),
-                                          backgroundColor: Colors.green.shade700,
+                                          backgroundColor: colorScheme.primary,
+                                          behavior: SnackBarBehavior.floating,
                                         ),
                                       );
                                       _fetchData();
@@ -411,13 +537,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade600,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: colorScheme.onPrimary,
                                   elevation: 0,
                                 ),
-                                child: const Text('Claim Reward', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child: const Text('Claim Reward'),
                               ),
                             ),
                           ],
@@ -427,23 +551,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
+            ),
 
-              const SizedBox(height: 32),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-              // Featured Artisans
-              Padding(
+            // Featured Artisans
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Top Traders', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                    TextButton(onPressed: () {}, child: const Text('View All')),
+                    Text('Top Traders', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text('View All', style: TextStyle(color: colorScheme.primary)),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 110,
+            ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 120,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -451,39 +581,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemBuilder: (context, index) {
                     final names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Ethan', 'Fiona'];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.all(3),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: theme.colorScheme.primary, width: 2),
+                              gradient: LinearGradient(
+                                colors: [colorScheme.secondary, colorScheme.primary],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                             ),
                             child: CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.grey.shade200,
+                              radius: 32,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
                               backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=$index'),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(names[index % names.length], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text(
+                            names[index % names.length],
+                            style: textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
                         ],
                       ),
                     );
                   },
                 ),
               ),
+            ),
 
-              const SizedBox(height: 24),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Trending Section
-              Padding(
+            // Trending Section
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Trending Now', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('Trending Now', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -491,14 +634,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const ExploreScreen()),
                         );
                       },
-                      child: const Text('See All'),
+                      child: Text('See All', style: TextStyle(color: colorScheme.primary)),
                     ),
                   ],
                 ),
               ),
-              
-              SizedBox(
-                height: 280,
+            ),
+            
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 290, // Adjusted height for new card style
                 child: FutureBuilder<List<Listing>>(
                   future: _trendingListingsFuture,
                   builder: (context, snapshot) {
@@ -506,17 +651,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       return ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        itemCount: 5,
+                        itemCount: 3,
                         itemBuilder: (context, index) => const SizedBox(
-                          width: 200,
+                          width: 210,
                           child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
                             child: ListingCardShimmer(),
                           ),
                         ),
                       );
                     } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No trending items found.'));
+                      return Center(child: Text('No trending items found.', style: textTheme.bodyMedium));
                     }
  
                     final trending = List<Listing>.from(snapshot.data!)
@@ -529,9 +674,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemCount: topTrending.length,
                       itemBuilder: (context, index) {
                         return SizedBox(
-                          width: 200,
+                          width: 220,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), // Added vertical padding for shadow
                             child: ListingCard(
                               listing: topTrending[index],
                             ),
@@ -542,71 +687,86 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
+            ),
 
-              const SizedBox(height: 24),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // Recent Activity Feed
-              Padding(
+            // Recent Activity Feed
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text('Recent Activity', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                child: Text('Recent Activity', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(height: 16),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: 3,
-                itemBuilder: (context, index) {
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
                   final actions = ['swapped a Camera', 'listed a Mountain Bike', 'completed a Quest'];
                   final times = ['2 mins ago', '15 mins ago', '1 hour ago'];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 12.0),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.grey.shade200,
-                          backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=${index + 10}'),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.black87),
-                                  children: [
-                                    TextSpan(text: 'User${index + 101} ', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    TextSpan(text: actions[index % actions.length]),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(times[index % times.length], style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-                            ],
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: colorScheme.surfaceContainerHighest,
+                            backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=${index + 10}'),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                                    children: [
+                                      TextSpan(
+                                        text: 'User${index + 101} ', 
+                                        style: const TextStyle(fontWeight: FontWeight.bold)
+                                      ),
+                                      TextSpan(
+                                        text: actions[index % actions.length],
+                                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  times[index % times.length],
+                                  style: textTheme.labelSmall?.copyWith(color: colorScheme.outline),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
+                childCount: 3,
               ),
+            ),
 
-              const SizedBox(height: 24),
-              
-              // Recommended Section
-              Padding(
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            
+            // Recommended Section Header
+            SliverToBoxAdapter(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Picked for You', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('Picked for You', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -614,55 +774,68 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const ExploreScreen()),
                         );
                       },
-                      child: const Text('See All'),
+                      child: Text('See All', style: TextStyle(color: colorScheme.primary)),
                     ),
                   ],
                 ),
               ),
-              
-              FutureBuilder<List<Listing>>(
-                future: _recommendationsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return GridView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
+            ),
+            
+            // Recommended Grid
+            FutureBuilder<List<Listing>>(
+              future: _recommendationsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
                         childAspectRatio: 0.7,
                       ),
-                      itemCount: 4,
-                      itemBuilder: (context, index) => const ListingCardShimmer(),
-                    );
-                  } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('No recommendations found.')));
-                  }
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => const ListingCardShimmer(),
+                        childCount: 4,
+                      ),
+                    ),
+                  );
+                } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text('No recommendations found.', style: textTheme.bodyMedium),
+                      ),
+                    ),
+                  );
+                }
 
-                  return GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  sliver: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                       childAspectRatio: 0.7,
                     ),
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      return ListingCard(
-                        listing: snapshot.data![index],
-                      );
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        return ListingCard(
+                          listing: snapshot.data![index],
+                        );
+                      },
+                      childCount: snapshot.data!.length,
+                    ),
+                  ),
+                );
+              },
+            ),
+            
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          ],
         ),
       ),
     );

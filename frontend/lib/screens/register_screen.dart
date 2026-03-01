@@ -1,6 +1,7 @@
 // frontend/lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
 import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,184 +26,288 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  void _handleRegister() async {
+    if (_usernameController.text.isEmpty || 
+        _emailController.text.isEmpty || 
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please fill in all fields'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await Provider.of<AuthProvider>(context, listen: false).signup(
+        _usernameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      if (mounted) {
+        Navigator.pop(context); // Go back to login or home
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      extendBodyBehindAppBar: true,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          // Background decoration
+          // Background Gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    colorScheme.secondaryContainer,
+                    colorScheme.surface,
+                    colorScheme.primaryContainer.withOpacity(0.5),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Background Blobs
           Positioned(
             top: -50,
             left: -50,
-            child: CircleAvatar(
-              radius: 120,
-              backgroundColor: theme.colorScheme.secondary.withOpacity(0.05),
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.secondary.withOpacity(0.2),
+                    blurRadius: 100,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
             bottom: -100,
             right: -100,
-            child: CircleAvatar(
-              radius: 150,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.05),
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.2),
+                    blurRadius: 100,
+                    spreadRadius: 20,
+                  ),
+                ],
+              ),
             ),
           ),
+
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondary.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person_add_rounded,
-                          size: 48,
-                          color: theme.colorScheme.secondary,
+                      // Back Button
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      
+                      const SizedBox(height: 20),
+                      
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [colorScheme.secondary, colorScheme.primary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.secondary.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.person_add_rounded,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       Text(
                         'Join Baterpoint',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Start your trading journey today',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade600,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 32),
-                      Card(
-                        elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextField(
-                                controller: _usernameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Username',
-                                  prefixIcon: Icon(Icons.person_outline_rounded),
+                      const SizedBox(height: 40),
+                      
+                      // Glassmorphic Card
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(32),
+                              border: Border.all(color: Colors.white.withOpacity(0.5)),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.shadow.withOpacity(0.05),
+                                  blurRadius: 24,
+                                  offset: const Offset(0, 8),
                                 ),
-                              ),
-                              const SizedBox(height: 20),
-                              TextField(
-                                controller: _emailController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email',
-                                  prefixIcon: Icon(Icons.email_outlined),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                TextField(
+                                  controller: _usernameController,
+                                  style: TextStyle(fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                                  decoration: InputDecoration(
+                                    labelText: 'Username',
+                                    prefixIcon: Icon(Icons.person_outline_rounded, color: colorScheme.primary),
+                                    fillColor: colorScheme.surface.withOpacity(0.5),
+                                  ),
                                 ),
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 20),
-                              TextField(
-                                controller: _passwordController,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: const Icon(Icons.lock_outline_rounded),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword 
-                                          ? Icons.visibility_off_outlined 
-                                          : Icons.visibility_outlined,
-                                      size: 20,
+                                const SizedBox(height: 20),
+                                TextField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  style: TextStyle(fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                                  decoration: InputDecoration(
+                                    labelText: 'Email',
+                                    prefixIcon: Icon(Icons.email_outlined, color: colorScheme.primary),
+                                    fillColor: colorScheme.surface.withOpacity(0.5),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                TextField(
+                                  controller: _passwordController,
+                                  style: TextStyle(fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: Icon(Icons.lock_outline_rounded, color: colorScheme.primary),
+                                    fillColor: colorScheme.surface.withOpacity(0.5),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscurePassword 
+                                            ? Icons.visibility_off_outlined 
+                                            : Icons.visibility_outlined,
+                                        size: 20,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                     ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                  obscureText: _obscurePassword,
+                                ),
+                                const SizedBox(height: 32),
+                                
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  height: 56,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _handleRegister,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                      elevation: 8,
+                                      shadowColor: colorScheme.primary.withOpacity(0.4),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    child: _isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                        )
+                                      : const Text(
+                                          'Create Account',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        ),
                                   ),
                                 ),
-                                obscureText: _obscurePassword,
-                              ),
-                              const SizedBox(height: 32),
-                              if (auth.isLoading)
-                                const Center(child: CircularProgressIndicator())
-                              else
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    if (_usernameController.text.isEmpty || 
-                                        _emailController.text.isEmpty || 
-                                        _passwordController.text.isEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Please fill in all fields')),
-                                      );
-                                      return;
-                                    }
-                                    try {
-                                      await auth.signup(
-                                        _usernameController.text.trim(),
-                                        _emailController.text.trim(),
-                                        _passwordController.text,
-                                      );
-                                      // On success, AuthProvider will set the user and home screen will show MainScreen
-                                    } catch (e) {
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(e.toString().replaceAll('Exception: ', '')),
-                                            backgroundColor: Colors.red.shade400,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    backgroundColor: theme.colorScheme.primary,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Create Account'),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: RichText(
-                          text: TextSpan(
-                            text: "Already have an account? ",
-                            style: TextStyle(color: Colors.grey.shade600),
-                            children: [
-                              TextSpan(
-                                text: 'Login',
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                      
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Already have an account? ",
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
-                        ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Text(
+                              'Log In',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

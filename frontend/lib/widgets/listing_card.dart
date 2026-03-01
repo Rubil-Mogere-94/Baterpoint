@@ -14,21 +14,24 @@ class ListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: colorScheme.shadow.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -54,48 +57,58 @@ class ListingCard extends StatelessWidget {
                                   imageUrl: listing.imageUrl!,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
-                                    color: Colors.grey.shade100,
-                                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    color: colorScheme.surfaceContainerHighest,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colorScheme.primary,
+                                      ),
+                                    ),
                                   ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(color: Colors.grey.shade200, child: const Icon(Icons.broken_image, color: Colors.grey)),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: colorScheme.surfaceContainerHighest,
+                                    child: Icon(Icons.broken_image, color: colorScheme.onSurfaceVariant),
+                                  ),
                                 )
                               : Container(
-                                  color: Colors.grey.shade100,
-                                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Icon(Icons.image_not_supported, color: colorScheme.onSurfaceVariant),
                                 ),
                         ),
                       ),
-                      // Gradient overlay at bottom of image
+                      // Gradient overlay
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.1)],
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.2),
+                              ],
                             ),
                           ),
                         ),
                       ),
                       Positioned(
-                        top: 10,
-                        right: 10,
+                        top: 12,
+                        right: 12,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withOpacity(0.2)),
                               ),
                               child: Text(
                                 listing.category.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 9,
+                                style: textTheme.labelSmall?.copyWith(
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   letterSpacing: 0.5,
@@ -106,8 +119,8 @@ class ListingCard extends StatelessWidget {
                         ),
                       ),
                       Positioned(
-                        top: 10,
-                        left: 10,
+                        top: 12,
+                        left: 12,
                         child: Consumer<AuthProvider>(
                           builder: (context, auth, _) {
                             if (!auth.isAuthenticated) return const SizedBox.shrink();
@@ -117,9 +130,9 @@ class ListingCard extends StatelessWidget {
                                 auth.toggleFavorite(listing.id);
                               },
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(14),
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                                   child: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
@@ -129,8 +142,8 @@ class ListingCard extends StatelessWidget {
                                     ),
                                     child: Icon(
                                       isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                                      color: isFavorite ? Colors.redAccent : Colors.white,
-                                      size: 18,
+                                      color: isFavorite ? const Color(0xFFEF4444) : Colors.white,
+                                      size: 20,
                                     ),
                                   ),
                                 ),
@@ -143,43 +156,41 @@ class ListingCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(14.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         listing.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Color(0xFF1E293B),
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       if (listing.cashPrice != null && listing.cashPrice! > 0)
                         Text(
                           '\$${listing.cashPrice}',
-                          style: TextStyle(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
                           ),
                         ),
                       if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.swap_horiz_rounded, size: 14, color: Color(0xFF94A3B8)),
-                            const SizedBox(width: 4),
+                            Icon(Icons.swap_horiz_rounded, size: 16, color: colorScheme.secondary),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 listing.exchangeItem!,
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 12,
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -188,36 +199,50 @@ class ListingCard extends StatelessWidget {
                           ],
                         ),
                       ],
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.grey.shade100,
-                            backgroundImage: listing.ownerAvatar != null 
-                              ? CachedNetworkImageProvider(listing.ownerAvatar!)
-                              : null,
-                            child: listing.ownerAvatar == null
-                              ? Text(
-                                  (listing.ownerUsername ?? 'U')[0].toUpperCase(),
-                                  style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold),
-                                )
-                              : null,
+                          Container(
+                            padding: const EdgeInsets.all(1),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
+                            ),
+                            child: CircleAvatar(
+                              radius: 12,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
+                              backgroundImage: listing.ownerAvatar != null 
+                                ? CachedNetworkImageProvider(listing.ownerAvatar!)
+                                : null,
+                              child: listing.ownerAvatar == null
+                                ? Text(
+                                    (listing.ownerUsername ?? 'U')[0].toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  )
+                                : null,
+                            ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               listing.ownerUsername ?? 'Unknown',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF475569), fontWeight: FontWeight.w600),
+                              style: textTheme.labelMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Icon(Icons.star_rounded, size: 12, color: Colors.amber.shade600),
+                          Icon(Icons.star_rounded, size: 14, color: Colors.amber.shade500),
                           const SizedBox(width: 2),
                           Text(
                             listing.ownerRating.toStringAsFixed(1),
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                            style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ],
                       ),
