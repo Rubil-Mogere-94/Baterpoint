@@ -274,6 +274,7 @@ class _InboxScreenState extends State<InboxScreen> {
                       );
                     },
                   ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _startNewChat,
         backgroundColor: Colors.blue,
