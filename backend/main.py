@@ -833,6 +833,98 @@ def get_listings(
         for l in listings
     ]
 
+@app.get("/listings/recommendations", response_model=List[Listing])
+def get_recommendations(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = 10
+):
+    try:
+        # 1. Get categories of user's favorites
+        fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+        fav_categories = [l.category for l in fav_listings]
+        
+        # 2. Get categories of user's own listings
+        own_categories = [l.category for l in current_user.listings]
+        
+        preferred_categories = list(set(fav_categories + own_categories))
+        
+        query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
+        
+        if preferred_categories:
+            query = query.filter(ListingModel.category.in_(preferred_categories))
+        
+        # Sort by view_count for "recommendation" quality
+        recommendations = query.order_by(desc(ListingModel.view_count)).limit(limit).all()
+        
+        # If not enough recommendations, fill with trending items
+        if len(recommendations) < limit:
+            additional_limit = limit - len(recommendations)
+            rec_ids = [r.id for r in recommendations]
+            trending = db.query(ListingModel).filter(
+                ListingModel.user_id != current_user.id,
+                ~ListingModel.id.in_(rec_ids) if rec_ids else True
+            ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
+            recommendations.extend(trending)
+            
+        return [
+            {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+             "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+             "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+             "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
+            for l in recommendations
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching recommendations: {str(e)}")
+
+@app.get("/listings/deal-of-the-hour", response_model=Deal)
+def get_deal_of_the_hour(
+    db: Annotated[Session, Depends(get_db)]
+):
+    try:
+        now = datetime.utcnow()
+        deal = db.query(DealModel).filter(DealModel.end_time > now).first()
+        
+        if not deal:
+            # Create a new deal
+            # Pick a random listing with a price
+            listing = db.query(ListingModel).filter(ListingModel.price > 0).order_by(func.random()).first()
+            if not listing:
+                 raise HTTPException(status_code=404, detail="No suitable listing for a deal")
+            
+            deal = DealModel(
+                listing_id=listing.id,
+                discount_percentage=random.choice([10, 15, 20, 25, 30, 50]),
+                start_time=now,
+                end_time=now + timedelta(hours=1)
+            )
+            db.add(deal)
+            db.commit()
+            db.refresh(deal)
+        
+        # Construct the rich listing dictionary
+        l = deal.listing
+        listing_dict = {
+            "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
+            "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
+            "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
+        }
+        
+        return {
+            "id": deal.id,
+            "listing_id": deal.listing_id,
+            "discount_percentage": deal.discount_percentage,
+            "start_time": deal.start_time,
+            "end_time": deal.end_time,
+            "listing": listing_dict
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error processing deal of the hour: {str(e)}")
+
 @app.get("/listings/{listing_id}", response_model=Listing)
 def get_listing(listing_id: int, request: Request, db: Annotated[Session, Depends(get_db)]):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
@@ -997,50 +1089,6 @@ def get_user_favorites(
          "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
         for l in listings
     ]
-
-@app.get("/listings/recommendations", response_model=List[Listing])
-def get_recommendations(
-    current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-    limit: int = 10
-):
-    try:
-        # 1. Get categories of user's favorites
-        fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
-        fav_categories = [l.category for l in fav_listings]
-        
-        # 2. Get categories of user's own listings
-        own_categories = [l.category for l in current_user.listings]
-        
-        preferred_categories = list(set(fav_categories + own_categories))
-        
-        query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
-        
-        if preferred_categories:
-            query = query.filter(ListingModel.category.in_(preferred_categories))
-        
-        # Sort by view_count for "recommendation" quality
-        recommendations = query.order_by(desc(ListingModel.view_count)).limit(limit).all()
-        
-        # If not enough recommendations, fill with trending items
-        if len(recommendations) < limit:
-            additional_limit = limit - len(recommendations)
-            rec_ids = [r.id for r in recommendations]
-            trending = db.query(ListingModel).filter(
-                ListingModel.user_id != current_user.id,
-                ~ListingModel.id.in_(rec_ids) if rec_ids else True
-            ).order_by(desc(ListingModel.view_count)).limit(additional_limit).all()
-            recommendations.extend(trending)
-            
-        return [
-            {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
-             "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-             "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-             "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews}
-            for l in recommendations
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching recommendations: {str(e)}")
 
 # --- Offers Endpoints ---
 
@@ -1328,53 +1376,7 @@ def update_quest_progress(user_id: int, goal_type: str, db: Session, amount: int
             uq.last_updated = datetime.utcnow()
     db.commit()
 
-@app.get("/listings/deal-of-the-hour", response_model=Deal)
-def get_deal_of_the_hour(
-    db: Annotated[Session, Depends(get_db)]
-):
-    try:
-        now = datetime.utcnow()
-        deal = db.query(DealModel).filter(DealModel.end_time > now).first()
-        
-        if not deal:
-            # Create a new deal
-            # Pick a random listing with a price
-            listing = db.query(ListingModel).filter(ListingModel.price > 0).order_by(func.random()).first()
-            if not listing:
-                 raise HTTPException(status_code=404, detail="No suitable listing for a deal")
-            
-            deal = DealModel(
-                listing_id=listing.id,
-                discount_percentage=random.choice([10, 15, 20, 25, 30, 50]),
-                start_time=now,
-                end_time=now + timedelta(hours=1)
-            )
-            db.add(deal)
-            db.commit()
-            db.refresh(deal)
-        
-        # Construct the rich listing dictionary
-        l = deal.listing
-        listing_dict = {
-            "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
-            "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-            "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews
-        }
-        
-        return {
-            "id": deal.id,
-            "listing_id": deal.listing_id,
-            "discount_percentage": deal.discount_percentage,
-            "start_time": deal.start_time,
-            "end_time": deal.end_time,
-            "listing": listing_dict
-        }
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error processing deal of the hour: {str(e)}")
+# --- Loyalty Shop Endpoints ---
 
 # --- Loyalty Shop Endpoints ---
 

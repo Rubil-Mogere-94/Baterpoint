@@ -229,8 +229,6 @@ def test_recommendations(client, db):
     app.dependency_overrides[get_current_user] = lambda: user
     
     response = client.get("/listings/recommendations")
-    if response.status_code != 200:
-        print(f"DEBUG: recommendations response: {response.json()}")
     assert response.status_code == 200
     assert len(response.json()) > 0
     assert response.json()[0]["id"] == listing.id
@@ -264,13 +262,11 @@ def test_deal_of_the_hour(client, db):
     user = UserModel(username="seller2", email="seller2@example.com", hashed_password="hashed")
     db.add(user)
     db.commit()
-    listing = ListingModel(title="Deal Item", category="Tech", price=100.0, user_id=user.id)
+    listing = ListingModel(title="Deal Item", category="Tech", price=100.0, user_id=user.id, trade_type="Sale")
     db.add(listing)
     db.commit()
 
     response = client.get("/listings/deal-of-the-hour")
-    if response.status_code != 200:
-        print(f"DEBUG: deal-of-the-hour response: {response.json()}")
     assert response.status_code == 200
     assert "discount_percentage" in response.json()
     assert response.json()["listing"]["id"] == listing.id
