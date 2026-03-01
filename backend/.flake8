@@ -1,0 +1,10 @@
+[flake8]
+exclude =
+    backend/venv,
+    **/venv,
+    __pycache__,
+    .pytest_cache,
+    .git,
+    build,
+    dist
+max-line-length = 120
