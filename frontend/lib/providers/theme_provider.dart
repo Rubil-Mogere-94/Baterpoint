@@ -5,8 +5,21 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeMode get themeMode => _themeMode;
 
-  void toggleTheme(bool isDark) {
-    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+  bool get isDarkMode {
+    if (_themeMode == ThemeMode.system) {
+      // In a real app we might check the platform brightness, 
+      // but for simplicity we'll treat system as not dark unless explicit
+      return false; 
+    }
+    return _themeMode == ThemeMode.dark;
+  }
+
+  void toggleTheme([bool? isDark]) {
+    if (isDark != null) {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    } else {
+      _themeMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+    }
     notifyListeners();
   }
 }

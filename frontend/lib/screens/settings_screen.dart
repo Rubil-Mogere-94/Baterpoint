@@ -33,7 +33,7 @@ class SettingsScreen extends StatelessWidget {
             onTap: () {},
           ),
           ListTile(
-            leading: const Icon(Icons.privacy_tip_outline),
+            leading: const Icon(Icons.privacy_tip),
             title: const Text('Privacy Settings'),
             onTap: () {},
           ),
@@ -43,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Dark Mode'),
             value: themeProvider.isDarkMode,
             onChanged: (value) {
-              themeProvider.toggleTheme();
+              themeProvider.toggleTheme(value);
             },
           ),
           ListTile(
