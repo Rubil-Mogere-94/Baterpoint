@@ -232,24 +232,20 @@ class _ChatScreenState extends State<ChatScreen> {
       appBarSubtitle = widget.forumCategory ?? 'General';
     } else if (widget.recipientName != null) {
       appBarTitle = widget.recipientName!;
-      // Simplified subtitle logic
       if (widget.tradeId != null) {
-        appBarSubtitle = 'Trade #${widget.tradeId}';
+        appBarSubtitle = 'Discussing Trade #${widget.tradeId}';
       }
-    } else if (widget.tradeId != null) {
-      appBarTitle = 'Negotiation Chat';
-      appBarSubtitle = 'Trade #${widget.tradeId}';
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7), // Slightly darker background for contrast
+      backgroundColor: Colors.white,
       appBar: AppBar(
         titleSpacing: 0,
         title: Row(
           children: [
             if (!_isForum && widget.recipientAvatar != null)
               Padding(
-                padding: const EdgeInsets.only(right: 10),
+                padding: const EdgeInsets.only(right: 12),
                 child: CircleAvatar(
                   radius: 18,
                   backgroundImage: CachedNetworkImageProvider(widget.recipientAvatar!),
@@ -258,170 +254,175 @@ class _ChatScreenState extends State<ChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(appBarTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87)),
+                Text(appBarTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                 if (appBarSubtitle.isNotEmpty)
-                  Text(appBarSubtitle, style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.green.shade700)),
+                  Text(appBarSubtitle, style: TextStyle(fontSize: 11, color: Colors.indigo.shade600, fontWeight: FontWeight.w600)),
               ],
             ),
           ],
         ),
         backgroundColor: Colors.white,
-        elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey.shade100, height: 1),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black54),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isMe = msg.sender == currentUsername;
-                final showDate = _shouldShowDateSeparator(index);
-                
-                return Column(
-                  children: [
-                    if (showDate)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            DateFormat.yMMMd().format(msg.timestamp),
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.blue.shade50.withOpacity(0.3)],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                itemCount: _messages.length,
+                itemBuilder: (context, index) {
+                  final msg = _messages[index];
+                  final isMe = msg.sender == currentUsername;
+                  final showDate = _shouldShowDateSeparator(index);
+                  
+                  return Column(
+                    children: [
+                      if (showDate)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Text(
+                                DateFormat.yMMMd().format(msg.timestamp),
+                                style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                              ),
+                            ),
                           ),
                         ),
+                      _ChatBubble(
+                        message: msg.message,
+                        sender: msg.sender,
+                        timestamp: msg.timestamp,
+                        imageUrl: msg.imageUrl,
+                        isRead: msg.isRead,
+                        isMe: isMe,
+                        avatarUrl: !isMe && !_isForum ? widget.recipientAvatar : null,
                       ),
-                    _ChatBubble(
-                      message: msg.message,
-                      sender: msg.sender,
-                      timestamp: msg.timestamp,
-                      imageUrl: msg.imageUrl,
-                      isRead: msg.isRead,
-                      isMe: isMe,
-                      avatarUrl: !isMe && !_isForum ? widget.recipientAvatar : null, // Show avatar for 1:1 if available
+                    ],
+                  );
+                },
+              ),
+            ),
+            if (_typingUser != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.indigo.shade300),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      '$_typingUser is typing...',
+                      style: TextStyle(fontSize: 12, color: const Color(0xFF64748B), fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
                     ),
                   ],
-                );
-              },
-            ),
-          ),
-          if (_typingUser != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey.shade400),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$_typingUser is typing...',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
-                  ),
-                ],
-              ),
-            ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), // Extra bottom padding for iOS home indicator
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5),
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.add_photo_alternate_rounded, color: Colors.grey.shade600),
-                      onPressed: _isSendingImage ? null : _pickImage,
-                    ),
+              ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        onChanged: _onTextChanged,
-                        style: const TextStyle(fontSize: 16),
-                        decoration: InputDecoration(
-                          hintText: 'Message...',
-                          hintStyle: TextStyle(color: Colors.grey.shade500),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          isDense: true,
-                        ),
-                        maxLines: 5,
-                        minLines: 1,
-                        textCapitalization: TextCapitalization.sentences,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  _isSendingImage 
-                    ? const Padding(padding: EdgeInsets.only(bottom: 8, right: 8), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
-                    : Container(
-                        margin: const EdgeInsets.only(bottom: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_upward_rounded, color: Colors.white, size: 24),
-                          onPressed: () {
-                            if (_messageController.text.trim().isNotEmpty) {
-                              _sendMessage(_messageController.text.trim());
-                              _messageController.clear();
-                              if (!_isForum) _chatService.sendTypingStatus(false);
-                            }
-                          },
-                        ),
-                      ),
                 ],
               ),
+              child: SafeArea(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 2),
+                      child: IconButton(
+                        icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF94A3B8), size: 28),
+                        onPressed: _isSendingImage ? null : _pickImage,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: TextField(
+                          controller: _messageController,
+                          onChanged: _onTextChanged,
+                          style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
+                          decoration: InputDecoration(
+                            hintText: 'Type your message...',
+                            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            isDense: true,
+                          ),
+                          maxLines: 5,
+                          minLines: 1,
+                          textCapitalization: TextCapitalization.sentences,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _isSendingImage 
+                      ? const Padding(padding: EdgeInsets.only(bottom: 8), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
+                      : Container(
+                          margin: const EdgeInsets.only(bottom: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                            onPressed: () {
+                              if (_messageController.text.trim().isNotEmpty) {
+                                _sendMessage(_messageController.text.trim());
+                                _messageController.clear();
+                                if (!_isForum) _chatService.sendTypingStatus(false);
+                              }
+                            },
+                          ),
+                        ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -453,7 +454,7 @@ class _ChatBubble extends StatelessWidget {
     final timeString = DateFormat.jm().format(timestamp);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(
         crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
@@ -463,32 +464,32 @@ class _ChatBubble extends StatelessWidget {
             children: [
               if (!isMe)
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 10, bottom: 2),
                   child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.grey.shade300,
+                    radius: 14,
+                    backgroundColor: const Color(0xFFF1F5F9),
                     backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl!) : null,
                     child: avatarUrl == null 
-                        ? Text(sender[0].toUpperCase(), style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.bold))
+                        ? Text(sender[0].toUpperCase(), style: const TextStyle(fontSize: 10, color: Color(0xFF475569), fontWeight: FontWeight.bold))
                         : null,
                   ),
                 ),
               Flexible(
                 child: Container(
-                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
                   decoration: BoxDecoration(
                     color: isMe ? theme.colorScheme.primary : Colors.white,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
-                      bottomLeft: Radius.circular(isMe ? 20 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 20),
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isMe ? 18 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 18),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -497,12 +498,12 @@ class _ChatBubble extends StatelessWidget {
                     children: [
                       if (imageUrl != null)
                         Padding(
-                          padding: const EdgeInsets.all(4.0),
+                          padding: const EdgeInsets.all(6.0),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             child: CachedNetworkImage(
                               imageUrl: imageUrl!,
-                              placeholder: (context, url) => Container(width: 200, height: 150, color: Colors.grey.shade100),
+                              placeholder: (context, url) => Container(width: 200, height: 150, color: const Color(0xFFF8FAFC)),
                               errorWidget: (context, url, error) => const Icon(Icons.error),
                               fit: BoxFit.cover,
                             ),
@@ -514,9 +515,10 @@ class _ChatBubble extends StatelessWidget {
                           child: Text(
                             message,
                             style: TextStyle(
-                              color: isMe ? Colors.white : Colors.black87,
-                              fontSize: 16,
-                              height: 1.3,
+                              color: isMe ? Colors.white : const Color(0xFF334155),
+                              fontSize: 15,
+                              height: 1.4,
+                              fontWeight: isMe ? FontWeight.w500 : FontWeight.normal,
                             ),
                           ),
                         ),
@@ -527,20 +529,20 @@ class _ChatBubble extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: EdgeInsets.only(top: 4, left: isMe ? 0 : 40, right: isMe ? 0 : 0),
+            padding: EdgeInsets.only(top: 6, left: isMe ? 0 : 38, right: isMe ? 4 : 0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   timeString,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),
                   Icon(
-                    isRead ? Icons.done_all_rounded : Icons.check_rounded,
-                    size: 16,
-                    color: isRead ? Colors.blue.shade600 : Colors.grey.shade400,
+                    isRead ? Icons.done_all_rounded : Icons.done_rounded,
+                    size: 14,
+                    color: isRead ? Colors.indigo.shade400 : const Color(0xFFCBD5E1),
                   ),
                 ],
               ],
