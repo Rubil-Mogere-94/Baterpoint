@@ -205,11 +205,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           child: Row(
                             children: [
                               CircleAvatar(
+                                radius: 24,
                                 backgroundColor: theme.colorScheme.secondaryContainer,
-                                child: Text(
-                                  (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
-                                  style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold),
-                                ),
+                                backgroundImage: _currentListing.ownerAvatar != null
+                                    ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
+                                    : null,
+                                child: _currentListing.ownerAvatar == null
+                                    ? Text(
+                                        (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
+                                        style: TextStyle(color: theme.colorScheme.onSecondaryContainer, fontWeight: FontWeight.bold, fontSize: 18),
+                                      )
+                                    : null,
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -330,7 +336,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ChatScreen(tradeId: _currentListing.id),
+                        builder: (context) => ChatScreen(
+                          tradeId: _currentListing.id,
+                          recipientId: _currentListing.userId,
+                          recipientName: _currentListing.ownerUsername,
+                          recipientAvatar: _currentListing.ownerAvatar,
+                        ),
                       ),
                     );
                   },
