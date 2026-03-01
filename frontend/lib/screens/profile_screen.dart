@@ -8,6 +8,10 @@ import '../providers/theme_provider.dart';
 import 'edit_profile_screen.dart';
 import 'listing_detail_screen.dart';
 import 'loyalty_shop_screen.dart';
+import 'wallet_screen.dart';
+import 'wishlist_screen.dart';
+import 'settings_screen.dart';
+import 'support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -117,41 +121,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const SizedBox(height: 24),
                     
-                    // Loyalty Shop Entry
-                    Card(
-                      elevation: 0,
-                      color: theme.colorScheme.primaryContainer.withOpacity(0.2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.1)),
-                      ),
-                      child: ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.shopping_basket_rounded, color: Colors.orange),
+                    // Premium Menu Grid
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _buildMenuCard(
+                          context,
+                          'My Wallet',
+                          '${user?.loyaltyPoints ?? 0} pts',
+                          Icons.account_balance_wallet_rounded,
+                          Colors.blue,
+                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen())),
                         ),
-                        title: const Text('Loyalty Shop', style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text('Redeem your points for premium rewards'),
-                        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoyaltyShopScreen()),
-                          ).then((_) => auth.refreshUser());
-                        },
-                      ),
+                        _buildMenuCard(
+                          context,
+                          'Wishlist',
+                          'Saved items',
+                          Icons.favorite_rounded,
+                          Colors.red,
+                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistScreen())),
+                        ),
+                        _buildMenuCard(
+                          context,
+                          'Loyalty Shop',
+                          'Redeem rewards',
+                          Icons.shopping_basket_rounded,
+                          Colors.orange,
+                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoyaltyShopScreen())).then((_) => auth.refreshUser()),
+                        ),
+                        _buildMenuCard(
+                          context,
+                          'Support',
+                          'Get help',
+                          Icons.support_agent_rounded,
+                          Colors.teal,
+                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportScreen())),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.bold)),
-                      secondary: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode),
-                      value: themeProvider.themeMode == ThemeMode.dark,
-                      onChanged: (value) {
-                        themeProvider.toggleTheme(value);
+                    ListTile(
+                      leading: const Icon(Icons.settings_outlined),
+                      title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
                       },
                     ),
                   ],
@@ -304,6 +323,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
         ),
       ],
+    );
+  }
+
+  Widget _buildMenuCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, color: color, size: 28),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

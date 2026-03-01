@@ -130,7 +130,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   initialPage: 0,
                   autoPlayInterval: const Duration(seconds: 4),
                 ),
-                items: promoImages.map((imageUrl) {
+                items: promoImages.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final imageUrl = entry.value;
+                  final labels = ['Flash Sale!', 'New Arrivals', 'Premium Deals'];
+                  
                   return Builder(
                     builder: (BuildContext context) {
                       return Container(
@@ -143,26 +147,38 @@ class _HomeScreenState extends State<HomeScreen> {
                             fit: BoxFit.cover,
                             colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.3), BlendMode.darken),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            )
-                          ]
                         ),
-                        child: Align(
-                          alignment: Alignment.bottomLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              'Special Offers',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 16,
+                              left: 16,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'LIMITED TIME',
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    labels[index % labels.length],
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       );
                     },
@@ -344,6 +360,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 24),
 
+              // Featured Artisans
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Featured Artisans', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    TextButton(onPressed: () {}, child: const Text('View All')),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: 6,
+                  itemBuilder: (context, index) {
+                    final names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Ethan', 'Fiona'];
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=$index'),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(names[index % names.length], style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
               // Trending Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -380,12 +434,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
                       return const Center(child: Text('No trending items found.'));
                     }
-
+ 
                     // Sort by viewCount locally just for display purposes
                     final trending = List<Listing>.from(snapshot.data!)
                       ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
                     final topTrending = trending.take(5).toList();
-
+ 
                     return ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -404,6 +458,49 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Recent Activity Feed
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text('Recent Activity', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 12),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  final actions = ['swaped a Camera', 'listed a Mountain Bike', 'completed a Quest'];
+                  final times = ['2 mins ago', '15 mins ago', '1 hour ago'];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 12,
+                          backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=${index + 10}'),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: theme.textTheme.bodySmall,
+                              children: [
+                                TextSpan(text: 'User${index + 101} ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                TextSpan(text: actions[index % actions.length]),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Text(times[index % times.length], style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: Colors.grey)),
+                      ],
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 16),
