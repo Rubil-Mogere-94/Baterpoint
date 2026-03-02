@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../constants/ui_constants.dart';
 import 'categories_screen.dart';
+import 'smart_match_screen.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'inbox_screen.dart';
@@ -20,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    CategoriesScreen(),
+    const SmartMatchScreen(),
     const ExploreScreen(),
     const InboxScreen(),
     const OffersScreen(),
@@ -58,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-                    _buildNavItem(1, Icons.grid_view_rounded, Icons.grid_view_outlined, 'Categories'),
+                    _buildNavItem(1, Icons.auto_awesome_rounded, Icons.auto_awesome_outlined, 'Matches'),
                     _buildNavItem(2, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
                     _buildNavItem(3, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Inbox'),
                     _buildNavItem(4, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),

@@ -1,10 +1,10 @@
-// frontend/lib/screens/explore_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
-import 'create_listing_screen.dart';
-import '../widgets/listing_card.dart';
+import '../screens/listing_detail_screen.dart';
+import '../constants/ui_constants.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -15,328 +15,231 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final ListingService _listingService = ListingService();
-  List<Listing> _listings = [];
-  bool _isLoading = true;
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
-  String? _selectedTradeType;
-  String _sortBy = 'created_at';
-  String _sortOrder = 'desc';
-  Timer? _debounce;
-  
-  final ScrollController _scrollController = ScrollController();
-  int _skip = 0;
-  final int _limit = 20;
-  bool _hasMore = true;
-  bool _isFetchingMore = false;
-
-  final List<String> _categories = [
-    'All',
-    'Electronics',
-    'Vehicles',
-    'Home',
-    'Fashion',
-    'Sports',
-    'Services',
-    'Other'
-  ];
-
-  final List<String> _tradeTypes = ['Both', 'Cash Only', 'Barter Only'];
+  final PageController _pageController = PageController();
+  late Future<List<Listing>> _exploreFeedFuture;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-    _fetchListings();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
-        !_isLoading && !_isFetchingMore && _hasMore) {
-      _fetchListings(reset: false);
-    }
+    _exploreFeedFuture = _listingService.fetchListings(limit: 20); // Fetch a feed of items
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
-    _scrollController.dispose();
+    _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _fetchListings({bool reset = true}) async {
-    if (reset) {
-      setState(() {
-        _isLoading = true;
-        _skip = 0;
-        _hasMore = true;
-        _listings.clear();
-      });
-    } else {
-      if (_isFetchingMore || !_hasMore) return;
-      setState(() => _isFetchingMore = true);
-    }
-    
-    try {
-      final newListings = await _listingService.fetchListings(
-        search: _searchQuery,
-        category: _selectedCategory,
-        tradeType: _selectedTradeType == 'Both' ? null : _selectedTradeType,
-        sortBy: _sortBy,
-        order: _sortOrder,
-        skip: _skip,
-        limit: _limit,
-      );
-      if (mounted) {
-        setState(() {
-          if (reset) {
-            _listings = newListings;
-          } else {
-            _listings.addAll(newListings);
-          }
-          _skip += newListings.length;
-          _hasMore = newListings.length == _limit;
-          _isLoading = false;
-          _isFetchingMore = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isFetchingMore = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading listings: $e')),
-        );
-      }
-    }
-  }
-
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (_searchQuery != query) {
-        _searchQuery = query;
-        _fetchListings();
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: RefreshIndicator(
-        onRefresh: () => _fetchListings(reset: true),
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              pinned: true,
-              expandedHeight: 140.0,
-              flexibleSpace: FlexibleSpaceBar(
-                title: const Text(
-                  'Explore Trades',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Discover', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+        ],
+      ),
+      body: FutureBuilder<List<Listing>>(
+        future: _exploreFeedFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.white));
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No items to explore.', style: TextStyle(color: Colors.white)));
+          }
+
+          final listings = snapshot.data!;
+
+          return PageView.builder(
+            controller: _pageController,
+            scrollDirection: Axis.vertical,
+            itemCount: listings.length,
+            itemBuilder: (context, index) {
+              return _ExploreItemPage(listing: listings[index]);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ExploreItemPage extends StatelessWidget {
+  final Listing listing;
+
+  const _ExploreItemPage({required this.listing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Full Screen Image
+        GestureDetector(
+          onTap: () {
+             Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ListingDetailScreen(listing: listing),
                 ),
-                centerTitle: false,
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
-                      ],
-                    ),
-                  ),
+              );
+          },
+          child: listing.imageUrl != null
+              ? CachedNetworkImage(
+                  imageUrl: listing.imageUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(color: Colors.grey[900]),
+                  errorWidget: (context, url, error) => Container(color: Colors.grey[900], child: const Icon(Icons.error, color: Colors.white)),
+                )
+              : Container(color: Colors.grey[900], child: const Icon(Icons.image_not_supported, color: Colors.white)),
+        ),
+
+        // Gradient Overlay
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withOpacity(0.3),
+                Colors.transparent,
+                Colors.black.withOpacity(0.8),
+              ],
+              stops: const [0.0, 0.6, 1.0],
+            ),
+          ),
+        ),
+
+        // Content
+        Positioned(
+          bottom: 100, // Adjusted for bottom nav
+          left: 20,
+          right: 80, // Space for side actions
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                ),
+                child: Text(
+                  listing.category.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
-              actions: [
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.sort_rounded, color: Colors.white),
-                  onSelected: (value) {
-                    setState(() {
-                      if (value == 'price_asc') {
-                        _sortBy = 'price';
-                        _sortOrder = 'asc';
-                      } else if (value == 'price_desc') {
-                        _sortBy = 'price';
-                        _sortOrder = 'desc';
-                      } else {
-                        _sortBy = 'created_at';
-                        _sortOrder = 'desc';
-                      }
-                    });
-                    _fetchListings();
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'newest', child: Text('Newest First')),
-                    const PopupMenuItem(value: 'price_asc', child: Text('Price: Low to High')),
-                    const PopupMenuItem(value: 'price_desc', child: Text('Price: High to Low')),
-                  ],
+              const SizedBox(height: 12),
+              Text(
+                listing.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
                 ),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(height: 8),
+              if (listing.cashPrice != null)
+                Text(
+                  '\$${listing.cashPrice}',
+                  style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search items...',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      onChanged: _onSearchChanged,
-                    ),
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
+                    child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 16) : null,
                   ),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: _categories.map((category) {
-                        final isSelected = _selectedCategory == category;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(category),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCategory = category;
-                              });
-                              _fetchListings();
-                            },
-                            backgroundColor: Colors.white,
-                            selectedColor: theme.colorScheme.primaryContainer,
-                            labelStyle: TextStyle(
-                              color: isSelected ? theme.colorScheme.primary : Colors.grey.shade700,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                color: isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
-                                width: 1,
-                              ),
-                            ),
-                            showCheckmark: false,
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: [
-                        Text('Accepting:', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 12),
-                        ..._tradeTypes.map((type) {
-                          final isSelected = (_selectedTradeType ?? 'Both') == type;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(type, style: TextStyle(fontSize: 12)),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                if (selected) {
-                                  setState(() {
-                                    _selectedTradeType = type;
-                                  });
-                                  _fetchListings();
-                                }
-                              },
-                              backgroundColor: Colors.white,
-                              selectedColor: theme.colorScheme.secondaryContainer,
-                              labelStyle: TextStyle(
-                                color: isSelected ? theme.colorScheme.secondary : Colors.grey.shade600,
-                              ),
-                              showCheckmark: false,
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                  const SizedBox(width: 8),
+                  Text(
+                    listing.ownerUsername ?? 'Unknown Trader',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
-            ),
-            if (_isLoading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_listings.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No trades found',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.all(16.0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final listing = _listings[index];
-                      return ListingCard(listing: listing);
-                    },
-                    childCount: _listings.length,
-                  ),
-                ),
-              ),
-            if (_isFetchingMore)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateListingScreen()),
-          );
-          if (result == true) {
-            _fetchListings();
-          }
-        },
-        child: const Icon(Icons.add_rounded),
+
+        // Side Actions
+        Positioned(
+          bottom: 100,
+          right: 10,
+          child: Column(
+            children: [
+              _SideActionButton(icon: Icons.favorite_border_rounded, label: 'Save', onTap: () {}),
+              const SizedBox(height: 20),
+              _SideActionButton(icon: Icons.comment_rounded, label: 'Chat', onTap: () {}),
+              const SizedBox(height: 20),
+              _SideActionButton(icon: Icons.share_rounded, label: 'Share', onTap: () {}),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ListingDetailScreen(listing: listing),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).primaryColor,
+                    boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.5), blurRadius: 10)],
+                  ),
+                  child: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SideActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SideActionButton({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black.withOpacity(0.4),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+        ],
       ),
     );
   }
