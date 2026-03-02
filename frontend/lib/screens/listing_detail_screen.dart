@@ -85,8 +85,8 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       pinned: true,
                       stretch: true,
                       backgroundColor: colorScheme.surface,
-                      iconTheme: IconThemeData(color: Colors.white),
-                      actionsIconTheme: IconThemeData(color: Colors.white),
+                      iconTheme: const IconThemeData(color: Colors.white),
+                      actionsIconTheme: const IconThemeData(color: Colors.white),
                       leading: Container(
                         margin: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -116,12 +116,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   ),
                                   errorWidget: (context, url, error) => Container(
                                     color: colorScheme.surfaceContainerHighest,
-                                    child: Icon(Icons.broken_image, size: 64, color: colorScheme.onSurfaceVariant),
+                                    child: const Icon(Icons.broken_image, size: 64, color: Colors.grey),
                                   ),
                                 )
                               : Container(
                                   color: colorScheme.surfaceContainerHighest,
-                                  child: Icon(Icons.image_not_supported, size: 64, color: colorScheme.onSurfaceVariant),
+                                  child: const Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
                                 ),
                         ),
                       ),
@@ -208,7 +208,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Category Chip
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
@@ -226,7 +225,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,8 +258,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                 ],
                               ),
                               const SizedBox(height: 24),
-
-                              // Sustainability Score Card
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -303,8 +299,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                 ),
                               ),
                               const SizedBox(height: 32),
-                              
-                              // Seller Info Block
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -314,29 +308,22 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: colorScheme.primary.withOpacity(0.5)),
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 24,
-                                        backgroundColor: colorScheme.surfaceContainerHighest,
-                                        backgroundImage: _currentListing.ownerAvatar != null
-                                            ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
-                                            : null,
-                                        child: _currentListing.ownerAvatar == null
-                                            ? Text(
-                                                (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
-                                                style: TextStyle(
-                                                  color: colorScheme.primary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
+                                    CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: colorScheme.surfaceContainerHighest,
+                                      backgroundImage: _currentListing.ownerAvatar != null
+                                          ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
+                                          : null,
+                                      child: _currentListing.ownerAvatar == null
+                                          ? Text(
+                                              (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
+                                              style: TextStyle(
+                                                color: colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            )
+                                          : null,
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
@@ -373,9 +360,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                     ),
                                     IconButton(
                                       icon: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: colorScheme.surface,
-                                      ),
                                       onPressed: () {
                                          Navigator.push(
                                           context,
@@ -393,7 +377,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   ],
                                 ),
                               ),
-                              
                               const SizedBox(height: 32),
                               if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
                                 Text(
@@ -421,14 +404,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   ),
                                   child: Row(
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: colorScheme.secondary.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary),
-                                      ),
+                                      Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary),
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Text(
@@ -456,9 +432,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   height: 1.6,
                                 ),
                               ),
-
                               const SizedBox(height: 32),
-                              // Amazon-like Reviews Section
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -469,11 +443,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   if (_currentListing.reviews.isNotEmpty)
                                     Row(
                                       children: [
-                                        Icon(Icons.star, color: Colors.amber, size: 20),
+                                        const Icon(Icons.star, color: Colors.amber, size: 20),
                                         const SizedBox(width: 4),
                                         Text(
                                           _currentListing.averageRating.toStringAsFixed(1),
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                         ),
                                       ],
                                     ),
@@ -492,8 +466,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ],
                 ),
           ),
-
-          // Improved Bottom Bar - Amazon Style
           if (!isOwner)
             Positioned(
               bottom: 0,
@@ -501,7 +473,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               right: 0,
               child: Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
                 ),
@@ -510,12 +482,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => _addToCart(context),
-                        child: Text('Add to Cart', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           side: BorderSide(color: Colors.grey[300]!),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
+                        child: const Text('Add to Cart', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -524,222 +496,22 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         onPressed: () {
                            Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => CheckoutScreen()),
+                            MaterialPageRoute(builder: (context) => CheckoutScreen(listing: _currentListing)),
                           );
                         },
-                        child: Text('Buy Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF9900), // Amazon Orange
-                          padding: EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: const Color(0xFFFF9900), // Amazon Orange
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
+                        child: const Text('Buy Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            _showMakeOfferModal(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 0,
-                          ),
-                          child: const Text('Make Offer', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildChip(BuildContext context, {required String label, required Color color, required IconData icon, bool isOutline = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isOutline ? Colors.transparent : color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isOutline ? color.withOpacity(0.5) : Colors.transparent,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showMakeOfferModal(BuildContext context) {
-    // ... existing modal code, updated to use theme ...
-    final priceController = TextEditingController();
-    final itemController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-    bool isSubmitting = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
-          
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 24,
-              right: 24,
-              top: 32,
-            ),
-            child: Form(
-              key: formKey,
-              child: Builder(builder: (context) {
-                final tType = _currentListing.tradeType?.toLowerCase() ?? '';
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Make an Offer', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                        IconButton(
-                          icon: const Icon(Icons.close), 
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text('Propose a price or an item to trade for this listing.', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 32),
-                    if (tType.contains('sale') || tType.contains('cash') || tType == 'both') ...[
-                      TextFormField(
-                        controller: priceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        style: TextStyle(color: colorScheme.onSurface),
-                        decoration: InputDecoration(
-                          labelText: 'Offer Price (\$)',
-                          prefixIcon: Icon(Icons.attach_money, color: colorScheme.primary),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                        ),
-                        validator: (value) {
-                          if ((tType.contains('sale') || tType.contains('cash')) && (value == null || value.isEmpty)) {
-                            return 'Please enter a price';
-                          }
-                          if (value != null && value.isNotEmpty && double.tryParse(value) == null) {
-                            return 'Please enter a valid number';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    // ... Bundle selection items would go here, styling updated similarly ...
-                    if (tType.contains('trade') || tType.contains('barter') || tType == 'both') ...[
-                       TextFormField(
-                        controller: itemController,
-                        maxLines: 2,
-                        style: TextStyle(color: colorScheme.onSurface),
-                        decoration: InputDecoration(
-                          labelText: 'Trading Bundle Items',
-                          hintText: 'Describe items you want to trade...',
-                          prefixIcon: Icon(Icons.inventory_2_outlined, color: colorScheme.primary),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                          filled: true,
-                          fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                        ),
-                        validator: (value) {
-                          if ((tType.contains('trade') || tType.contains('barter')) && (value == null || value.isEmpty)) {
-                            return 'Please describe your offer';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                    ],
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isSubmitting ? null : () async {
-                          if (formKey.currentState!.validate()) {
-                            if (tType == 'both' && priceController.text.isEmpty && itemController.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please offer a price or an item.')));
-                              return;
-                            }
-                            setModalState(() => isSubmitting = true);
-                            try {
-                              await _offerService.makeOffer(
-                                _currentListing.id,
-                                offeredPrice: priceController.text.isNotEmpty ? double.parse(priceController.text) : null,
-                                offeredItem: itemController.text.isNotEmpty ? itemController.text : null,
-                              );
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Offer sent successfully!'),
-                                    backgroundColor: colorScheme.primary,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                              }
-                            } finally {
-                              if (mounted) setModalState(() => isSubmitting = false);
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          elevation: 0,
-                        ),
-                        child: isSubmitting 
-                          ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary))
-                          : const Text('Submit Offer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-                );
-              }),
-            ),
-          );
-        },
       ),
     );
   }
