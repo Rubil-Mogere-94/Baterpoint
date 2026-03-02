@@ -9,6 +9,7 @@ import '../models/quest.dart';
 import '../services/listing_service.dart';
 import '../services/quest_service.dart';
 import '../widgets/listing_card.dart';
+import '../constants/ui_constants.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'explore_screen.dart';
@@ -97,18 +98,19 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: () async => _fetchData(),
         color: colorScheme.primary,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
               floating: true,
               pinned: true,
               snap: false,
-              backgroundColor: colorScheme.surface.withOpacity(0.9),
+              backgroundColor: colorScheme.surface.withOpacity(0.8),
               surfaceTintColor: Colors.transparent,
               elevation: 0,
-              expandedHeight: 60,
+              expandedHeight: 70,
               flexibleSpace: ClipRRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                   child: FlexibleSpaceBar(
                     background: Container(color: Colors.transparent),
                   ),
@@ -117,37 +119,51 @@ class _HomeScreenState extends State<HomeScreen> {
               title: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [colorScheme.primary, colorScheme.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppRadius.roundedMD,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 20),
+                    child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 22),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Text(
                     'Baterpoint',
                     style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       color: colorScheme.onSurface,
-                      letterSpacing: -0.5,
+                      letterSpacing: -1.0,
                     ),
                   ),
                 ],
               ),
               actions: [
-                IconButton(
-                  icon: Icon(Icons.notifications_outlined, color: colorScheme.onSurface),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                    );
-                  },
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 26),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -155,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
             
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                padding: const EdgeInsets.fromLTRB(AppPadding.md, AppPadding.md, AppPadding.md, AppPadding.lg),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -164,23 +180,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                      color: colorScheme.surface,
+                      borderRadius: AppRadius.roundedXL,
+                      border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+                      boxShadow: AppShadows.soft,
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search_rounded, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 12),
+                        Icon(Icons.search_rounded, color: colorScheme.primary, size: 22),
+                        const SizedBox(width: 14),
                         Text(
-                          'Search for items, categories...',
+                          'Find your next treasure...',
                           style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
+                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
                             fontSize: 15,
                           ),
                         ),
+                        const Spacer(),
+                        Icon(Icons.tune_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.5), size: 20),
                       ],
                     ),
                   ),
@@ -191,74 +211,78 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(
               child: CarouselSlider(
                 options: CarouselOptions(
-                  height: 200.0,
+                  height: 210.0,
                   autoPlay: true,
                   enlargeCenterPage: true,
-                  viewportFraction: 0.9,
+                  viewportFraction: 0.92,
                   aspectRatio: 16/9,
                   initialPage: 0,
-                  autoPlayInterval: const Duration(seconds: 6),
+                  autoPlayInterval: const Duration(seconds: 7),
+                  autoPlayCurve: Curves.fastOutSlowIn,
                 ),
                 items: promoImages.asMap().entries.map((entry) {
                   final index = entry.key;
                   final imageUrl = entry.value;
-                  final labels = ['Flash Sale!', 'New Arrivals', 'Premium Deals'];
+                  final labels = ['Sustainable Trading', 'New Arrivals', 'Premium Swap'];
+                  final sublabels = ['Trade what you have for what you need', 'Fresh items added daily by the community', 'Exclusive items for high-rated traders'];
                   
                   return Builder(
                     builder: (BuildContext context) {
                       return Container(
                         width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.shadow.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+                          borderRadius: AppRadius.roundedXXL,
                           image: DecorationImage(
                             image: CachedNetworkImageProvider(imageUrl),
                             fit: BoxFit.cover,
                           ),
+                          boxShadow: AppShadows.medium,
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: AppRadius.roundedXXL,
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
-                              stops: const [0.6, 1.0],
+                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                              stops: const [0.4, 1.0],
                             ),
                           ),
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(AppPadding.lg),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.secondary,
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: colorScheme.primary,
+                                  borderRadius: AppRadius.roundedSM,
                                 ),
                                 child: Text(
-                                  'LIMITED TIME',
+                                  'FEATURED',
                                   style: textTheme.labelSmall?.copyWith(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Text(
                                 labels[index % labels.length],
                                 style: textTheme.headlineSmall?.copyWith(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                sublabels[index % sublabels.length],
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -271,17 +295,17 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
             
             // Deal of the Hour
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                 child: FutureBuilder<Deal>(
                   future: _dealFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ShimmerLoading.rectangular(height: 120);
+                      return const ShimmerLoading.rectangular(height: 140);
                     } else if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
@@ -291,19 +315,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     final seconds = _dealRemaining.inSeconds % 60;
                     
                     return Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppPadding.lg),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [colorScheme.primary, colorScheme.tertiary],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: AppRadius.roundedXXL,
                         boxShadow: [
                           BoxShadow(
                             color: colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
                         ],
                       ),
@@ -313,28 +337,29 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        shape: BoxShape.circle,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: AppRadius.roundedSM,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.bolt_rounded, color: Colors.amber, size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'FLASH DEAL',
+                                        style: textTheme.labelSmall?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.5,
+                                        ),
                                       ),
-                                      child: const Icon(Icons.bolt_rounded, color: Colors.amber, size: 16),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'DEAL OF THE HOUR',
-                                      style: textTheme.labelSmall?.copyWith(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 16),
                                 Text(
                                   '${deal.discountPercentage}% OFF',
                                   style: textTheme.headlineMedium?.copyWith(
@@ -343,64 +368,71 @@ class _HomeScreenState extends State<HomeScreen> {
                                     height: 1.0,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Text(
                                   deal.listing.title,
                                   style: textTheme.bodyMedium?.copyWith(
                                     color: Colors.white.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    'Ends in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontFamily: 'monospace',
-                                      fontWeight: FontWeight.bold,
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.timer_outlined, color: Colors.white70, size: 14),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Ends in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 16),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: deal.listing)),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                'Grab It',
-                                style: textTheme.labelLarge?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
+                          Column(
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: AppRadius.roundedXL,
+                                  image: deal.listing.imageUrl != null 
+                                    ? DecorationImage(
+                                        image: CachedNetworkImageProvider(deal.listing.imageUrl!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: deal.listing)),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: colorScheme.primary,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
+                                ),
+                                child: const Text('View Deal', style: TextStyle(fontWeight: FontWeight.w900)),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -410,12 +442,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
             
             // Daily Quests
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                 child: FutureBuilder<List<UserQuest>>(
                   future: _questsFuture,
                   builder: (context, snapshot) {
@@ -428,18 +460,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     final progress = currentQuest.progress / currentQuest.quest.goalValue;
                     
                     return Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppPadding.lg),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withOpacity(0.05),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: AppRadius.roundedXXL,
+                        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+                        boxShadow: AppShadows.soft,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -449,62 +475,94 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.stars_rounded, color: colorScheme.primary, size: 24),
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.secondary.withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(Icons.auto_awesome_rounded, color: colorScheme.secondary, size: 20),
+                                  ),
                                   const SizedBox(width: 12),
                                   Text(
                                     'Daily Quest',
                                     style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w900,
                                       color: colorScheme.onSurface,
                                     ),
                                   ),
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer,
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: colorScheme.primaryContainer.withOpacity(0.5),
+                                  borderRadius: AppRadius.roundedSM,
                                 ),
                                 child: Text(
-                                  '+${currentQuest.quest.pointsReward} pts',
+                                  '+${currentQuest.quest.pointsReward} XP',
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w900,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           Text(
                             currentQuest.quest.title,
-                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Text(
                             currentQuest.quest.description,
-                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           Row(
                             children: [
                               Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: progress,
-                                    backgroundColor: colorScheme.surfaceContainerHighest,
-                                    color: colorScheme.primary,
-                                    minHeight: 8,
-                                  ),
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                        borderRadius: AppRadius.roundedXS,
+                                      ),
+                                    ),
+                                    AnimatedFractionallySizedBox(
+                                      duration: AppAnimations.slow,
+                                      widthFactor: progress.clamp(0.0, 1.0),
+                                      child: Container(
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.7)],
+                                          ),
+                                          borderRadius: AppRadius.roundedXS,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: colorScheme.primary.withOpacity(0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Text(
-                                '${currentQuest.progress}/${currentQuest.quest.goalValue}',
+                                '${(progress * 100).toInt()}%',
                                 style: textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w900,
                                   color: colorScheme.primary,
                                 ),
                               ),
@@ -524,6 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           content: Text('Reward Claimed! ${result['points_awarded']} points added.'),
                                           backgroundColor: colorScheme.primary,
                                           behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
                                         ),
                                       );
                                       _fetchData();
@@ -539,9 +598,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: colorScheme.primary,
                                   foregroundColor: colorScheme.onPrimary,
-                                  elevation: 0,
+                                  elevation: 4,
+                                  shadowColor: colorScheme.primary.withOpacity(0.3),
+                                  shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
                                 ),
-                                child: const Text('Claim Reward'),
+                                child: const Text('Claim Reward', style: TextStyle(fontWeight: FontWeight.w900)),
                               ),
                             ),
                           ],
@@ -553,59 +614,93 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
 
             // Featured Artisans
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('Top Traders', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Top Traders', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                        Text('Most active community members', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
                     TextButton(
                       onPressed: () {},
-                      child: Text('View All', style: TextStyle(color: colorScheme.primary)),
+                      child: Text('View All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
               ),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.md)),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 120,
+                height: 130,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                   itemCount: 6,
                   itemBuilder: (context, index) {
                     final names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Ethan', 'Fiona'];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      padding: const EdgeInsets.only(right: 20.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [colorScheme.secondary, colorScheme.primary],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                          Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [colorScheme.secondary, colorScheme.primary],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withOpacity(0.2),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 34,
+                                  backgroundColor: colorScheme.surface,
+                                  backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=$index'),
+                                ),
                               ),
-                            ),
-                            child: CircleAvatar(
-                              radius: 32,
-                              backgroundColor: colorScheme.surfaceContainerHighest,
-                              backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=$index'),
-                            ),
+                              if (index < 3)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                    ),
+                                    child: Icon(Icons.workspace_premium_rounded, size: 12, color: Colors.white),
+                                  ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 10),
                           Text(
                             names[index % names.length],
-                            style: textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
+                            style: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
                               color: colorScheme.onSurface,
                             ),
                           ),
@@ -617,16 +712,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
 
             // Trending Section
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('Trending Now', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Trending Now', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                        Text('Items getting the most attention', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -634,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const ExploreScreen()),
                         );
                       },
-                      child: Text('See All', style: TextStyle(color: colorScheme.primary)),
+                      child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -643,19 +745,19 @@ class _HomeScreenState extends State<HomeScreen> {
             
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 290, // Adjusted height for new card style
+                height: 310, 
                 child: FutureBuilder<List<Listing>>(
                   future: _trendingListingsFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                         itemCount: 3,
                         itemBuilder: (context, index) => const SizedBox(
-                          width: 210,
+                          width: 220,
                           child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            padding: EdgeInsets.only(right: AppPadding.md),
                             child: ListingCardShimmer(),
                           ),
                         ),
@@ -670,13 +772,14 @@ class _HomeScreenState extends State<HomeScreen> {
  
                     return ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                       itemCount: topTrending.length,
                       itemBuilder: (context, index) {
                         return SizedBox(
-                          width: 220,
+                          width: 230,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), // Added vertical padding for shadow
+                            padding: const EdgeInsets.only(right: 16.0, top: 12.0, bottom: 20.0), 
                             child: ListingCard(
                               listing: topTrending[index],
                             ),
@@ -689,36 +792,46 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.lg)),
 
             // Recent Activity Feed
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text('Recent Activity', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
+                child: Text('Recent Activity', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.md)),
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final actions = ['swapped a Camera', 'listed a Mountain Bike', 'completed a Quest'];
+                  final actions = ['swapped a Vintage Camera', 'listed a Mountain Bike', 'completed a Master Quest'];
                   final times = ['2 mins ago', '15 mins ago', '1 hour ago'];
+                  final colors = [colorScheme.primary, colorScheme.secondary, colorScheme.tertiary];
+                  
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: 8.0),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(AppPadding.md),
                       decoration: BoxDecoration(
                         color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.3)),
+                        borderRadius: AppRadius.roundedXL,
+                        border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
+                        boxShadow: AppShadows.soft,
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: colorScheme.surfaceContainerHighest,
-                            backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=${index + 10}'),
+                          Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colors[index % colors.length].withOpacity(0.3), width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 22,
+                              backgroundColor: colorScheme.surfaceContainerHighest,
+                              backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150?u=${index + 20}'),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -727,27 +840,34 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 RichText(
                                   text: TextSpan(
-                                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+                                    style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface, height: 1.3),
                                     children: [
                                       TextSpan(
                                         text: 'User${index + 101} ', 
-                                        style: const TextStyle(fontWeight: FontWeight.bold)
+                                        style: const TextStyle(fontWeight: FontWeight.w900)
                                       ),
                                       TextSpan(
                                         text: actions[index % actions.length],
-                                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                        style: TextStyle(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                                       ),
                                     ],
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  times[index % times.length],
-                                  style: textTheme.labelSmall?.copyWith(color: colorScheme.outline),
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time_rounded, size: 12, color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      times[index % times.length],
+                                      style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant.withOpacity(0.5), fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
+                          Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.3)),
                         ],
                       ),
                     ),
@@ -757,16 +877,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
             
             // Recommended Section Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('Picked for You', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Picked for You', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                        Text('Based on your interests', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -774,7 +901,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(builder: (context) => const ExploreScreen()),
                         );
                       },
-                      child: Text('See All', style: TextStyle(color: colorScheme.primary)),
+                      child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -787,13 +914,13 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.md),
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
-                        childAspectRatio: 0.7,
+                        childAspectRatio: 0.68,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => const ListingCardShimmer(),
@@ -805,7 +932,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(AppPadding.xxl),
                         child: Text('No recommendations found.', style: textTheme.bodyMedium),
                       ),
                     ),
@@ -813,18 +940,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
 
                 return SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.md),
                   sliver: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 0.7,
+                      childAspectRatio: 0.68,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        return ListingCard(
-                          listing: snapshot.data![index],
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ListingCard(
+                            listing: snapshot.data![index],
+                          ),
                         );
                       },
                       childCount: snapshot.data!.length,
@@ -834,7 +964,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             
-            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)), // Extra space for floating nav
           ],
         ),
       ),

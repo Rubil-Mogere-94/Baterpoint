@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../screens/listing_detail_screen.dart';
+import '../constants/ui_constants.dart';
 
 class ListingCard extends StatelessWidget {
   final Listing listing;
@@ -20,18 +21,12 @@ class ListingCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+        borderRadius: AppRadius.roundedXL,
+        boxShadow: AppShadows.soft,
+        border: Border.all(color: colorScheme.outline.withOpacity(0.06)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppRadius.roundedXL,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -47,6 +42,7 @@ class ListingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Expanded(
+                  flex: 12,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -57,26 +53,30 @@ class ListingCard extends StatelessWidget {
                                   imageUrl: listing.imageUrl!,
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
+                                    color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
                                     child: Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: colorScheme.primary,
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colorScheme.primary.withOpacity(0.5),
+                                        ),
                                       ),
                                     ),
                                   ),
                                   errorWidget: (context, url, error) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    child: Icon(Icons.broken_image, color: colorScheme.onSurfaceVariant),
+                                    color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                    child: Icon(Icons.broken_image_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.3)),
                                   ),
                                 )
                               : Container(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  child: Icon(Icons.image_not_supported, color: colorScheme.onSurfaceVariant),
+                                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  child: Icon(Icons.image_not_supported_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.3)),
                                 ),
                         ),
                       ),
-                      // Gradient overlay
+                      // Subtle gradient overlay for better text contrast if needed
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -84,34 +84,36 @@ class ListingCard extends StatelessWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
+                                Colors.black.withOpacity(0.05),
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.2),
+                                Colors.black.withOpacity(0.15),
                               ],
+                              stops: const [0.0, 0.5, 1.0],
                             ),
                           ),
                         ),
                       ),
                       Positioned(
-                        top: 12,
-                        right: 12,
+                        top: 10,
+                        right: 10,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: AppRadius.roundedSM,
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                color: Colors.black.withOpacity(0.35),
+                                borderRadius: AppRadius.roundedSM,
+                                border: Border.all(color: Colors.white.withOpacity(0.1)),
                               ),
                               child: Text(
                                 listing.category.toUpperCase(),
                                 style: textTheme.labelSmall?.copyWith(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  letterSpacing: 0.5,
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ),
@@ -119,8 +121,8 @@ class ListingCard extends StatelessWidget {
                         ),
                       ),
                       Positioned(
-                        top: 12,
-                        left: 12,
+                        bottom: 8,
+                        left: 8,
                         child: Consumer<AuthProvider>(
                           builder: (context, auth, _) {
                             if (!auth.isAuthenticated) return const SizedBox.shrink();
@@ -130,20 +132,20 @@ class ListingCard extends StatelessWidget {
                                 auth.toggleFavorite(listing.id);
                               },
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(20),
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                                   child: Container(
-                                    padding: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.25),
+                                      color: Colors.white.withOpacity(0.2),
                                       shape: BoxShape.circle,
                                       border: Border.all(color: Colors.white.withOpacity(0.2)),
                                     ),
                                     child: Icon(
                                       isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
                                       color: isFavorite ? const Color(0xFFEF4444) : Colors.white,
-                                      size: 20,
+                                      size: 18,
                                     ),
                                   ),
                                 ),
@@ -155,40 +157,86 @@ class ListingCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        listing.title,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      if (listing.cashPrice != null && listing.cashPrice! > 0)
+                Expanded(
+                  flex: 9,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          '\$${listing.cashPrice}',
-                          style: textTheme.titleLarge?.copyWith(
-                            color: colorScheme.primary,
+                          listing.title,
+                          style: textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
+                            color: colorScheme.onSurface,
+                            fontSize: 14,
+                            height: 1.2,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        const Spacer(),
+                        if (listing.cashPrice != null && listing.cashPrice! > 0)
+                          Text(
+                            '\$${listing.cashPrice}',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.swap_horiz_rounded, size: 14, color: colorScheme.secondary),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  listing.exchangeItem!,
+                                  style: textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 10),
                         Row(
                           children: [
-                            Icon(Icons.swap_horiz_rounded, size: 16, color: colorScheme.secondary),
+                            Container(
+                              padding: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+                              ),
+                              child: CircleAvatar(
+                                radius: 10,
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                backgroundImage: listing.ownerAvatar != null 
+                                  ? CachedNetworkImageProvider(listing.ownerAvatar!)
+                                  : null,
+                                child: listing.ownerAvatar == null
+                                  ? Text(
+                                      (listing.ownerUsername ?? 'U')[0].toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w900,
+                                        color: colorScheme.primary,
+                                      ),
+                                    )
+                                  : null,
+                              ),
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                listing.exchangeItem!,
-                                style: textTheme.bodySmall?.copyWith(
+                                listing.ownerUsername ?? 'Trader',
+                                style: textTheme.labelSmall?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -196,57 +244,16 @@ class ListingCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const Icon(Icons.star_rounded, size: 12, color: Colors.amber),
+                            const SizedBox(width: 2),
+                            Text(
+                              listing.ownerRating.toStringAsFixed(1),
+                              style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w900),
+                            ),
                           ],
                         ),
                       ],
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(1),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
-                            ),
-                            child: CircleAvatar(
-                              radius: 12,
-                              backgroundColor: colorScheme.surfaceContainerHighest,
-                              backgroundImage: listing.ownerAvatar != null 
-                                ? CachedNetworkImageProvider(listing.ownerAvatar!)
-                                : null,
-                              child: listing.ownerAvatar == null
-                                ? Text(
-                                    (listing.ownerUsername ?? 'U')[0].toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.primary,
-                                    ),
-                                  )
-                                : null,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              listing.ownerUsername ?? 'Unknown',
-                              style: textTheme.labelMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Icon(Icons.star_rounded, size: 14, color: Colors.amber.shade500),
-                          const SizedBox(width: 2),
-                          Text(
-                            listing.ownerRating.toStringAsFixed(1),
-                            style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],
