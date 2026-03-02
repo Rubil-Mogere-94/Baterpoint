@@ -74,7 +74,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: 5,
-            itemBuilder: (context, index) => const ShimmerLoading.rectangular(height: 120),
+            itemBuilder: (context, index) => ShimmerLoading.rectangular(height: 120),
           );
         } else if (snapshot.hasError) {
           return Center(
