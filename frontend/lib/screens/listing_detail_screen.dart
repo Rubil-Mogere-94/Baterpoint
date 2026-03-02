@@ -7,10 +7,12 @@ import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
 import '../services/offer_service.dart';
+import '../services/cart_service.dart';
 import '../constants/ui_constants.dart';
 import 'chat_screen.dart';
 import 'edit_listing_screen.dart';
 import 'checkout_screen.dart';
+import 'cart_screen.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final Listing listing;
@@ -26,6 +28,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   bool _isLoading = false;
   final ListingService _listingService = ListingService();
   final OfferService _offerService = OfferService();
+  final CartService _cartService = CartService();
 
   @override
   void initState() {
@@ -175,6 +178,19 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             child: IconButton(
                               icon: const Icon(Icons.share, color: Colors.white),
                               onPressed: () {},
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
+                              },
                             ),
                           ),
                         ],
@@ -726,6 +742,58 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildReviewItem(Review review) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(radius: 12, child: Text(review.username?[0] ?? 'U')),
+              const SizedBox(width: 8),
+              Text(review.username ?? 'Anonymous', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: List.generate(5, (index) => Icon(
+              Icons.star,
+              size: 14,
+              color: index < review.rating ? Colors.amber : Colors.grey[300],
+            )),
+          ),
+          if (review.comment != null) ...[
+            const SizedBox(height: 4),
+            Text(review.comment!),
+          ],
+          const Divider(),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addToCart(BuildContext context) async {
+    try {
+      await _cartService.addToCart(_currentListing.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Added to Cart!'),
+            action: SnackBarAction(
+              label: 'View Cart',
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen())),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error adding to cart: $e')));
+      }
+    }
   }
 
   void _showDeleteDialog(BuildContext context, ListingService listingService) {
