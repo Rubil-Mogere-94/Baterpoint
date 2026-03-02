@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
 import '../services/offer_service.dart';
+import '../constants/ui_constants.dart';
 import 'chat_screen.dart';
 import 'edit_listing_screen.dart';
 import 'checkout_screen.dart';
@@ -62,27 +64,39 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _isLoading 
-          ? Center(
-              key: const ValueKey('loading'), 
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            )
-          : CustomScrollView(
-              key: const ValueKey('content'),
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: 320.0,
-                  pinned: true,
-                  backgroundColor: colorScheme.surface,
-                  iconTheme: IconThemeData(color: colorScheme.onSurface),
-                  actionsIconTheme: IconThemeData(color: colorScheme.onSurface),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Hero(
+      body: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _isLoading 
+              ? Center(
+                  key: const ValueKey('loading'), 
+                  child: CircularProgressIndicator(color: colorScheme.primary),
+                )
+              : CustomScrollView(
+                  key: const ValueKey('content'),
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: 400.0,
+                      pinned: true,
+                      stretch: true,
+                      backgroundColor: colorScheme.surface,
+                      iconTheme: IconThemeData(color: Colors.white),
+                      actionsIconTheme: IconThemeData(color: Colors.white),
+                      leading: Container(
+                        margin: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context, true),
+                        ),
+                      ),
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Hero(
                           tag: 'listing_image_${_currentListing.id}',
                           child: _currentListing.imageUrl != null
                               ? CachedNetworkImage(
@@ -107,371 +121,406 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   child: Icon(Icons.image_not_supported, size: 64, color: colorScheme.onSurfaceVariant),
                                 ),
                         ),
-                        // Gradient Overlay for text visibility
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.3),
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.1),
-                                ],
-                                stops: const [0.0, 0.3, 1.0],
+                      ),
+                      actions: [
+                        if (isOwner) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black.withOpacity(0.3),
+                              child: IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.white),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditListingScreen(listing: _currentListing),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _refreshListing();
+                                  }
+                                },
                               ),
                             ),
                           ),
-                        ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black.withOpacity(0.3),
+                              child: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                onPressed: () => _showDeleteDialog(context, _listingService),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Container(
+                            margin: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.favorite_border, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.share, color: Colors.white),
+                              onPressed: () {},
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                  ),
-                  leading: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircleAvatar(
-                      backgroundColor: colorScheme.surface.withOpacity(0.8),
-                      child: IconButton(
-                        icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface),
-                        onPressed: () => Navigator.pop(context, true),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    if (isOwner) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: CircleAvatar(
-                          backgroundColor: colorScheme.surface.withOpacity(0.8),
-                          child: IconButton(
-                            icon: Icon(Icons.edit_outlined, color: colorScheme.primary),
-                            onPressed: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditListingScreen(listing: _currentListing),
-                                ),
-                              );
-                              if (result == true) {
-                                _refreshListing();
-                              }
-                            },
-                          ),
+                    SliverToBoxAdapter(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: CircleAvatar(
-                          backgroundColor: colorScheme.surface.withOpacity(0.8),
-                          child: IconButton(
-                            icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
-                            onPressed: () => _showDeleteDialog(context, _listingService),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                    ),
-                    transform: Matrix4.translationValues(0, -24, 0),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        transform: Matrix4.translationValues(0, -24, 0),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
+                              // Category Chip
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                                 child: Text(
-                                  _currentListing.title,
-                                  style: textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: colorScheme.onSurface,
-                                    height: 1.2,
+                                  _currentListing.category.toUpperCase(),
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    letterSpacing: 1.0,
                                   ),
                                 ),
                               ),
-                              if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
-                                Container(
-                                  margin: const EdgeInsets.only(left: 16),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Text(
-                                    '\$${_currentListing.cashPrice}',
-                                    style: textTheme.titleLarge?.copyWith(
-                                      color: colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.w900,
+                              const SizedBox(height: 16),
+
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _currentListing.title,
+                                      style: textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        color: colorScheme.onSurface,
+                                        height: 1.2,
+                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: [
-                              _buildChip(
-                                context, 
-                                label: _currentListing.category.toUpperCase(),
-                                color: colorScheme.primary,
-                                icon: Icons.category_outlined,
+                                  if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 16),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Text(
+                                        '\$${_currentListing.cashPrice}',
+                                        style: textTheme.titleLarge?.copyWith(
+                                          color: colorScheme.onPrimaryContainer,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              _buildChip(
-                                context,
-                                label: '${_currentListing.viewCount} views',
-                                color: colorScheme.secondary,
-                                icon: Icons.visibility_outlined,
-                                isOutline: true,
-                              ),
-                            ],
-                          ),
+                              const SizedBox(height: 24),
 
-                          const SizedBox(height: 32),
-                          
-                          // Seller Info Block
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: colorScheme.primary.withOpacity(0.5)),
+                              // Sustainability Score Card
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [const Color(0xFF10B981).withOpacity(0.1), const Color(0xFF34D399).withOpacity(0.05)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  child: CircleAvatar(
-                                    radius: 24,
-                                    backgroundColor: colorScheme.surfaceContainerHighest,
-                                    backgroundImage: _currentListing.ownerAvatar != null
-                                        ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
-                                        : null,
-                                    child: _currentListing.ownerAvatar == null
-                                        ? Text(
-                                            (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
-                                            style: TextStyle(
-                                              color: colorScheme.primary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(Icons.eco_rounded, color: Color(0xFF10B981), size: 24),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            _currentListing.ownerUsername ?? 'User',
-                                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                            'Eco-Impact',
+                                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
                                           ),
-                                          const SizedBox(width: 4),
-                                          Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
+                                          Text(
+                                            'Trading this item saves ~12kg of CO2 vs buying new.',
+                                            style: TextStyle(fontSize: 12, color: Color(0xFF064E3B)),
+                                          ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      Row(
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              
+                              // Seller Info Block
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: colorScheme.primary.withOpacity(0.5)),
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: colorScheme.surfaceContainerHighest,
+                                        backgroundImage: _currentListing.ownerAvatar != null
+                                            ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
+                                            : null,
+                                        child: _currentListing.ownerAvatar == null
+                                            ? Text(
+                                                (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
+                                                style: TextStyle(
+                                                  color: colorScheme.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Icon(Icons.star_rounded, color: Colors.amber.shade500, size: 16),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${_currentListing.ownerRating} ',
-                                            style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                _currentListing.ownerUsername ?? 'User',
+                                                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
+                                            ],
                                           ),
-                                          Text(
-                                            '(${_currentListing.ownerReviews} reviews)',
-                                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Icon(Icons.star_rounded, color: Colors.amber.shade500, size: 16),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${_currentListing.ownerRating} ',
+                                                style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                              ),
+                                              Text(
+                                                '(${_currentListing.ownerReviews} reviews)',
+                                                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                                              ),
+                                            ],
                                           ),
                                         ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary),
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: colorScheme.surface,
+                                      ),
+                                      onPressed: () {
+                                         Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatScreen(
+                                              tradeId: _currentListing.id,
+                                              recipientId: _currentListing.userId,
+                                              recipientName: _currentListing.ownerUsername,
+                                              recipientAvatar: _currentListing.ownerAvatar,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 32),
+                              if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
+                                Text(
+                                  'Looking For',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        colorScheme.secondaryContainer.withOpacity(0.5),
+                                        colorScheme.surface,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: colorScheme.secondary.withOpacity(0.2)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.secondary.withOpacity(0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          _currentListing.exchangeItem!,
+                                          style: textTheme.titleMedium?.copyWith(
+                                            color: colorScheme.secondary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
-                                  onPressed: () {
-                                    // Navigate to profile
-                                  },
-                                ),
+                                const SizedBox(height: 32),
                               ],
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 32),
-                          if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
-                            Text(
-                              'Looking For',
-                              style: textTheme.titleMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.bold,
+                              Text(
+                                'Description',
+                                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    colorScheme.secondaryContainer.withOpacity(0.5),
-                                    colorScheme.surface,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                              const SizedBox(height: 12),
+                              Text(
+                                _currentListing.description ?? 'No description provided.',
+                                style: textTheme.bodyLarge?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  height: 1.6,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: colorScheme.secondary.withOpacity(0.2)),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.secondary.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Text(
-                                      _currentListing.exchangeItem!,
-                                      style: textTheme.titleMedium?.copyWith(
-                                        color: colorScheme.secondary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                          ],
-                          Text(
-                            'Description',
-                            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _currentListing.description ?? 'No description provided.',
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              height: 1.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-      ),
-      bottomNavigationBar: isOwner ? null : Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          tradeId: _currentListing.id,
-                          recipientId: _currentListing.userId,
-                          recipientName: _currentListing.ownerUsername,
-                          recipientAvatar: _currentListing.ownerAvatar,
                         ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  label: const Text('Chat'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: BorderSide(color: colorScheme.outline),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    _showMakeOfferModal(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
-                  ),
-                  child: const Text('Make Offer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-              ),
-              if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CheckoutScreen(listing: _currentListing),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: colorScheme.tertiary,
-                      foregroundColor: colorScheme.onTertiary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
                     ),
-                    child: const Text('Buy Now', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
+                  ],
                 ),
-              ],
-            ],
           ),
-        ),
+
+          // Glassmorphic Bottom Bar
+          if (!isOwner)
+            Positioned(
+              bottom: 24,
+              left: 24,
+              right: 24,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Interested?',
+                                style: TextStyle(
+                                  color: colorScheme.onSurface.withOpacity(0.6),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                _currentListing.cashPrice != null 
+                                    ? '\$${_currentListing.cashPrice}' 
+                                    : 'Trade Only',
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            _showMakeOfferModal(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
+                          ),
+                          child: const Text('Make Offer', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
