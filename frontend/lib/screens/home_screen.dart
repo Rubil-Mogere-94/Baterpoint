@@ -305,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   future: _dealFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ShimmerLoading.rectangular(height: 140);
+                      return ShimmerLoading.rectangular(height: 140);
                     } else if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
