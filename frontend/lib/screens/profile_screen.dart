@@ -13,6 +13,8 @@ import 'loyalty_shop_screen.dart';
 import 'wallet_screen.dart';
 import 'wishlist_screen.dart';
 import 'settings_screen.dart';
+import 'orders_screen.dart';
+import 'cart_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -157,8 +159,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Menu Section
                     Text('Trading Tools', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 16),
+                    _buildMenuItem(context, 'Your Orders', 'Track and manage purchases', Icons.receipt_long_rounded, Colors.blue, () => Navigator.push(context, MaterialPageRoute(builder: (context) => OrdersScreen()))),
+                    _buildMenuItem(context, 'Your Cart', 'Items ready for checkout', Icons.shopping_cart_rounded, Colors.green, () => Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()))),
                     _buildMenuItem(context, 'My Wallet', 'Manage tokens and rewards', Icons.account_balance_wallet_rounded, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen()))),
-                    _buildMenuItem(context, 'Trade History', 'View your completed swaps', Icons.history_rounded, Colors.purple, () {}),
                     _buildMenuItem(context, 'Wishlist', 'Items you are tracking', Icons.favorite_rounded, Colors.red, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistScreen()))),
                     _buildMenuItem(context, 'Sustainability Report', 'Your personal eco-contribution', Icons.eco_rounded, Colors.teal, () {}),
 
@@ -213,7 +216,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-        boxShadow: AppShadows.soft,
       ),
       child: Column(
         children: [

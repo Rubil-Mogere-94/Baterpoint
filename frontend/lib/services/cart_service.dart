@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/cart.dart';
+import '../models/order.dart' as model;
 import 'environment_config.dart';
 import 'auth_service.dart';
 
@@ -67,31 +68,14 @@ class CartService {
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['detail'] ?? 'Failed to update quantity');
-    import '../models/order.dart' as model;
-    ...
-    class OrderService {
-      final AuthService _authService = AuthService();
-
-      Future<void> createOrder(String shippingAddress) async {
-    ...
-      }
-
-      Future<List<model.Order>> fetchMyOrders() async {
-        final token = await _authService.getToken();
-        final response = await http.get(
-          Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),
-          headers: {'Authorization': 'Bearer $token'},
-        );
-        if (response.statusCode == 200) {
-          Iterable l = jsonDecode(response.body);
-          return List<model.Order>.from(l.map((m) => model.Order.fromJson(m)));
-        } else {
-          final error = jsonDecode(response.body);
-          throw Exception(error['detail'] ?? 'Failed to load orders');
-        }
-      }
     }
+  }
+}
 
+class OrderService {
+  final AuthService _authService = AuthService();
+
+  Future<void> createOrder(String shippingAddress) async {
     final token = await _authService.getToken();
     final response = await http.post(
       Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),
@@ -106,6 +90,21 @@ class CartService {
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body);
       throw Exception(error['detail'] ?? 'Failed to create order');
+    }
+  }
+
+  Future<List<model.Order>> fetchMyOrders() async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = jsonDecode(response.body);
+      return List<model.Order>.from(l.map((m) => model.Order.fromJson(m)));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load orders');
     }
   }
 }
