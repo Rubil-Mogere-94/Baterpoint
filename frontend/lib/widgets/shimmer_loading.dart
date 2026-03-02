@@ -7,7 +7,7 @@ class ShimmerLoading extends StatelessWidget {
   final double height;
   final ShapeBorder shapeBorder;
 
-  const ShimmerLoading.rectangular({
+  ShimmerLoading.rectangular({
     super.key,
     this.width = double.infinity,
     required this.height,
@@ -69,17 +69,17 @@ class ListingCardShimmer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const ShimmerLoading.rectangular(height: 14, width: 140),
+                  ShimmerLoading.rectangular(height: 14, width: 140),
                   const SizedBox(height: 6),
-                  const ShimmerLoading.rectangular(height: 14, width: 100),
+                  ShimmerLoading.rectangular(height: 14, width: 100),
                   const Spacer(),
-                  const ShimmerLoading.rectangular(height: 18, width: 60),
+                  ShimmerLoading.rectangular(height: 18, width: 60),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       const ShimmerLoading.circular(width: 20, height: 20),
                       const SizedBox(width: 8),
-                      const ShimmerLoading.rectangular(height: 10, width: 80),
+                      ShimmerLoading.rectangular(height: 10, width: 80),
                     ],
                   ),
                 ],
