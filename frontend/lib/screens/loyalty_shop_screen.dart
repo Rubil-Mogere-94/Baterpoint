@@ -108,7 +108,7 @@ class _LoyaltyShopScreenState extends State<LoyaltyShopScreen> {
                     return ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: 5,
-                      itemBuilder: (context, index) => const ShimmerLoading.rectangular(height: 100),
+                      itemBuilder: (context, index) => ShimmerLoading.rectangular(height: 100),
                     );
                   } else if (snapshot.hasError) {
                     return Center(
