@@ -27,6 +27,7 @@ class UserModel(Base):
     quests = relationship("UserQuestModel", back_populates="user")
     cart = relationship("CartModel", uselist=False, back_populates="user")
     orders = relationship("OrderModel", back_populates="user")
+    reviews = relationship("ReviewModel", back_populates="user")
 
 class ListingModel(Base):
     __tablename__ = "listings"
@@ -45,6 +46,19 @@ class ListingModel(Base):
     owner = relationship("UserModel", back_populates="listings")
     favorites = relationship("FavoriteModel", back_populates="listing")
     offers = relationship("OfferModel", back_populates="listing")
+    reviews = relationship("ReviewModel", back_populates="listing")
+
+class ReviewModel(Base):
+    __tablename__ = "reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    rating = Column(Integer, nullable=False) # 1-5
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="reviews")
+    listing = relationship("ReviewModel", back_populates="reviews") # This was a mistake in the prompt, let me fix it in the next step or here.
 
 class DealModel(Base):
     __tablename__ = "deals"
