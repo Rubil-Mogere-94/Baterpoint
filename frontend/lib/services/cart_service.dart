@@ -67,13 +67,31 @@ class CartService {
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['detail'] ?? 'Failed to update quantity');
-    }
-  }
-}
-class OrderService {
-  final AuthService _authService = AuthService();
+    import '../models/order.dart' as model;
+    ...
+    class OrderService {
+      final AuthService _authService = AuthService();
 
-  Future<void> createOrder(String shippingAddress) async {
+      Future<void> createOrder(String shippingAddress) async {
+    ...
+      }
+
+      Future<List<model.Order>> fetchMyOrders() async {
+        final token = await _authService.getToken();
+        final response = await http.get(
+          Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+        if (response.statusCode == 200) {
+          Iterable l = jsonDecode(response.body);
+          return List<model.Order>.from(l.map((m) => model.Order.fromJson(m)));
+        } else {
+          final error = jsonDecode(response.body);
+          throw Exception(error['detail'] ?? 'Failed to load orders');
+        }
+      }
+    }
+
     final token = await _authService.getToken();
     final response = await http.post(
       Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),

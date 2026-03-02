@@ -1,68 +1,107 @@
 import 'package:flutter/material.dart';
 import '../models/listing.dart';
+import '../models/cart.dart';
+import '../services/cart_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  final Listing listing;
+  final Listing? listing;
 
-  const CheckoutScreen({super.key, required this.listing});
+  const CheckoutScreen({super.key, this.listing});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  final OrderService _orderService = OrderService();
+  final CartService _cartService = CartService();
+  Cart? _cart;
   int _currentStep = 0;
   String _selectedPaymentMethod = 'credit_card';
   bool _isProcessing = false;
+  bool _isLoadingCart = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.listing == null) {
+      _loadCart();
+    }
+  }
+
+  Future<void> _loadCart() async {
+    setState(() => _isLoadingCart = true);
+    try {
+      final cart = await _cartService.fetchMyCart();
+      setState(() {
+        _cart = cart;
+        _isLoadingCart = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingCart = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading cart: $e')));
+      }
+    }
+  }
 
   void _processPayment() async {
     setState(() => _isProcessing = true);
     
-    // Simulate network delay for payment processing
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted) return;
-    
-    // Show success dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
-            const SizedBox(height: 24),
-            Text('Payment Successful!', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('Your order has been placed successfully.', textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+    try {
+      // In a real Amazon-like app, we'd send the actual shipping address from a form
+      await _orderService.createOrder("123 Baterpoint Ave, Metropolis, NY 10001");
+      
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
+              const SizedBox(height: 24),
+              Text('Order Placed!', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Your order has been placed successfully.', textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  child: const Text('Back to Home', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                child: const Text('Back to Home', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment/Order error: $e')));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingCart) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    
     final theme = Theme.of(context);
-    final price = widget.listing.cashPrice ?? 0.0;
+    final price = widget.listing != null ? (widget.listing!.cashPrice ?? 0.0) : (_cart?.totalAmount ?? 0.0);
     final shippingFee = price > 0 ? 15.00 : 0.0;
     final total = price + shippingFee;
 
@@ -110,7 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     child: _isProcessing 
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(isLastStep ? 'Pay \$${total.toStringAsFixed(2)}' : 'Continue', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      : Text(isLastStep ? 'Place Your Order' : 'Continue', style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
                 if (_currentStep > 0 && !_isProcessing) ...[
@@ -162,16 +201,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Add New Address'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
               ],
             ),
           ),
@@ -200,36 +229,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 Text('Order Summary', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 80,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey.shade200,
-                        image: widget.listing.imageUrl != null 
-                          ? DecorationImage(image: NetworkImage(widget.listing.imageUrl!), fit: BoxFit.cover)
-                          : null,
-                      ),
-                      child: widget.listing.imageUrl == null ? const Icon(Icons.image, color: Colors.grey) : null,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(widget.listing.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(widget.listing.category, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-                          const SizedBox(height: 8),
-                          Text('\$${price.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary, fontSize: 16)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                if (widget.listing != null)
+                  _buildListingRow(widget.listing!)
+                else if (_cart != null)
+                  ..._cart!.items.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildListingRow(item.listing),
+                  )),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Divider(),
@@ -249,6 +255,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildListingRow(Listing listing) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 80,
+          width: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.shade200,
+            image: listing.imageUrl != null 
+              ? DecorationImage(image: NetworkImage(listing.imageUrl!), fit: BoxFit.cover)
+              : null,
+          ),
+          child: listing.imageUrl == null ? const Icon(Icons.image, color: Colors.grey) : null,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(listing.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 4),
+              Text(listing.category, style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+              const SizedBox(height: 8),
+              Text('\$${listing.cashPrice?.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary, fontSize: 16)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
