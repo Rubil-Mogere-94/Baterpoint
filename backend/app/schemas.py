@@ -32,6 +32,23 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
+class ReviewCreate(BaseModel):
+    listing_id: int
+    rating: int = Field(ge=1, le=5)
+    comment: Optional[str] = None
+
+class Review(BaseModel):
+    id: int
+    user_id: int
+    listing_id: int
+    rating: int
+    comment: Optional[str] = None
+    created_at: datetime
+    username: Optional[str] = None # For convenience
+
+    class Config:
+        from_attributes = True
+
 class Listing(BaseModel):
     id: int
     title: str
@@ -47,6 +64,8 @@ class Listing(BaseModel):
     owner_rating: Optional[float] = 0.0
     owner_reviews: Optional[int] = 0
     owner_avatar: Optional[str] = None
+    average_rating: Optional[float] = 0.0
+    reviews: List[Review] = []
 
     class Config:
         from_attributes = True
