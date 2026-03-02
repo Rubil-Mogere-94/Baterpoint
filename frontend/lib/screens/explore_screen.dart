@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
 import 'create_listing_screen.dart';
-import 'listing_detail_screen.dart';
 import '../widgets/listing_card.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
