@@ -1,17 +1,18 @@
 // frontend/lib/screens/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
+import '../constants/ui_constants.dart';
 import 'edit_profile_screen.dart';
 import 'listing_detail_screen.dart';
 import 'loyalty_shop_screen.dart';
 import 'wallet_screen.dart';
 import 'wishlist_screen.dart';
 import 'settings_screen.dart';
-import 'support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,7 +24,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ListingService _listingService = ListingService();
   late Future<List<Listing>> _myListingsFuture;
-  late Future<List<Listing>> _myFavoritesFuture;
 
   @override
   void initState() {
@@ -34,331 +34,301 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _refreshMyListings() {
     setState(() {
       _myListingsFuture = _listingService.fetchMyListings();
-      _myFavoritesFuture = _listingService.fetchFavorites();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final user = auth.user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _refreshMyListings();
-          await auth.refreshUser();
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: theme.colorScheme.primary,
-                      child: Text(
-                        user?.username != null && user!.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
+      backgroundColor: colorScheme.surface,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Premium Header
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            stretch: true,
+            backgroundColor: colorScheme.surface,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Animated background gradient
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [colorScheme.primary, colorScheme.secondary.withOpacity(0.8)],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(user?.username ?? 'Username', style: theme.textTheme.headlineSmall),
-                    Text(user?.email ?? 'Email', style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: 8),
-                    Chip(
-                      label: Text(user?.subscriptionStatus?.toUpperCase() ?? 'BASIC'),
-                      backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
-                      labelStyle: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Stats Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  ),
+                  // Abstract shapes
+                  Positioned(
+                    top: -50,
+                    right: -50,
+                    child: CircleAvatar(radius: 100, backgroundColor: Colors.white.withOpacity(0.1)),
+                  ),
+                  
+                  Padding(
+                    padding: const EdgeInsets.only(top: 60),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildStatItem(
-                          context,
-                          'Trades',
-                          '${user?.successfulTrades ?? 0}',
-                          Icons.handshake_rounded,
-                          Colors.blue,
+                        Hero(
+                          tag: 'profile_avatar',
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: colorScheme.surface,
+                              backgroundImage: user?.avatarUrl != null 
+                                  ? CachedNetworkImageProvider(user!.avatarUrl!) 
+                                  : null,
+                              child: user?.avatarUrl == null 
+                                  ? Text(user?.username[0].toUpperCase() ?? 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold))
+                                  : null,
+                            ),
+                          ),
                         ),
-                        _buildStatItem(
-                          context,
-                          'Reputation',
-                          user?.tradeReputation.toStringAsFixed(1) ?? '5.0',
-                          Icons.shield_rounded,
-                          Colors.green,
+                        const SizedBox(height: 12),
+                        Text(
+                          user?.username ?? 'Trader',
+                          style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
                         ),
-                        _buildStatItem(
-                          context,
-                          'Rating',
-                          '${user?.overallRating ?? 0.0}',
-                          Icons.star_rounded,
-                          Colors.amber,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.verified_rounded, color: Colors.blue.shade200, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Verified Citizen',
+                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    
-                    // Premium Menu Grid
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.5,
-                      children: [
-                        _buildMenuCard(
-                          context,
-                          'My Wallet',
-                          '${user?.loyaltyPoints ?? 0} pts',
-                          Icons.account_balance_wallet_rounded,
-                          Colors.blue,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen())),
-                        ),
-                        _buildMenuCard(
-                          context,
-                          'Wishlist',
-                          'Saved items',
-                          Icons.favorite_rounded,
-                          Colors.red,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistScreen())),
-                        ),
-                        _buildMenuCard(
-                          context,
-                          'Loyalty Shop',
-                          'Redeem rewards',
-                          Icons.shopping_basket_rounded,
-                          Colors.orange,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const LoyaltyShopScreen())).then((_) => auth.refreshUser()),
-                        ),
-                        _buildMenuCard(
-                          context,
-                          'Support',
-                          'Get help',
-                          Icons.support_agent_rounded,
-                          Colors.teal,
-                          () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportScreen())),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.settings_outlined),
-                      title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
-              Text('My Trade Items', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 16),
-              FutureBuilder<List<Listing>>(
-                future: _myListingsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 24),
-                          Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade400),
-                          const SizedBox(height: 8),
-                          Text("You haven't posted any trades yet.", style: TextStyle(color: Colors.grey.shade600)),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final listings = snapshot.data!;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: listings.length,
-                    itemBuilder: (context, index) {
-                      final listing = listings[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: listing.imageUrl != null
-                                ? Image.network(listing.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
-                                : Container(width: 50, height: 50, color: Colors.grey.shade200),
-                          ),
-                          title: Text(listing.title),
-                          subtitle: Text('${listing.category} • \$${listing.cashPrice}'),
-                          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
-                            );
-                            if (result == true) {
-                              _refreshMyListings();
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              Text('My Favorites', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 16),
-              FutureBuilder<List<Listing>>(
-                future: _myFavoritesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 24),
-                          Icon(Icons.favorite_border_rounded, size: 48, color: Colors.grey.shade400),
-                          const SizedBox(height: 8),
-                          Text("You haven't favorited any trades yet.", style: TextStyle(color: Colors.grey.shade600)),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final listings = snapshot.data!;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: listings.length,
-                    itemBuilder: (context, index) {
-                      final listing = listings[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: listing.imageUrl != null
-                                ? Image.network(listing.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
-                                : Container(width: 50, height: 50, color: Colors.grey.shade200),
-                          ),
-                          title: Text(listing.title),
-                          subtitle: Text('${listing.category} • \$${listing.cashPrice}'),
-                          trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
-                            );
-                            if (result == true) {
-                              _refreshMyListings();
-                            }
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => auth.logout(),
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Logout'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                  foregroundColor: Colors.red.shade700,
-                  elevation: 0,
-                ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, IconData icon, Color color) {
-    final theme = Theme.of(context);
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-        ),
-      ],
-    );
-  }
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              transform: Matrix4.translationValues(0, -32, 0),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Impact Dashboard Card
+                    _buildImpactCard(context),
+                    const SizedBox(height: 32),
 
-  Widget _buildMenuCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.1)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Icon(icon, color: color, size: 28),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    // Stats Grid
+                    Row(
+                      children: [
+                        Expanded(child: _buildMiniStat(context, 'Trust Score', '9.8', Icons.shield_rounded, Colors.green)),
+                        const SizedBox(width: 16),
+                        Expanded(child: _buildMiniStat(context, 'Successful Trades', '${user?.successfulTrades ?? 0}', Icons.handshake_rounded, Colors.blue)),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Menu Section
+                    Text('Trading Tools', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 16),
+                    _buildMenuItem(context, 'My Wallet', 'Manage tokens and rewards', Icons.account_balance_wallet_rounded, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen()))),
+                    _buildMenuItem(context, 'Trade History', 'View your completed swaps', Icons.history_rounded, Colors.purple, () {}),
+                    _buildMenuItem(context, 'Wishlist', 'Items you are tracking', Icons.favorite_rounded, Colors.red, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistScreen()))),
+                    _buildMenuItem(context, 'Sustainability Report', 'Your personal eco-contribution', Icons.eco_rounded, Colors.teal, () {}),
+
+                    const SizedBox(height: 32),
+                    
+                    // My Listings Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('My Active Trades', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                        TextButton(onPressed: () {}, child: const Text('Manage All')),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildMyListings(context),
+                    
+                    const SizedBox(height: 48),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => auth.logout(),
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Sign Out'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 100),
+                  ],
                 ),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: Colors.grey.shade600),
-                ),
-              ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildImpactCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [colorScheme.surfaceContainerHighest, colorScheme.surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('PLANET IMPACT', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.2)),
+                  const SizedBox(height: 4),
+                  const Text('42kg CO2 Saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.eco_rounded, color: Colors.green, size: 32),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: 0.7,
+              minHeight: 8,
+              backgroundColor: colorScheme.outline.withOpacity(0.1),
+              color: Colors.green,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'You are in the top 5% of sustainable traders this month!',
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(BuildContext context, String label, String value, IconData icon, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+      leading: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+        child: Icon(icon, color: color),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+      subtitle: Text(subtitle, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+      trailing: const Icon(Icons.chevron_right_rounded),
+    );
+  }
+
+  Widget _buildMyListings(BuildContext context) {
+    return FutureBuilder<List<Listing>>(
+      future: _myListingsFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1), style: BorderStyle.none),
+            ),
+            child: const Center(child: Text('No active listings')),
+          );
+        }
+        
+        return SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: snapshot.data!.length,
+            itemBuilder: (context, index) {
+              final listing = snapshot.data![index];
+              return Container(
+                width: 100,
+                margin: const EdgeInsets.only(right: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: listing.imageUrl != null 
+                      ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover)
+                      : null,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
