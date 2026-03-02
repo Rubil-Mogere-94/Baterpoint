@@ -58,7 +58,7 @@ class ReviewModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("UserModel", back_populates="reviews")
-    listing = relationship("ReviewModel", back_populates="reviews") # This was a mistake in the prompt, let me fix it in the next step or here.
+    listing = relationship("ListingModel", back_populates="reviews")
 
 class DealModel(Base):
     __tablename__ = "deals"
