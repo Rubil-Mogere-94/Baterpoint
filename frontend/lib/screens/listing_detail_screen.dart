@@ -440,6 +440,34 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   height: 1.6,
                                 ),
                               ),
+
+                              const SizedBox(height: 32),
+                              // Amazon-like Reviews Section
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Customer Reviews',
+                                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  if (_currentListing.reviews.isNotEmpty)
+                                    Row(
+                                      children: [
+                                        Icon(Icons.star, color: Colors.amber, size: 20),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _currentListing.averageRating.toStringAsFixed(1),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              if (_currentListing.reviews.isEmpty)
+                                Text('No reviews yet. Be the first!', style: TextStyle(color: colorScheme.onSurfaceVariant))
+                              else
+                                ..._currentListing.reviews.map((review) => _buildReviewItem(review)),
                             ],
                           ),
                         ),
@@ -449,55 +477,52 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 ),
           ),
 
-          // Glassmorphic Bottom Bar
+          // Improved Bottom Bar - Amazon Style
           if (!isOwner)
             Positioned(
-              bottom: 24,
-              left: 24,
-              right: 24,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _addToCart(context),
+                        child: Text('Add to Cart', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                      ],
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Interested?',
-                                style: TextStyle(
-                                  color: colorScheme.onSurface.withOpacity(0.6),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                _currentListing.cashPrice != null 
-                                    ? '\$${_currentListing.cashPrice}' 
-                                    : 'Trade Only',
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                           Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CheckoutScreen()),
+                          );
+                        },
+                        child: Text('Buy Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFFF9900), // Amazon Orange
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
                           ),
                         ),
                         ElevatedButton(

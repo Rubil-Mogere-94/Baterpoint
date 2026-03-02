@@ -1,4 +1,35 @@
-// frontend/lib/models/listing.dart
+class Review {
+  final int id;
+  final int userId;
+  final int listingId;
+  final int rating;
+  final String? comment;
+  final DateTime createdAt;
+  final String? username;
+
+  Review({
+    required this.id,
+    required this.userId,
+    required this.listingId,
+    required this.rating,
+    this.comment,
+    required this.createdAt,
+    this.username,
+  });
+
+  factory Review.fromJson(Map<String, dynamic> json) {
+    return Review(
+      id: json['id'],
+      userId: json['user_id'],
+      listingId: json['listing_id'],
+      rating: json['rating'],
+      comment: json['comment'],
+      createdAt: DateTime.parse(json['created_at']),
+      username: json['username'],
+    );
+  }
+}
+
 class Listing {
   final int id;
   final String title;
@@ -14,6 +45,8 @@ class Listing {
   final double ownerRating;
   final int ownerReviews;
   final String? ownerAvatar;
+  final double averageRating;
+  final List<Review> reviews;
 
   Listing({
     required this.id,
@@ -30,6 +63,8 @@ class Listing {
     this.ownerRating = 0.0,
     this.ownerReviews = 0,
     this.ownerAvatar,
+    this.averageRating = 0.0,
+    this.reviews = const [],
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
@@ -48,6 +83,10 @@ class Listing {
       ownerRating: (json['owner_rating'] ?? 0.0).toDouble(),
       ownerReviews: json['owner_reviews'] ?? 0,
       ownerAvatar: json['owner_avatar'],
+      averageRating: (json['average_rating'] ?? 0.0).toDouble(),
+      reviews: json['reviews'] != null 
+          ? (json['reviews'] as List).map((r) => Review.fromJson(r)).toList()
+          : [],
     );
   }
 }
