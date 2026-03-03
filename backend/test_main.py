@@ -69,10 +69,10 @@ def test_get_all_users_as_admin(client, db):
     # but let's try the proper way)
     
     # Actually, let's use dependency override for current_user to simplify admin testing
-    from app.main import get_current_user
+    from app.dependencies import get_current_user
     app.dependency_overrides[get_current_user] = lambda: admin
     
-    response = client.get("/api/v1/admin/users")
+    response = client.get("/api/v1/users/admin/all")
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["username"] == "admin"
@@ -125,7 +125,7 @@ def test_favorites(client, db):
     db.add(listing)
     db.commit()
 
-    from app.main import get_current_user
+    from app.dependencies import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
 
     # Get empty favorites
@@ -167,7 +167,7 @@ def test_offers(client, db):
     db.add(listing)
     db.commit()
 
-    from app.main import get_current_user
+    from app.dependencies import get_current_user
 
     # Test buyer making an offer
     app.dependency_overrides[get_current_user] = lambda: buyer
@@ -227,7 +227,7 @@ def test_recommendations(client, db):
     db.add(listing)
     db.commit()
 
-    from app.main import get_current_user
+    from app.dependencies import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
     
     response = client.get("/api/v1/listings/recommendations")
@@ -240,7 +240,7 @@ def test_loyalty_shop(client, db):
     db.add(user)
     db.commit()
 
-    from app.main import get_current_user
+    from app.dependencies import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
 
     # Get rewards

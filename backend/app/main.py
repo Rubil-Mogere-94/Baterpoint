@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from .config import settings
-from .routers import auth, listings, cart, orders, users, offers, chat
+from .routers import auth, listings, cart, orders, users, offers, chat, rewards
 
 # Configure logging
 logging.basicConfig(
@@ -63,6 +63,7 @@ app.include_router(orders.router, prefix=settings.API_V1_STR)
 app.include_router(users.router, prefix=settings.API_V1_STR)
 app.include_router(offers.router, prefix=settings.API_V1_STR)
 app.include_router(chat.router, prefix=settings.API_V1_STR)
+app.include_router(rewards.router, prefix=settings.API_V1_STR)
 
 # Ensure static directories exist
 os.makedirs(settings.STATIC_DIR, exist_ok=True)

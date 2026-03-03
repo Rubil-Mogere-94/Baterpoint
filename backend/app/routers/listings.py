@@ -149,9 +149,8 @@ def get_recommendations(
 def get_deal_of_the_hour(
     db: Annotated[Session, Depends(get_db)]
 ):
-    # Same logic as before
     import random
-    from datetime import datetime
+    from datetime import datetime, timedelta
     try:
         now = datetime.utcnow()
         deal = db.query(DealModel).filter(DealModel.end_time > now).first()
