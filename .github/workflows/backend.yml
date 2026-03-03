@@ -28,5 +28,7 @@ jobs:
     - name: Test with pytest
       run: |
         cd backend
-        # Note: We skip complex DB tests if DATABASE_URL is not set (defaults to sqlite)
         pytest
+    - name: Build Docker image
+      run: |
+        docker build -t baterpoint-backend ./backend

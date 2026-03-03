@@ -2,7 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from main import app, get_db, Base, UserModel, ListingModel
+from app.main import app
+from app.database import get_db
+from app.models import Base, UserModel, ListingModel
 import os
 
 # Use SQLite for testing
@@ -33,7 +35,7 @@ def client(db):
     app.dependency_overrides.clear()
 
 def test_register_user(client):
-    response = client.post("/register/", json={
+    response = client.post("/api/v1/register/", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
@@ -43,14 +45,14 @@ def test_register_user(client):
 
 def test_login_for_access_token(client):
     # First register
-    client.post("/register/", json={
+    client.post("/api/v1/register/", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
     })
     
     # Then login
-    response = client.post("/token", data={
+    response = client.post("/api/v1/token", data={
         "username": "testuser",
         "password": "password123"
     })
@@ -67,22 +69,22 @@ def test_get_all_users_as_admin(client, db):
     # but let's try the proper way)
     
     # Actually, let's use dependency override for current_user to simplify admin testing
-    from main import get_current_user
+    from app.main import get_current_user
     app.dependency_overrides[get_current_user] = lambda: admin
     
-    response = client.get("/admin/users")
+    response = client.get("/api/v1/admin/users")
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["username"] == "admin"
 
 def test_get_listings_empty(client):
-    response = client.get("/listings/")
+    response = client.get("/api/v1/listings/")
     assert response.status_code == 200
     assert response.json() == []
 
 def test_create_listing_unauthenticated(client):
     # Should fail without token/override
-    response = client.post("/listings/", data={
+    response = client.post("/api/v1/listings/", data={
         "title": "Test Listing",
         "category": "Electronics",
         "tradeType": "Trade"
@@ -100,17 +102,17 @@ def test_pagination(client, db):
     db.commit()
 
     # Test limit=20 (default or explicit)
-    response = client.get("/listings/")
+    response = client.get("/api/v1/listings/")
     assert response.status_code == 200
     assert len(response.json()) == 20
 
     # Test limit=10
-    response = client.get("/listings/?limit=10")
+    response = client.get("/api/v1/listings/?limit=10")
     assert response.status_code == 200
     assert len(response.json()) == 10
 
     # Test skip=20, expecting 5
-    response = client.get("/listings/?skip=20&limit=10")
+    response = client.get("/api/v1/listings/?skip=20&limit=10")
     assert response.status_code == 200
     assert len(response.json()) == 5
 
@@ -123,33 +125,33 @@ def test_favorites(client, db):
     db.add(listing)
     db.commit()
 
-    from main import get_current_user
+    from app.main import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
 
     # Get empty favorites
-    response = client.get("/users/me/favorites")
+    response = client.get("/api/v1/users/me/favorites")
     assert response.status_code == 200
     assert response.json() == []
 
     # Add favorite
-    response = client.post(f"/listings/{listing.id}/favorite")
+    response = client.post(f"/api/v1/listings/{listing.id}/favorite")
     assert response.status_code == 200
     assert response.json()["status"] == "favorited"
 
     # Get favorites again
-    response = client.get("/users/me/favorites")
+    response = client.get("/api/v1/users/me/favorites")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
     assert data[0]["id"] == listing.id
 
     # Remove favorite
-    response = client.post(f"/listings/{listing.id}/favorite")
+    response = client.post(f"/api/v1/listings/{listing.id}/favorite")
     assert response.status_code == 200
     assert response.json()["status"] == "unfavorited"
 
     # Get favorites again
-    response = client.get("/users/me/favorites")
+    response = client.get("/api/v1/users/me/favorites")
     assert response.status_code == 200
     assert response.json() == []
     
@@ -165,11 +167,11 @@ def test_offers(client, db):
     db.add(listing)
     db.commit()
 
-    from main import get_current_user
+    from app.main import get_current_user
 
     # Test buyer making an offer
     app.dependency_overrides[get_current_user] = lambda: buyer
-    response = client.post(f"/listings/{listing.id}/offers", json={
+    response = client.post(f"/api/v1/listings/{listing.id}/offers", json={
         "offered_price": 50.0,
         "offered_item": "Trade Item"
     })
@@ -179,35 +181,35 @@ def test_offers(client, db):
 
     # Test making offer on own listing fails
     app.dependency_overrides[get_current_user] = lambda: seller
-    response = client.post(f"/listings/{listing.id}/offers", json={
+    response = client.post(f"/api/v1/listings/{listing.id}/offers", json={
         "offered_price": 50.0
     })
     assert response.status_code == 400
 
     # Test buyer viewing their offers
     app.dependency_overrides[get_current_user] = lambda: buyer
-    response = client.get("/users/me/offers")
+    response = client.get("/api/v1/users/me/offers")
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["id"] == offer_id
 
     # Test seller viewing received offers
     app.dependency_overrides[get_current_user] = lambda: seller
-    response = client.get("/users/me/received_offers")
+    response = client.get("/api/v1/users/me/received_offers")
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["id"] == offer_id
 
     # Test buyer trying to accept their own offer (should fail)
     app.dependency_overrides[get_current_user] = lambda: buyer
-    response = client.put(f"/offers/{offer_id}", json={
+    response = client.put(f"/api/v1/offers/{offer_id}", json={
         "status": "accepted"
     })
     assert response.status_code == 403
 
     # Test seller accepting the offer
     app.dependency_overrides[get_current_user] = lambda: seller
-    response = client.put(f"/offers/{offer_id}", json={
+    response = client.put(f"/api/v1/offers/{offer_id}", json={
         "status": "accepted"
     })
     assert response.status_code == 200
@@ -225,10 +227,10 @@ def test_recommendations(client, db):
     db.add(listing)
     db.commit()
 
-    from main import get_current_user
+    from app.main import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
     
-    response = client.get("/listings/recommendations")
+    response = client.get("/api/v1/listings/recommendations")
     assert response.status_code == 200
     assert len(response.json()) > 0
     assert response.json()[0]["id"] == listing.id
@@ -238,18 +240,18 @@ def test_loyalty_shop(client, db):
     db.add(user)
     db.commit()
 
-    from main import get_current_user
+    from app.main import get_current_user
     app.dependency_overrides[get_current_user] = lambda: user
 
     # Get rewards
-    response = client.get("/rewards/")
+    response = client.get("/api/v1/rewards/")
     assert response.status_code == 200
     rewards = response.json()
     assert len(rewards) > 0
     premium_reward = next(r for r in rewards if "Premium" in r["title"])
 
     # Redeem
-    response = client.post(f"/rewards/{premium_reward['id']}/redeem")
+    response = client.post(f"/api/v1/rewards/{premium_reward['id']}/redeem")
     assert response.status_code == 200
     assert response.json()["reward"]["title"] == premium_reward["title"]
 
@@ -266,7 +268,7 @@ def test_deal_of_the_hour(client, db):
     db.add(listing)
     db.commit()
 
-    response = client.get("/listings/deal-of-the-hour")
+    response = client.get("/api/v1/listings/deal-of-the-hour")
     assert response.status_code == 200
     assert "discount_percentage" in response.json()
     assert response.json()["listing"]["id"] == listing.id

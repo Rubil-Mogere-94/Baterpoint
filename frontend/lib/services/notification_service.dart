@@ -1,11 +1,12 @@
 // frontend/lib/services/notification_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../constants.dart';
+import 'environment_config.dart';
 import 'auth_service.dart';
 
 class NotificationService {
   final AuthService _authService = AuthService();
+  final String apiUrl = EnvironmentConfig.apiUrl;
 
   Future<void> registerDeviceToken(String token) async {
     final authToken = await _authService.getToken();

@@ -4,13 +4,16 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'dart:io';
 import 'dart:convert';
-import '../constants.dart';
+import 'environment_config.dart';
 import '../models/chat_message.dart';
 import 'auth_service.dart';
 
 class ChatService {
   late io.Socket socket;
   final AuthService _authService = AuthService();
+  final String apiUrl = EnvironmentConfig.apiUrl;
+  final String baseUrl = EnvironmentConfig.baseUrl;
+
   Function(ChatMessage)? onMessageReceived;
   Function(ChatMessage)? onForumMessageReceived;
   Function(String)? onStatusMessage;
@@ -20,7 +23,7 @@ class ChatService {
   void connect({int? tradeId, String? forumCategory}) async {
     final token = await _authService.getToken();
     
-    socket = io.io(apiUrl, <String, dynamic>{
+    socket = io.io(baseUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });
