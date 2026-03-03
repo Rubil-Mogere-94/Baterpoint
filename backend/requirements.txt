@@ -3,6 +3,7 @@ uvicorn
 sqlalchemy
 psycopg2-binary
 python-dotenv
+pydantic-settings
 fastapi-cors
 passlib[bcrypt]
 python-jose[cryptography]
@@ -13,3 +14,4 @@ slowapi
 httpx
 email-validator
 python-multipart
+alembic
