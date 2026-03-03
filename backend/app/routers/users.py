@@ -4,8 +4,8 @@ from typing import Annotated, List, Optional
 from pydantic import EmailStr
 
 from ..database import get_db
-from ..models import UserModel, ListingModel, FavoriteModel, ReviewModel
-from ..schemas import User, UserUpdate, Listing, Review, ReviewCreate, UserRoleUpdate, UserSubscriptionUpdate, DeviceTokenUpdate
+from ..models import UserModel, ListingModel, FavoriteModel, ReviewModel, OfferModel
+from ..schemas import User, UserUpdate, Listing, Review, ReviewCreate, UserRoleUpdate, UserSubscriptionUpdate, DeviceTokenUpdate, Offer
 from ..dependencies import get_current_user, get_current_active_admin_user
 from ..auth_utils import get_password_hash
 
@@ -72,6 +72,20 @@ def get_user_favorites(
          "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
         for l in listings
     ]
+
+@router.get("/me/offers", response_model=List[Offer])
+def get_my_offers(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    return db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).all()
+
+@router.get("/me/received_offers", response_model=List[Offer])
+def get_received_offers(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    return db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).all()
 
 @router.post("/me/device-token")
 async def register_device_token(

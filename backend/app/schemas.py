@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
 class User(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     email: str
     username: str
@@ -15,9 +16,6 @@ class User(BaseModel):
     successful_trades: Optional[int] = 0
     trade_reputation: Optional[float] = 5.0
     avatar_url: Optional[str] = None
-
-    class Config:
-        from_attributes = True
 
 class UserCreate(BaseModel):
     username: str
@@ -38,6 +36,7 @@ class ReviewCreate(BaseModel):
     comment: Optional[str] = None
 
 class Review(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     listing_id: int
@@ -46,18 +45,16 @@ class Review(BaseModel):
     created_at: datetime
     username: Optional[str] = None # For convenience
 
-    class Config:
-        from_attributes = True
-
 class Listing(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     id: int
     title: str
     description: Optional[str] = None
-    cashPrice: Optional[float] = None
-    exchangeItem: Optional[str] = None
+    cashPrice: Optional[float] = Field(None, alias="price", validation_alias="price")
+    exchangeItem: Optional[str] = Field(None, alias="exchange_item", validation_alias="exchange_item")
     category: str
-    tradeType: str
-    imageUrl: Optional[str] = None
+    tradeType: str = Field(..., alias="trade_type", validation_alias="trade_type")
+    imageUrl: Optional[str] = Field(None, alias="image_url", validation_alias="image_url")
     user_id: int
     view_count: int
     owner_username: Optional[str] = None
@@ -67,14 +64,12 @@ class Listing(BaseModel):
     average_rating: Optional[float] = 0.0
     reviews: List[Review] = []
 
-    class Config:
-        from_attributes = True
-
 class OfferCreate(BaseModel):
     offered_price: Optional[float] = None
     offered_item: Optional[str] = None
 
 class Offer(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     buyer_id: int
     listing_id: int
@@ -85,10 +80,8 @@ class Offer(BaseModel):
     seller_confirmed: bool = False
     listing: Optional[Listing] = None
 
-    class Config:
-        from_attributes = True
-
 class Quest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
     description: str
@@ -96,47 +89,36 @@ class Quest(BaseModel):
     goal_value: int
     points_reward: int
 
-    class Config:
-        from_attributes = True
-
 class UserQuest(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     quest_id: int
     progress: int
     completed: bool
     quest: Quest
 
-    class Config:
-        from_attributes = True
-
 class Reward(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
     description: str
     points_cost: int
     reward_type: str
 
-    class Config:
-        from_attributes = True
-
 class UserReward(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     reward_id: int
     redeemed_at: datetime
     reward: Reward
 
-    class Config:
-        from_attributes = True
-
 class Notification(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     title: str
     message: str
     is_read: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 class InboxItem(BaseModel):
     other_user_id: int
@@ -149,6 +131,7 @@ class InboxItem(BaseModel):
     listing_id: Optional[int] = None
 
 class ForumMessage(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     sender_id: int
     sender_username: str
@@ -156,19 +139,15 @@ class ForumMessage(BaseModel):
     image_url: Optional[str] = None
     forum_category: str
     timestamp: datetime
-    class Config:
-        from_attributes = True
 
 class Deal(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     listing_id: int
     discount_percentage: int
     start_time: datetime
     end_time: datetime
     listing: Listing
-
-    class Config:
-        from_attributes = True
 
 class OfferUpdate(BaseModel):
     status: str
@@ -203,39 +182,34 @@ class CartItemCreate(BaseModel):
     quantity: Optional[int] = 1
 
 class CartItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     cart_id: int
     listing_id: int
     quantity: int
     listing: Listing
 
-    class Config:
-        from_attributes = True
-
 class Cart(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     items: List[CartItem] = []
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 class OrderItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     listing_id: int
     quantity: int
     price_at_purchase: float
     listing: Listing
-    
-    class Config:
-        from_attributes = True
 
 class OrderCreate(BaseModel):
     shipping_address: str
 
 class Order(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     user_id: int
     status: str
@@ -243,6 +217,3 @@ class Order(BaseModel):
     shipping_address: Optional[str] = None
     created_at: datetime
     items: List[OrderItem] = []
-
-    class Config:
-        from_attributes = True

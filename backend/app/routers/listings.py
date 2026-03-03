@@ -8,8 +8,8 @@ import os
 from jose import jwt
 
 from ..database import get_db
-from ..models import UserModel, ListingModel, FavoriteModel, DealModel
-from ..schemas import Listing, ListingUpdate, Deal
+from ..models import UserModel, ListingModel, FavoriteModel, DealModel, OfferModel
+from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate
 from ..dependencies import get_current_user, SECRET_KEY, ALGORITHM
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -98,14 +98,7 @@ def get_listings(
         query = query.order_by(desc(ListingModel.created_at) if order == 'desc' else ListingModel.created_at)
     
     listings = query.offset(skip).limit(limit).all()
-    return [
-        {"id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
-         "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
-         "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-         "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
-         "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
-        for l in listings
-    ]
+    return listings
 
 @router.get("/recommendations", response_model=List[Listing])
 def get_recommendations(
@@ -299,3 +292,30 @@ def toggle_favorite(
         # update_quest_progress(current_user.id, "favorite", db) # Re-enable later
         db.commit()
         return {"status": "favorited"}
+
+@router.post("/{listing_id}/offers", response_model=Offer)
+def create_offer(
+    listing_id: int,
+    offer_data: OfferCreate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot make an offer on your own listing")
+    
+    new_offer = OfferModel(
+        buyer_id=current_user.id,
+        listing_id=listing_id,
+        offered_price=offer_data.offered_price,
+        offered_item=offer_data.offered_item
+    )
+    db.add(new_offer)
+    db.commit()
+    db.refresh(new_offer)
+    
+    # Returning dict to match Offer schema rich listing expectations if needed
+    # but the response_model should handle it if Config.from_attributes is True
+    return new_offer
