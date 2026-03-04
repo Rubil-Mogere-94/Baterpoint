@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated, List
 
 from ..database import get_db
-from ..models import UserModel, CartModel, OrderModel, OrderItemModel, ListingModel
+from ..models import UserModel, CartModel, OrderModel, OrderItemModel, ListingModel, CouponModel
 from ..schemas import Order, OrderCreate
 from ..dependencies import get_current_user
 
@@ -41,6 +41,14 @@ def create_order(
             price_at_purchase=item_price
         ))
         
+    discount = 0.0
+    if order_in.coupon_code:
+        coupon = db.query(CouponModel).filter(CouponModel.code == order_in.coupon_code, CouponModel.is_active == True).first()
+        if not coupon:
+            raise HTTPException(status_code=400, detail="Invalid coupon code")
+        discount = (coupon.discount_percentage / 100.0) * total_amount
+        total_amount -= discount
+
     # 3. Create order
     new_order = OrderModel(
         user_id=current_user.id,
@@ -62,9 +70,11 @@ def create_order(
 @router.get("/", response_model=List[Order])
 def get_my_orders(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 20
 ):
-    return db.query(OrderModel).filter(OrderModel.user_id == current_user.id).order_by(OrderModel.created_at.desc()).all()
+    return db.query(OrderModel).filter(OrderModel.user_id == current_user.id).order_by(OrderModel.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.get("/{order_id}", response_model=Order)
 def get_order_detail(

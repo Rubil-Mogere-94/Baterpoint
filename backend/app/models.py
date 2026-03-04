@@ -60,6 +60,14 @@ class ReviewModel(Base):
     user = relationship("UserModel", back_populates="reviews")
     listing = relationship("ListingModel", back_populates="reviews")
 
+class CouponModel(Base):
+    __tablename__ = "coupons"
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True, nullable=False)
+    discount_percentage = Column(Integer, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class DealModel(Base):
     __tablename__ = "deals"
     id = Column(Integer, primary_key=True, index=True)

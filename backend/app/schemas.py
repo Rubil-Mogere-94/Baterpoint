@@ -149,6 +149,18 @@ class Deal(BaseModel):
     end_time: datetime
     listing: Listing
 
+class CouponCreate(BaseModel):
+    code: str
+    discount_percentage: int = Field(ge=1, le=100)
+
+class Coupon(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    discount_percentage: int
+    is_active: bool
+    created_at: datetime
+
 class OfferUpdate(BaseModel):
     status: str
 
@@ -207,6 +219,7 @@ class OrderItem(BaseModel):
 
 class OrderCreate(BaseModel):
     shipping_address: str
+    coupon_code: Optional[str] = None
 
 class Order(BaseModel):
     model_config = ConfigDict(from_attributes=True)

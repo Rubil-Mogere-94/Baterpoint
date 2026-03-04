@@ -57,9 +57,11 @@ async def read_own_listings(current_user: Annotated[UserModel, Depends(get_curre
 @router.get("/me/favorites", response_model=List[Listing])
 def get_user_favorites(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 20
 ):
-    favorites = db.query(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+    favorites = db.query(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).offset(skip).limit(limit).all()
     listing_ids = [fav.listing_id for fav in favorites]
     if not listing_ids:
         return []
@@ -76,16 +78,20 @@ def get_user_favorites(
 @router.get("/me/offers", response_model=List[Offer])
 def get_my_offers(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 20
 ):
-    return db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).all()
+    return db.query(OfferModel).filter(OfferModel.buyer_id == current_user.id).order_by(OfferModel.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.get("/me/received_offers", response_model=List[Offer])
 def get_received_offers(
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    skip: int = 0,
+    limit: int = 20
 ):
-    return db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).all()
+    return db.query(OfferModel).join(ListingModel).filter(ListingModel.user_id == current_user.id).order_by(OfferModel.created_at.desc()).offset(skip).limit(limit).all()
 
 @router.post("/me/device-token")
 async def register_device_token(
