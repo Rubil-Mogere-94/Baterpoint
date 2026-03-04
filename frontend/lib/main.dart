@@ -31,11 +31,13 @@ class BaterpointApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    // Modern Vibrant Color Palette
-    const primaryColor = Color(0xFF6366F1); // Indigo 500
-    const secondaryColor = Color(0xFFEC4899); // Pink 500
-    const tertiaryColor = Color(0xFF14B8A6); // Teal 500
-    const surfaceLight = Color(0xFFF8FAFC); // Slate 50
+    // V2 Premium Monochrome Luxury Palette
+    const primaryColor = Color(0xFF0F172A); // Deep Slate (Primary Dark)
+    const secondaryColor = Color(0xFF10B981); // Emerald Green (Success/Action)
+    const tertiaryColor = Color(0xFF6366F1); // Indigo Accent
+    
+    const surfaceLight = Color(0xFFFFFFFF); // Crisp White
+    const surfaceDark = Color(0xFF020617); // Ultra Dark Slate
     const textDark = Color(0xFF0F172A); // Slate 900
     const textMuted = Color(0xFF64748B); // Slate 500
 
@@ -51,11 +53,14 @@ class BaterpointApp extends StatelessWidget {
           seedColor: primaryColor,
           brightness: Brightness.light,
           primary: primaryColor,
+          onPrimary: Colors.white,
           secondary: secondaryColor,
+          onSecondary: Colors.white,
           tertiary: tertiaryColor,
           surface: surfaceLight,
           onSurface: textDark,
-          outline: const Color(0xFFE2E8F0),
+          outline: const Color(0xFFE2E8F0), // Slate 200
+          error: const Color(0xFFEF4444),
         ),
         scaffoldBackgroundColor: surfaceLight,
         textTheme: baseTextTheme.copyWith(
@@ -71,6 +76,10 @@ class BaterpointApp extends StatelessWidget {
           ),
           titleLarge: baseTextTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
+            color: textDark,
+          ),
+          titleMedium: baseTextTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
             color: textDark,
           ),
           bodyLarge: baseTextTheme.bodyLarge?.copyWith(
@@ -110,9 +119,29 @@ class BaterpointApp extends StatelessWidget {
             ),
           ),
         ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: textDark,
+            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
+            textStyle: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: primaryColor,
+            textStyle: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.white,
+          fillColor: const Color(0xFFF8FAFC), // Slate 50
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           border: OutlineInputBorder(
             borderRadius: AppRadius.roundedLG,
@@ -142,26 +171,52 @@ class BaterpointApp extends StatelessWidget {
         snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
+          backgroundColor: primaryColor,
+          contentTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: surfaceLight,
+          selectedItemColor: primaryColor,
+          unselectedItemColor: textMuted,
+          selectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 12),
+          unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 12),
+          type: BottomNavigationBarType.fixed,
+          elevation: 8,
         ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF818CF8),
+          seedColor: const Color(0xFFF8FAFC), // White primary for dark mode
           brightness: Brightness.dark,
-          primary: const Color(0xFF818CF8),
-          secondary: const Color(0xFFEC4899),
-          tertiary: const Color(0xFF2DD4BF),
-          surface: const Color(0xFF0F172A),
-          background: const Color(0xFF020617),
+          primary: const Color(0xFFF8FAFC),
+          onPrimary: const Color(0xFF0F172A),
+          secondary: const Color(0xFF10B981),
+          onSecondary: Colors.white,
+          tertiary: const Color(0xFF818CF8),
+          surface: surfaceDark,
+          onSurface: const Color(0xFFF8FAFC),
+          background: surfaceDark,
+          outline: const Color(0xFF334155),
         ),
-        scaffoldBackgroundColor: const Color(0xFF020617),
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
+        scaffoldBackgroundColor: surfaceDark,
+        textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme).copyWith(
+          headlineLarge: baseTextTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -1.5,
+          ),
+          headlineMedium: baseTextTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -1.0,
+          ),
+        ),
         appBarTheme: AppBarTheme(
           centerTitle: false,
           elevation: 0,
-          backgroundColor: const Color(0xFF020617),
+          backgroundColor: surfaceDark,
           scrolledUnderElevation: 0,
           titleTextStyle: GoogleFonts.plusJakartaSans(
             color: Colors.white,
@@ -178,6 +233,29 @@ class BaterpointApp extends StatelessWidget {
             side: const BorderSide(color: Color(0xFF1E293B)),
           ),
           color: const Color(0xFF0F172A),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF0F172A),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: AppRadius.roundedLG,
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppRadius.roundedLG,
+            borderSide: const BorderSide(color: Color(0xFF334155)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppRadius.roundedLG,
+            borderSide: const BorderSide(color: Colors.white, width: 2),
+          ),
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: surfaceDark,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: const Color(0xFF64748B),
+          type: BottomNavigationBarType.fixed,
         ),
       ),
       themeMode: themeProvider.themeMode,
