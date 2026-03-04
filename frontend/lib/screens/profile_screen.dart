@@ -15,6 +15,7 @@ import 'wishlist_screen.dart';
 import 'settings_screen.dart';
 import 'orders_screen.dart';
 import 'cart_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -164,6 +165,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuItem(context, 'My Wallet', 'Manage tokens and rewards', Icons.account_balance_wallet_rounded, Colors.orange, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletScreen()))),
                     _buildMenuItem(context, 'Wishlist', 'Items you are tracking', Icons.favorite_rounded, Colors.red, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishlistScreen()))),
                     _buildMenuItem(context, 'Sustainability Report', 'Your personal eco-contribution', Icons.eco_rounded, Colors.teal, () {}),
+
+                    if (user?.role == 'admin') ...[
+                      const SizedBox(height: 32),
+                      Text('Admin Platform', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: Colors.deepPurple)),
+                      const SizedBox(height: 16),
+                      _buildMenuItem(context, 'Admin Dashboard', 'Platform analytics and management', Icons.admin_panel_settings_rounded, Colors.deepPurple, () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminDashboardScreen()))),
+                    ],
 
                     const SizedBox(height: 32),
                     

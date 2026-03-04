@@ -453,6 +453,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                     ),
                                 ],
                               ),
+                              if (!isOwner) ...[
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: () => _showAddReviewDialog(context),
+                                  icon: const Icon(Icons.rate_review_rounded),
+                                  label: const Text('Write a Review'),
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               if (_currentListing.reviews.isEmpty)
                                 Text('No reviews yet. Be the first!', style: TextStyle(color: colorScheme.onSurfaceVariant))
@@ -602,6 +613,82 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showAddReviewDialog(BuildContext context) {
+    int rating = 5;
+    final commentController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Write a Review', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: Colors.amber,
+                          size: 32,
+                        ),
+                        onPressed: () => setState(() => rating = index + 1),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      labelText: 'Comment (Optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await _listingService.addReview(
+                        listingId: _currentListing.id,
+                        rating: rating,
+                        comment: commentController.text,
+                      );
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        _refreshListing();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Review submitted successfully!')),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          }
+        );
+      },
     );
   }
 }

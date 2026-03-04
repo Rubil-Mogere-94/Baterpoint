@@ -211,4 +211,24 @@ class ListingService {
       throw Exception(error['detail'] ?? 'Failed to load deal of the hour');
     }
   }
+
+  Future<void> addReview({required int listingId, required int rating, String? comment}) async {
+    final token = await _authService.getToken();
+    final response = await http.post(
+      Uri.parse('${EnvironmentConfig.apiUrl}/users/reviews'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'listing_id': listingId,
+        'rating': rating,
+        'comment': comment,
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to add review');
+    }
+  }
 }

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/listing.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
+import '../services/auth_service.dart';
+import '../services/environment_config.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Listing? listing;
@@ -20,6 +24,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPaymentMethod = 'credit_card';
   bool _isProcessing = false;
   bool _isLoadingCart = false;
+  
+  final TextEditingController _couponController = TextEditingController();
+  double _discountPercentage = 0.0;
+  bool _isApplyingCoupon = false;
+  String? _couponError;
+  String? _appliedCouponCode;
 
   @override
   void initState() {
@@ -45,12 +55,55 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  Future<void> _applyCoupon() async {
+    final code = _couponController.text.trim();
+    if (code.isEmpty) return;
+
+    setState(() {
+      _isApplyingCoupon = true;
+      _couponError = null;
+    });
+
+    try {
+      final token = await AuthService().getToken();
+      final response = await http.get(
+        Uri.parse('${EnvironmentConfig.apiUrl}/coupons/validate/$code'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _discountPercentage = data['discount_percentage'].toDouble();
+          _appliedCouponCode = code;
+          _isApplyingCoupon = false;
+        });
+      } else {
+        final error = jsonDecode(response.body);
+        setState(() {
+          _couponError = error['detail'] ?? 'Invalid coupon';
+          _discountPercentage = 0.0;
+          _appliedCouponCode = null;
+          _isApplyingCoupon = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _couponError = 'Network error';
+        _isApplyingCoupon = false;
+      });
+    }
+  }
+
   void _processPayment() async {
     setState(() => _isProcessing = true);
     
     try {
       // In a real Amazon-like app, we'd send the actual shipping address from a form
-      await _orderService.createOrder("123 Baterpoint Ave, Metropolis, NY 10001");
+      await _orderService.createOrder(
+        "123 Baterpoint Ave, Metropolis, NY 10001",
+        couponCode: _appliedCouponCode,
+      );
       
       if (!mounted) return;
       setState(() => _isProcessing = false);
@@ -101,9 +154,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (_isLoadingCart) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     
     final theme = Theme.of(context);
-    final price = widget.listing != null ? (widget.listing!.cashPrice ?? 0.0) : (_cart?.totalAmount ?? 0.0);
-    final shippingFee = price > 0 ? 15.00 : 0.0;
-    final total = price + shippingFee;
+    final subtotal = widget.listing != null ? (widget.listing!.cashPrice ?? 0.0) : (_cart?.totalAmount ?? 0.0);
+    final discountAmount = subtotal * (_discountPercentage / 100.0);
+    final priceAfterDiscount = subtotal - discountAmount;
+    final shippingFee = priceAfterDiscount > 0 ? 15.00 : 0.0;
+    final total = priceAfterDiscount + shippingFee;
 
     return Scaffold(
       appBar: AppBar(
@@ -240,7 +295,53 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Divider(),
                 ),
-                _buildSummaryRow('Subtotal', '\$${price.toStringAsFixed(2)}'),
+                Text('Promo Code', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _couponController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter code',
+                          errorText: _couponError,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          suffixIcon: _appliedCouponCode != null 
+                              ? const Icon(Icons.check_circle, color: Colors.green)
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: _isApplyingCoupon || _appliedCouponCode != null ? null : _applyCoupon,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                      ),
+                      child: _isApplyingCoupon
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Apply'),
+                    ),
+                  ],
+                ),
+                if (_appliedCouponCode != null)
+                   Padding(
+                     padding: const EdgeInsets.only(top: 8.0),
+                     child: Text('Coupon $_appliedCouponCode applied! (${_discountPercentage.toStringAsFixed(0)}% off)', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                   ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Divider(),
+                ),
+                _buildSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+                if (discountAmount > 0) ...[
+                  const SizedBox(height: 12),
+                  _buildSummaryRow('Discount (${_discountPercentage.toStringAsFixed(0)}%)', '-\$${discountAmount.toStringAsFixed(2)}', color: Colors.green),
+                ],
                 const SizedBox(height: 12),
                 _buildSummaryRow('Shipping Fee', '\$${shippingFee.toStringAsFixed(2)}'),
                 const SizedBox(height: 12),

@@ -75,17 +75,22 @@ class CartService {
 class OrderService {
   final AuthService _authService = AuthService();
 
-  Future<void> createOrder(String shippingAddress) async {
+  Future<void> createOrder(String shippingAddress, {String? couponCode}) async {
     final token = await _authService.getToken();
+    final body = {
+      'shipping_address': shippingAddress,
+    };
+    if (couponCode != null && couponCode.isNotEmpty) {
+      body['coupon_code'] = couponCode;
+    }
+    
     final response = await http.post(
       Uri.parse('${EnvironmentConfig.apiUrl}/orders/'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'shipping_address': shippingAddress,
-      }),
+      body: jsonEncode(body),
     );
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body);
