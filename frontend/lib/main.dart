@@ -185,6 +185,8 @@ class BaterpointApp extends StatelessWidget {
         builder: (context, auth, _) {
           if (auth.isAuthenticated) {
             return const MainScreen();
+          } else if (auth.hasSeenOnboarding) {
+            return const LoginScreen();
           } else {
             return const OnboardingScreen();
           }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../models/user.dart';
 
@@ -11,11 +12,13 @@ class AuthProvider extends ChangeNotifier {
   
   User? _user;
   bool _isLoading = false;
+  bool _hasSeenOnboarding = false;
   Set<int> _favoriteIds = {};
 
   User? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
+  bool get hasSeenOnboarding => _hasSeenOnboarding;
   Set<int> get favoriteIds => _favoriteIds;
 
   AuthProvider() {
@@ -29,6 +32,13 @@ class AuthProvider extends ChangeNotifier {
       _favoriteIds = favs.map((l) => l.id).toSet();
       notifyListeners();
     } catch (_) {}
+  }
+
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_seen_onboarding', true);
+    _hasSeenOnboarding = true;
+    notifyListeners();
   }
 
   Future<void> toggleFavorite(int listingId) async {
@@ -48,6 +58,9 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
       _user = await _authService.getCurrentUser();
       if (_user != null) {
         await _fetchFavorites();

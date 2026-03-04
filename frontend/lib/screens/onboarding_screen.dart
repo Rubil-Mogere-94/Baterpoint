@@ -3,7 +3,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
-import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -139,10 +138,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_currentIndex == onboardingData.length - 1)
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                      );
+                      context.read<AuthProvider>().completeOnboarding();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
@@ -171,10 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               right: 24,
               child: TextButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  );
+                  context.read<AuthProvider>().completeOnboarding();
                 },
                 child: const Text(
                   'Skip',
