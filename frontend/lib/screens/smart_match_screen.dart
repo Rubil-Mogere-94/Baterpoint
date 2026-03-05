@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import '../constants/ui_constants.dart';
+import '../widgets/modern_button.dart';
 
 
 class SmartMatchScreen extends StatefulWidget {
@@ -97,7 +99,9 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> with SingleTickerPr
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.tune_rounded),
-                  onPressed: () {},
+                  onPressed: () {
+                    Vibrate.feedback(FeedbackType.light);
+                  },
                 ),
               ),
             ],
@@ -297,16 +301,12 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> with SingleTickerPr
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shadowColor: colorScheme.primary.withOpacity(0.4),
-                        elevation: 4,
-                      ),
-                      child: const Text('Start Trade'),
-                    ),
+                  child: ModernButton(
+                    text: 'Start Trade',
+                    onPressed: () {
+                      // Haptic feedback is already in ModernButton
+                    },
+                  ),
                   ),
                 ),
               ],

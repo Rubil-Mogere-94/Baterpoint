@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:page_transition/page_transition.dart';
 import 'dart:ui';
+import '../widgets/modern_button.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
@@ -95,7 +98,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                          onPressed: () => Navigator.pop(context, true),
+                          onPressed: () {
+                            Vibrate.feedback(FeedbackType.light);
+                            Navigator.pop(context, true);
+                          },
                         ),
                       ),
                       flexibleSpace: FlexibleSpaceBar(
@@ -492,46 +498,26 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: ModernButton(
+                        text: 'Add to Cart',
+                        type: ModernButtonType.outlined,
                         onPressed: () => _addToCart(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          foregroundColor: colorScheme.primary,
-                          side: BorderSide(color: colorScheme.primary, width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
-                        ),
-                        child: Text(
-                          'Add to Cart',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: colorScheme.primary,
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: ElevatedButton(
+                      child: ModernButton(
+                        text: 'Buy Now',
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => CheckoutScreen(listing: _currentListing)),
+                            PageTransition(
+                              type: PageTransitionType.bottomToTop,
+                              child: CheckoutScreen(listing: _currentListing),
+                            ),
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 4,
-                          shadowColor: colorScheme.primary.withOpacity(0.3),
-                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
-                        ),
-                        child: const Text(
-                          'Buy Now',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                        ),
                       ),
                     ),
                   ],

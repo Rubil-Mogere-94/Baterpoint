@@ -325,7 +325,10 @@ class _SideActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Vibrate.feedback(FeedbackType.light);
+        onTap();
+      },
       child: Column(
         children: [
           ClipRRect(
