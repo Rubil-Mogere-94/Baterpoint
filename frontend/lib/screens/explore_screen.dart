@@ -136,6 +136,20 @@ class _ExploreItemPage extends StatelessWidget {
                   style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
+                    child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 14) : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    listing.ownerUsername ?? 'Unknown Trader',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               Text(
                 listing.title,
@@ -157,21 +171,7 @@ class _ExploreItemPage extends StatelessWidget {
                     shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
                   ),
                 ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
-                    child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 16) : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    listing.ownerUsername ?? 'Unknown Trader',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
+
             ],
           ),
         ),

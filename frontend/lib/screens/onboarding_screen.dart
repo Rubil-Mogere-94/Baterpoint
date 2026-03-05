@@ -22,14 +22,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'image': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
     },
     {
-      'title': 'Eco-Friendly Focus',
-      'description': 'Every trade saves CO2. Track your environmental impact straight from your dashboard.',
-      'image': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2013&auto=format&fit=crop',
+      'title': 'Curated Excellence',
+      'description': 'Discover premium, authenticated items from a community of trusted traders.',
+      'image': 'https://images.unsplash.com/photo-1556906781-9a412961c28c?q=80&w=1974&auto=format&fit=crop', // Premium sneakers/streetwear vibe
     },
     {
-      'title': 'Awesome Rewards',
-      'description': 'Earn tokens for trading, use them in the loyalty shop, and become a Baterpoint VIP.',
-      'image': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2071&auto=format&fit=crop',
+      'title': 'Zero Compromise',
+      'description': 'Elevate your lifestyle without the retail markup. Join the exclusive trading network.',
+      'image': 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2071&auto=format&fit=crop', // Gaming/Tech vibe
     },
   ];
 
@@ -38,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: Colors.black, // Force black background to ensure images blend perfectly
       body: Stack(
         children: [
           CarouselSlider(
@@ -63,6 +63,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       image: DecorationImage(
                         image: NetworkImage(data['image']!),
                         fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.2), 
+                          BlendMode.darken
+                        ),
                       ),
                     ),
                     child: Container(
@@ -71,11 +75,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.transparent,
+                            Colors.black.withOpacity(0.1),
                             Colors.black.withOpacity(0.4),
-                            Colors.black.withOpacity(0.9),
+                            Colors.black.withOpacity(0.95),
                           ],
-                          stops: const [0.0, 0.4, 1.0],
+                          stops: const [0.0, 0.5, 1.0],
                         ),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
@@ -85,21 +89,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: [
                           Text(
                             data['title']!,
-                            style: theme.textTheme.displaySmall?.copyWith(
+                            style: theme.textTheme.displayMedium?.copyWith(
                               color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              height: 1.1,
+                              letterSpacing: -1.0,
                             ),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             data['description']!,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withOpacity(0.85),
+                              fontWeight: FontWeight.w400,
                               height: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 120),
+                          const SizedBox(height: 140), // Space for bottom controls
                         ],
                       ),
                     ),
@@ -109,72 +113,92 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             }).toList(),
           ),
           
+          // Bottom Controls Layer
           Positioned(
             bottom: 48,
             left: 24,
             right: 24,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // Pagination Indicator
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: onboardingData.asMap().entries.map((entry) {
                     return GestureDetector(
                       onTap: () => _controller.animateToPage(entry.key),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        width: _currentIndex == entry.key ? 24.0 : 8.0,
+                        curve: Curves.easeOutCubic,
+                        width: _currentIndex == entry.key ? 32.0 : 8.0,
                         height: 8.0,
                         margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4.0),
                           color: _currentIndex == entry.key
-                              ? theme.colorScheme.primary
-                              : Colors.white.withOpacity(0.5),
+                              ? Colors.white
+                              : Colors.white.withOpacity(0.3),
                         ),
                       ),
                     );
                   }).toList(),
                 ),
+                const SizedBox(height: 32),
+                
+                // Action Buttons
                 if (_currentIndex == onboardingData.length - 1)
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<AuthProvider>().completeOnboarding();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<AuthProvider>().completeOnboarding();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                      ),
+                      child: const Text(
+                        'Enter Baterpoint', 
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800, 
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        )
+                      ),
                     ),
-                    child: const Text('Get Started', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   )
                 else
-                  IconButton(
-                    onPressed: () => _controller.nextPage(),
-                    icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.2),
-                      padding: const EdgeInsets.all(16),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          context.read<AuthProvider>().completeOnboarding();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white.withOpacity(0.7),
+                        ),
+                        child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                      ),
+                      IconButton(
+                        onPressed: () => _controller.nextPage(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOutCubic,
+                        ),
+                        icon: const Icon(Icons.arrow_forward_rounded, color: Colors.black),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(16),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
           ),
-          
-          if (_currentIndex < onboardingData.length - 1)
-            Positioned(
-              top: 60,
-              right: 24,
-              child: TextButton(
-                onPressed: () {
-                  context.read<AuthProvider>().completeOnboarding();
-                },
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-            ),
         ],
       ),
     );

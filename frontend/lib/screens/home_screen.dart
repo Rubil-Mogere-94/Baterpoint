@@ -32,11 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dealTimer;
   Duration _dealRemaining = Duration.zero;
 
-  final List<String> promoImages = [
-    'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?q=80&w=2076&auto=format&fit=crop',
-  ];
+
 
   @override
   void initState() {
@@ -209,89 +205,107 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             SliverToBoxAdapter(
-              child: CarouselSlider(
-                options: CarouselOptions(
-                  height: 210.0,
-                  autoPlay: true,
-                  enlargeCenterPage: true,
-                  viewportFraction: 0.92,
-                  aspectRatio: 16/9,
-                  initialPage: 0,
-                  autoPlayInterval: const Duration(seconds: 7),
-                  autoPlayCurve: Curves.fastOutSlowIn,
-                ),
-                items: promoImages.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final imageUrl = entry.value;
-                  final labels = ['Sustainable Trading', 'New Arrivals', 'Premium Swap'];
-                  final sublabels = ['Trade what you have for what you need', 'Fresh items added daily by the community', 'Exclusive items for high-rated traders'];
+              child: FutureBuilder<List<Listing>>(
+                future: _trendingListingsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    return ShimmerLoading.rectangular(height: 210, width: MediaQuery.of(context).size.width * 0.92);
+                  }
                   
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return Container(
-                        width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadius.roundedXXL,
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(imageUrl),
-                            fit: BoxFit.cover,
-                          ),
-                          boxShadow: AppShadows.medium,
-                        ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: AppRadius.roundedXXL,
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                              stops: const [0.4, 1.0],
-                            ),
-                          ),
-                          padding: const EdgeInsets.all(AppPadding.lg),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary,
-                                  borderRadius: AppRadius.roundedSM,
+                  // Filter listings with images for the hero carousel
+                  final heroListings = snapshot.data!.where((l) => l.imageUrl != null).take(5).toList();
+                  if (heroListings.isEmpty) return const SizedBox.shrink();
+
+                  return CarouselSlider(
+                    options: CarouselOptions(
+                      height: 210.0,
+                      autoPlay: true,
+                      enlargeCenterPage: true,
+                      viewportFraction: 0.92,
+                      aspectRatio: 16/9,
+                      initialPage: 0,
+                      autoPlayInterval: const Duration(seconds: 7),
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                    ),
+                    items: heroListings.map((listing) {
+                      return Builder(
+                        builder: (BuildContext context) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
+                              );
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width,
+                              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                              decoration: BoxDecoration(
+                                borderRadius: AppRadius.roundedXXL,
+                                image: DecorationImage(
+                                  image: CachedNetworkImageProvider(listing.imageUrl!),
+                                  fit: BoxFit.cover,
                                 ),
-                                child: Text(
-                                  'FEATURED',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.0,
+                                boxShadow: AppShadows.medium,
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: AppRadius.roundedXXL,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                                    stops: const [0.4, 1.0],
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                labels[index % labels.length],
-                                style: textTheme.headlineSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
+                                padding: const EdgeInsets.all(AppPadding.lg),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.primary,
+                                        borderRadius: AppRadius.roundedSM,
+                                      ),
+                                      child: Text(
+                                        listing.tradeType?.toUpperCase() ?? '',
+                                        style: textTheme.labelSmall?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      listing.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: textTheme.headlineSmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      listing.category,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: Colors.white.withOpacity(0.8),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                sublabels[index % sublabels.length],
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       );
-                    },
+                    }).toList(),
                   );
-                }).toList(),
+                },
               ),
             ),
             
