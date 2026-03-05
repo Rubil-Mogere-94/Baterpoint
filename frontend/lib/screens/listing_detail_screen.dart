@@ -140,10 +140,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               child: IconButton(
                                 icon: const Icon(Icons.edit, color: Colors.white),
                                 onPressed: () async {
+                                  Vibrate.feedback(FeedbackType.light);
                                   final result = await Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) => EditListingScreen(listing: _currentListing),
+                                    PageTransition(
+                                      type: PageTransitionType.rightToLeftWithFade,
+                                      child: EditListingScreen(listing: _currentListing),
                                     ),
                                   );
                                   if (result == true) {
@@ -159,7 +161,10 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                               backgroundColor: Colors.black.withOpacity(0.3),
                               child: IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                onPressed: () => _showDeleteDialog(context, _listingService),
+                                onPressed: () {
+                                  Vibrate.feedback(FeedbackType.medium);
+                                  _showDeleteDialog(context, _listingService);
+                                },
                               ),
                             ),
                           ),
