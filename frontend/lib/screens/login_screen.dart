@@ -5,6 +5,8 @@ import 'dart:ui';
 import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
 import 'register_screen.dart';
+import '../widgets/modern_button.dart';
+import '../widgets/modern_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -92,46 +94,23 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          // Background Blobs
+          // Elegant gradient background subtle blobs
           Positioned(
-            top: -120,
-            right: -80,
+            top: -100,
+            right: -50,
             child: AnimatedBuilder(
               animation: _animationController,
               builder: (context, child) => Transform.scale(
-                scale: 1.0 + (0.1 * _animationController.value),
+                scale: 1.0 + (0.05 * _animationController.value),
                 child: Container(
-                  width: 350,
-                  height: 350,
+                  width: 400,
+                  height: 400,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        colorScheme.primary.withOpacity(0.25),
-                        colorScheme.primary.withOpacity(0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -60,
-            child: AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) => Transform.scale(
-                scale: 1.0 + (0.1 * _animationController.value),
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        colorScheme.secondary.withOpacity(0.2),
-                        colorScheme.secondary.withOpacity(0),
+                        colorScheme.primary.withOpacity(0.04),
+                        Colors.transparent,
                       ],
                     ),
                   ),
@@ -153,172 +132,127 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       constraints: const BoxConstraints(maxWidth: 400),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // App Logo
+                          // App Logo Minimalist
                           Hero(
                             tag: 'app_logo',
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [colorScheme.primary, colorScheme.secondary],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
                                 ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: colorScheme.primary.withOpacity(0.3),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 15),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.handshake_rounded,
-                                size: 56,
-                                color: Colors.white,
+                                child: const Icon(
+                                  Icons.handshake_rounded,
+                                  size: 40,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 32),
                           
                           Text(
-                            'Baterpoint',
-                            style: textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              color: colorScheme.onSurface,
-                              letterSpacing: -1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Your community for trading and bartering.',
+                            'Welcome back.',
                             textAlign: TextAlign.center,
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: colorScheme.onSurfaceVariant.withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
+                            style: textTheme.headlineLarge?.copyWith(
+                              letterSpacing: -1.0,
                             ),
                           ),
-                          const SizedBox(height: 56),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Sign in to your Baterpoint account.',
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 48),
 
                           // Login Form
-                          Container(
-                            padding: const EdgeInsets.all(AppPadding.lg),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surface,
-                              borderRadius: AppRadius.roundedXXL,
-                              border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-                              boxShadow: AppShadows.medium,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                TextField(
-                                  controller: _usernameController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Username',
-                                    prefixIcon: Icon(Icons.person_outline_rounded, size: 22, color: colorScheme.primary),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: AppRadius.roundedLG,
-                                      borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                TextField(
-                                  controller: _passwordController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Password',
-                                    prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: colorScheme.primary),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _obscurePassword 
-                                            ? Icons.visibility_off_outlined 
-                                            : Icons.visibility_outlined,
-                                        size: 20,
-                                        color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                                      ),
-                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: AppRadius.roundedLG,
-                                      borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.1)),
-                                    ),
-                                  ),
-                                  obscureText: _obscurePassword,
-                                ),
-                                const SizedBox(height: 12),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () {},
-                                    child: Text(
-                                      'Forgot password?',
-                                      style: TextStyle(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-                                
-                                AnimatedContainer(
-                                  duration: AppAnimations.fast,
-                                  height: 60,
-                                  child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _handleLogin,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: colorScheme.primary,
-                                      foregroundColor: Colors.white,
-                                      elevation: 8,
-                                      shadowColor: colorScheme.primary.withOpacity(0.4),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: AppRadius.roundedLG,
-                                      ),
-                                    ),
-                                    child: _isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                        )
-                                      : const Text(
-                                          'Sign In',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-                                        ),
-                                  ),
-                                ),
-                              ],
+                          ModernTextField(
+                            labelText: 'Username',
+                            hintText: 'Enter your username',
+                            controller: _usernameController,
+                            prefixIcon: Icon(Icons.person_outline_rounded, color: colorScheme.primary),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          ModernTextField(
+                            labelText: 'Password',
+                            hintText: 'Enter your password',
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            prefixIcon: Icon(Icons.lock_outline_rounded, color: colorScheme.primary),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword 
+                                    ? Icons.visibility_off_outlined 
+                                    : Icons.visibility_outlined,
+                                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
                           
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {}, // Add forgot password flow
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 40),
+                          
+                          ModernButton(
+                            text: 'Sign In',
+                            isLoading: _isLoading,
+                            onPressed: _handleLogin,
+                          ),
+                          
+                          const SizedBox(height: 32),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Don't have an account? ",
+                                "New to Baterpoint? ",
                                 style: TextStyle(
                                   color: colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.push(
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(builder: (context) => const RegisterScreen()),
                                   );
                                 },
-                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
                                 child: Text(
-                                  'Sign Up',
+                                  'Create account',
                                   style: TextStyle(
                                     color: colorScheme.primary,
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
