@@ -195,7 +195,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             child: IconButton(
                               icon: const Icon(Icons.shopping_cart, color: Colors.white),
                               onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()));
+                                Vibrate.feedback(FeedbackType.light);
+                                Navigator.push(
+                                  context, 
+                                  PageTransition(
+                                    type: PageTransitionType.rightToLeftWithFade,
+                                    child: const CartScreen(),
+                                  ),
+                                );
                               },
                             ),
                           ),
@@ -367,10 +374,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                     IconButton(
                                       icon: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary),
                                       onPressed: () {
+                                         Vibrate.feedback(FeedbackType.light);
                                          Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ChatScreen(
+                                          PageTransition(
+                                            type: PageTransitionType.fade,
+                                            child: ChatScreen(
                                               tradeId: _currentListing.id,
                                               recipientId: _currentListing.userId,
                                               recipientName: _currentListing.ownerUsername,
