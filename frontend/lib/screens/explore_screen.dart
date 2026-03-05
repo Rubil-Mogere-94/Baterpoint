@@ -21,7 +21,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    _exploreFeedFuture = _listingService.fetchListings(limit: 20); // Fetch a feed of items
+    _exploreFeedFuture = _listingService.fetchListings(limit: 20);
   }
 
   @override
@@ -38,9 +38,38 @@ class _ExploreScreenState extends State<ExploreScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Discover', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text(
+          'Discover',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.15),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.search_rounded, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       body: FutureBuilder<List<Listing>>(
@@ -83,80 +112,110 @@ class _ExploreItemPage extends StatelessWidget {
         // Full Screen Image
         GestureDetector(
           onTap: () {
-             Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ListingDetailScreen(listing: listing),
-                ),
-              );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ListingDetailScreen(listing: listing),
+              ),
+            );
           },
           child: listing.imageUrl != null
               ? CachedNetworkImage(
                   imageUrl: listing.imageUrl!,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(color: Colors.grey[900]),
-                  errorWidget: (context, url, error) => Container(color: Colors.grey[900], child: const Icon(Icons.error, color: Colors.white)),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[900],
+                    child: const Icon(Icons.broken_image_rounded, color: Colors.white54, size: 48),
+                  ),
                 )
-              : Container(color: Colors.grey[900], child: const Icon(Icons.image_not_supported, color: Colors.white)),
+              : Container(
+                  color: Colors.grey[900],
+                  child: const Icon(Icons.image_not_supported_rounded, color: Colors.white54, size: 48),
+                ),
         ),
 
-        // Gradient Overlay
+        // Multi-stop Gradient Overlay
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.3),
+                Colors.black.withOpacity(0.4),
                 Colors.transparent,
-                Colors.black.withOpacity(0.8),
+                Colors.transparent,
+                Colors.black.withOpacity(0.85),
               ],
-              stops: const [0.0, 0.6, 1.0],
+              stops: const [0.0, 0.3, 0.5, 1.0],
             ),
           ),
         ),
 
         // Content
         Positioned(
-          bottom: 100, // Adjusted for bottom nav
+          bottom: 110,
           left: 20,
-          right: 80, // Space for side actions
+          right: 90,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                ),
-                child: Text(
-                  listing.category.toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              // Category pill
+              ClipRRect(
+                borderRadius: AppRadius.roundedSM,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: AppRadius.roundedSM,
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      listing.category.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
                 ),
               ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
-                    child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 14) : null,
+                    backgroundImage: listing.ownerAvatar != null
+                        ? CachedNetworkImageProvider(listing.ownerAvatar!)
+                        : null,
+                    backgroundColor: Colors.white24,
+                    child: listing.ownerAvatar == null
+                        ? const Icon(Icons.person_rounded, size: 14, color: Colors.white)
+                        : null,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     listing.ownerUsername ?? 'Unknown Trader',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 listing.title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
                   shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
                 ),
               ),
@@ -165,32 +224,31 @@ class _ExploreItemPage extends StatelessWidget {
                 Text(
                   '\$${listing.cashPrice}',
                   style: const TextStyle(
-                    color: Colors.greenAccent,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
                     shadows: [Shadow(color: Colors.black54, blurRadius: 10)],
                   ),
                 ),
-
             ],
           ),
         ),
 
         // Side Actions
         Positioned(
-          bottom: 100,
-          right: 10,
+          bottom: 110,
+          right: 12,
           child: Column(
             children: [
               _SideActionButton(icon: Icons.favorite_border_rounded, label: 'Save', onTap: () {}),
               const SizedBox(height: 20),
-              _SideActionButton(icon: Icons.comment_rounded, label: 'Chat', onTap: () {}),
+              _SideActionButton(icon: Icons.chat_bubble_outline_rounded, label: 'Chat', onTap: () {}),
               const SizedBox(height: 20),
               _SideActionButton(icon: Icons.share_rounded, label: 'Share', onTap: () {}),
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
-                   Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ListingDetailScreen(listing: listing),
@@ -198,16 +256,44 @@ class _ExploreItemPage extends StatelessWidget {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Theme.of(context).primaryColor,
-                    boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.5), blurRadius: 10)],
+                    color: Theme.of(context).colorScheme.primary,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                  child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
                 ),
               ),
             ],
+          ),
+        ),
+
+        // Swipe indicator
+        Positioned(
+          bottom: 60,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.keyboard_arrow_up_rounded, color: Colors.white.withOpacity(0.7), size: 24),
+                Text(
+                  'Swipe for more',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -228,17 +314,31 @@ class _SideActionButton extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.4),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.15),
+                  border: Border.all(color: Colors.white.withOpacity(0.25)),
+                ),
+                child: Icon(icon, color: Colors.white, size: 26),
+              ),
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+            ),
+          ),
         ],
       ),
     );

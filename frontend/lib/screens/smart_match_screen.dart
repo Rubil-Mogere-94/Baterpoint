@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/ui_constants.dart';
-import '../models/listing.dart';
+
 
 class SmartMatchScreen extends StatefulWidget {
   const SmartMatchScreen({super.key});

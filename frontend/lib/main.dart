@@ -1,14 +1,14 @@
 // frontend/lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/environment_config.dart';
-import 'constants/ui_constants.dart';
+
 import 'constants/theme.dart';
 
 void main() async {

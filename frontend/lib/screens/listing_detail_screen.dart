@@ -27,7 +27,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late Listing _currentListing;
   bool _isLoading = false;
   final ListingService _listingService = ListingService();
-  final OfferService _offerService = OfferService();
+
   final CartService _cartService = CartService();
 
   @override
@@ -94,7 +94,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
                           onPressed: () => Navigator.pop(context, true),
                         ),
                       ),
@@ -483,10 +483,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+                padding: EdgeInsets.fromLTRB(AppPadding.lg, 16, AppPadding.lg, MediaQuery.of(context).padding.bottom + 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  border: Border(top: BorderSide(color: colorScheme.outline.withOpacity(0.1))),
+                  boxShadow: AppShadows.medium,
                 ),
                 child: Row(
                   children: [
@@ -494,28 +495,43 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                       child: OutlinedButton(
                         onPressed: () => _addToCart(context),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: Colors.grey[300]!),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          foregroundColor: colorScheme.primary,
+                          side: BorderSide(color: colorScheme.primary, width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
                         ),
-                        child: const Text('Add to Cart', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'Add to Cart',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
+                      flex: 2,
                       child: ElevatedButton(
                         onPressed: () {
-                           Navigator.push(
+                          Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => CheckoutScreen(listing: _currentListing)),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF9900), // Amazon Orange
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 4,
+                          shadowColor: colorScheme.primary.withOpacity(0.3),
+                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
                         ),
-                        child: const Text('Buy Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        child: const Text(
+                          'Buy Now',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                        ),
                       ),
                     ),
                   ],
@@ -528,31 +544,58 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Widget _buildReviewItem(Review review) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: AppRadius.roundedXL,
+        border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircleAvatar(radius: 12, child: Text(review.username?[0] ?? 'U')),
-              const SizedBox(width: 8),
-              Text(review.username ?? 'Anonymous', style: const TextStyle(fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: colorScheme.primary.withOpacity(0.1),
+                    child: Text(
+                      (review.username?[0] ?? 'U').toUpperCase(),
+                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    review.username ?? 'Anonymous',
+                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+              Row(
+                children: List.generate(5, (index) => Icon(
+                  index < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
+                  size: 14,
+                  color: index < review.rating ? Colors.amber : colorScheme.outline,
+                )),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: List.generate(5, (index) => Icon(
-              Icons.star,
-              size: 14,
-              color: index < review.rating ? Colors.amber : Colors.grey[300],
-            )),
-          ),
           if (review.comment != null) ...[
-            const SizedBox(height: 4),
-            Text(review.comment!),
+            const SizedBox(height: 10),
+            Text(
+              review.comment!,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
           ],
-          const Divider(),
         ],
       ),
     );

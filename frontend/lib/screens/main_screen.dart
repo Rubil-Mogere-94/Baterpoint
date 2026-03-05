@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../constants/ui_constants.dart';
-import 'categories_screen.dart';
+
 import 'smart_match_screen.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';

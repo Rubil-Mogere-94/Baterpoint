@@ -9,7 +9,7 @@ import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
 import 'edit_profile_screen.dart';
 import 'listing_detail_screen.dart';
-import 'loyalty_shop_screen.dart';
+
 import 'wallet_screen.dart';
 import 'wishlist_screen.dart';
 import 'settings_screen.dart';
@@ -174,13 +174,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
 
                     const SizedBox(height: 32),
-                    
-                    // My Listings Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('My Active Trades', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                        TextButton(onPressed: () {}, child: const Text('Manage All')),
+                        OutlinedButton.icon(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen())),
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Edit Profile'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            side: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+                            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -194,10 +203,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: const Icon(Icons.logout_rounded),
                         label: const Text('Sign Out'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.redAccent,
-                          side: const BorderSide(color: Colors.redAccent),
+                          foregroundColor: colorScheme.error,
+                          side: BorderSide(color: colorScheme.error.withOpacity(0.5)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
                         ),
                       ),
                     ),
@@ -303,6 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMyListings(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return FutureBuilder<List<Listing>>(
       future: _myListingsFuture,
       builder: (context, snapshot) {
@@ -310,29 +320,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.1), style: BorderStyle.none),
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              borderRadius: AppRadius.roundedXXL,
+              border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
             ),
-            child: const Center(child: Text('No active listings')),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.inventory_2_outlined, size: 32, color: colorScheme.onSurfaceVariant.withOpacity(0.4)),
+                  const SizedBox(height: 8),
+                  Text('No active listings', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                ],
+              ),
+            ),
           );
         }
         
         return SizedBox(
-          height: 120,
+          height: 130,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final listing = snapshot.data![index];
-              return Container(
-                width: 100,
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: listing.imageUrl != null 
-                      ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover)
-                      : null,
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
+                ),
+                child: Container(
+                  width: 110,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.roundedXL,
+                    color: colorScheme.surfaceContainerHighest,
+                    image: listing.imageUrl != null
+                        ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover)
+                        : null,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.roundedXL,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                        stops: const [0.5, 1.0],
+                      ),
+                    ),
+                    alignment: Alignment.bottomLeft,
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      listing.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               );
             },
