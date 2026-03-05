@@ -177,7 +177,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.favorite_border, color: Colors.white),
-                              onPressed: () {},
+                              onPressed: () {
+                                Vibrate.feedback(FeedbackType.light);
+                              },
                             ),
                           ),
                           Container(
@@ -188,7 +190,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.share, color: Colors.white),
-                              onPressed: () {},
+                              onPressed: () {
+                                Vibrate.feedback(FeedbackType.light);
+                              },
                             ),
                           ),
                           Container(

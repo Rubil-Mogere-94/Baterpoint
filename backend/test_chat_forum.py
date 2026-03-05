@@ -2,7 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from main import app, get_db, Base, UserModel, ChatMessageModel, limiter
+from app.main import app, get_db, limiter
+from app.models import Base, UserModel, ChatMessageModel
 from datetime import datetime
 
 # Disable rate limiter for tests
