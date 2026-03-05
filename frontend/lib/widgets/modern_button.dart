@@ -67,7 +67,10 @@ class ModernButton extends StatelessWidget {
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : () {
+            Vibrate.feedback(FeedbackType.light);
+            onPressed?.call();
+          },
           style: style,
           child: buttonContent,
         );
@@ -81,7 +84,10 @@ class ModernButton extends StatelessWidget {
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : () {
+            Vibrate.feedback(FeedbackType.light);
+            onPressed?.call();
+          },
           style: style,
           child: buttonContent,
         );

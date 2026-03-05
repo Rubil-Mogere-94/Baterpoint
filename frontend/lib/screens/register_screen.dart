@@ -1,6 +1,7 @@
-// frontend/lib/screens/register_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:page_transition/page_transition.dart';
 import 'dart:ui';
 import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
@@ -82,7 +83,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Vibrate.feedback(FeedbackType.light);
+            Navigator.pop(context);
+          },
         ),
       ),
       extendBodyBehindAppBar: true,
@@ -213,6 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
+                              Vibrate.feedback(FeedbackType.light);
                               Navigator.pop(context);
                             },
                             child: Text(

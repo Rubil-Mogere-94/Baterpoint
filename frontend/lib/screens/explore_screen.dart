@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:page_transition/page_transition.dart';
 import 'dart:ui';
 import '../models/listing.dart';
 import '../services/listing_service.dart';
@@ -40,7 +43,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.maybePop(context),
+          onPressed: () {
+            Vibrate.feedback(FeedbackType.light);
+            Navigator.maybePop(context);
+          },
         ),
         title: const Text(
           'Discover',
@@ -75,23 +81,27 @@ class _ExploreScreenState extends State<ExploreScreen> {
       body: FutureBuilder<List<Listing>>(
         future: _exploreFeedFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.white));
-          } else if (snapshot.hasError) {
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          if (!isLoading && snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (!isLoading && (!snapshot.hasData || snapshot.data!.isEmpty)) {
             return const Center(child: Text('No items to explore.', style: TextStyle(color: Colors.white)));
           }
 
-          final listings = snapshot.data!;
+          final listings = isLoading 
+              ? List.generate(3, (_) => Listing.skeleton())
+              : snapshot.data!;
 
-          return PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            itemCount: listings.length,
-            itemBuilder: (context, index) {
-              return _ExploreItemPage(listing: listings[index]);
-            },
+          return Skeletonizer(
+            enabled: isLoading,
+            child: PageView.builder(
+              controller: _pageController,
+              scrollDirection: Axis.vertical,
+              itemCount: listings.length,
+              itemBuilder: (context, index) {
+                return _ExploreItemPage(listing: listings[index]);
+              },
+            ),
           );
         },
       ),
@@ -112,10 +122,12 @@ class _ExploreItemPage extends StatelessWidget {
         // Full Screen Image
         GestureDetector(
           onTap: () {
+            Vibrate.feedback(FeedbackType.light);
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => ListingDetailScreen(listing: listing),
+              PageTransition(
+                type: PageTransitionType.fade,
+                child: ListingDetailScreen(listing: listing),
               ),
             );
           },
@@ -248,10 +260,12 @@ class _ExploreItemPage extends StatelessWidget {
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
+                  Vibrate.feedback(FeedbackType.medium);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => ListingDetailScreen(listing: listing),
+                    PageTransition(
+                      type: PageTransitionType.fade,
+                      child: ListingDetailScreen(listing: listing),
                     ),
                   );
                 },

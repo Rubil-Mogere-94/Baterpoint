@@ -689,7 +689,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ExploreScreen()),
+                          PageTransition(
+                            type: PageTransitionType.fade,
+                            child: const ExploreScreen(),
+                          ),
                         );
                       },
                       child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
@@ -768,7 +771,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ExploreScreen()),
+                          PageTransition(
+                            type: PageTransitionType.fade,
+                            child: const ExploreScreen(),
+                          ),
                         );
                       },
                       child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),

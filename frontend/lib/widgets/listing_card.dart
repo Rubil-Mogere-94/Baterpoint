@@ -1,6 +1,10 @@
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import '../screens/listing_detail_screen.dart';
 import '../constants/ui_constants.dart';
 import '../constants/theme.dart';
@@ -29,10 +33,12 @@ class ListingCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () async {
+              Vibrate.feedback(FeedbackType.light);
               await Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => ListingDetailScreen(listing: listing),
+                PageTransition(
+                  type: PageTransitionType.fade,
+                  child: ListingDetailScreen(listing: listing),
                 ),
               );
             },

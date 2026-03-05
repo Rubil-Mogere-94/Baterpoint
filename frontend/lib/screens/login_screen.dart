@@ -1,6 +1,7 @@
-// frontend/lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:page_transition/page_transition.dart';
 import 'dart:ui';
 import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
@@ -206,7 +207,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {}, // Add forgot password flow
+                              onPressed: () {
+                                Vibrate.feedback(FeedbackType.light);
+                                // Add forgot password flow
+                              },
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
@@ -243,9 +247,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               ),
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.pushReplacement(
+                                  Vibrate.feedback(FeedbackType.light);
+                                  Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                                    PageTransition(
+                                      type: PageTransitionType.bottomToTop,
+                                      child: const RegisterScreen(),
+                                    ),
                                   );
                                 },
                                 child: Text(
