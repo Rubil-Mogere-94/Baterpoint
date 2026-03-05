@@ -89,4 +89,19 @@ class Listing {
           : [],
     );
   }
+
+  factory Listing.skeleton() {
+    return Listing(
+      id: 0,
+      title: 'Loading listing title...',
+      description: 'Loading description of the listing item goes here...',
+      category: 'CATEGORY',
+      userId: 0,
+      viewCount: 0,
+      ownerUsername: 'Username',
+      tradeType: 'TRADE',
+      cashPrice: 0.0,
+      exchangeItem: 'Exchange item',
+    );
+  }
 }

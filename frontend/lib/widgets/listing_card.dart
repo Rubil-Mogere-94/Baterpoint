@@ -1,11 +1,9 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../screens/listing_detail_screen.dart';
 import '../constants/ui_constants.dart';
+import '../constants/theme.dart';
 
 class ListingCard extends StatelessWidget {
   final Listing listing;
@@ -54,16 +52,6 @@ class ListingCard extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   placeholder: (context, url) => Container(
                                     color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                                    child: Center(
-                                      child: SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: colorScheme.primary.withOpacity(0.5),
-                                        ),
-                                      ),
-                                    ),
                                   ),
                                   errorWidget: (context, url, error) => Container(
                                     color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
@@ -76,7 +64,6 @@ class ListingCard extends StatelessWidget {
                                 ),
                         ),
                       ),
-                      // Subtle gradient overlay for better text contrast if needed
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -84,11 +71,11 @@ class ListingCard extends StatelessWidget {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.05),
+                                Colors.black.withOpacity(0.02),
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.15),
+                                Colors.black.withOpacity(0.2),
                               ],
-                              stops: const [0.0, 0.5, 1.0],
+                              stops: const [0.0, 0.6, 1.0],
                             ),
                           ),
                         ),
@@ -99,27 +86,27 @@ class ListingCard extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: AppRadius.roundedSM,
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                            filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.35),
+                                color: Colors.black.withOpacity(0.4),
                                 borderRadius: AppRadius.roundedSM,
-                                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                border: Border.all(color: Colors.white.withOpacity(0.15)),
                               ),
                               child: Text(
                                 listing.category.toUpperCase(),
                                 style: textTheme.labelSmall?.copyWith(
-                                  fontSize: 9,
+                                  fontSize: 8,
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
-                                  letterSpacing: 0.8,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.2),
                       Positioned(
                         bottom: 8,
                         left: 8,
@@ -136,11 +123,17 @@ class ListingCard extends StatelessWidget {
                                 child: BackdropFilter(
                                   filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                                   child: Container(
-                                    padding: const EdgeInsets.all(6),
+                                    padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: Colors.white.withOpacity(0.25),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.1),
+                                          blurRadius: 4,
+                                        )
+                                      ],
                                     ),
                                     child: Icon(
                                       isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
@@ -150,7 +143,7 @@ class ListingCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            );
+                            ).animate(target: isFavorite ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 200.ms, curve: Curves.elasticOut);
                           },
                         ),
                       ),
@@ -171,6 +164,7 @@ class ListingCard extends StatelessWidget {
                             color: colorScheme.onSurface,
                             fontSize: 14,
                             height: 1.2,
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -182,20 +176,20 @@ class ListingCard extends StatelessWidget {
                             style: textTheme.titleMedium?.copyWith(
                               color: colorScheme.primary,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
+                              letterSpacing: -0.8,
                             ),
                           ),
                         if (listing.exchangeItem != null && listing.exchangeItem!.isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.swap_horiz_rounded, size: 14, color: colorScheme.secondary),
+                              Icon(Icons.swap_horiz_rounded, size: 14, color: AppColors.secondary),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   listing.exchangeItem!,
                                   style: textTheme.labelSmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                                     fontWeight: FontWeight.w700,
                                   ),
                                   maxLines: 1,
@@ -205,14 +199,14 @@ class ListingCard extends StatelessWidget {
                             ],
                           ),
                         ],
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(1),
+                              padding: const EdgeInsets.all(1.5),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+                                border: Border.all(color: colorScheme.primary.withOpacity(0.08)),
                               ),
                               child: CircleAvatar(
                                 radius: 10,
@@ -232,7 +226,7 @@ class ListingCard extends StatelessWidget {
                                   : null,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 listing.ownerUsername ?? 'Trader',
@@ -248,7 +242,7 @@ class ListingCard extends StatelessWidget {
                             const SizedBox(width: 2),
                             Text(
                               listing.ownerRating.toStringAsFixed(1),
-                              style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w900),
+                              style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w900, fontSize: 10),
                             ),
                           ],
                         ),
@@ -261,6 +255,6 @@ class ListingCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
   }
 }

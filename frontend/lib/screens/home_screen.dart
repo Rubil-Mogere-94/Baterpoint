@@ -8,12 +8,14 @@ import '../models/deal.dart';
 import '../models/quest.dart';
 import '../services/listing_service.dart';
 import '../services/quest_service.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../widgets/listing_card.dart';
 import '../constants/ui_constants.dart';
+import '../providers/connectivity_provider.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'explore_screen.dart';
-import '../widgets/shimmer_loading.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -104,13 +106,44 @@ class _HomeScreenState extends State<HomeScreen> {
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               expandedHeight: 70,
-              flexibleSpace: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: FlexibleSpaceBar(
-                    background: Container(color: Colors.transparent),
+              flexibleSpace: Column(
+                children: [
+                   Consumer<ConnectivityProvider>(
+                    builder: (context, connectivity, _) {
+                      if (connectivity.isOffline) {
+                        return Container(
+                          width: double.infinity,
+                          color: colorScheme.errorContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.wifi_off_rounded, size: 14, color: colorScheme.onErrorContainer),
+                              const SizedBox(width: 8),
+                              Text(
+                                'YOU ARE OFFLINE',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ).animate().slideY(begin: -1, end: 0);
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
-                ),
+                  ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: FlexibleSpaceBar(
+                        background: Container(color: Colors.transparent),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               title: Row(
                 children: [
@@ -208,15 +241,19 @@ class _HomeScreenState extends State<HomeScreen> {
               child: FutureBuilder<List<Listing>>(
                 future: _trendingListingsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData || snapshot.data!.isEmpty) {
-                    return ShimmerLoading.rectangular(height: 210, width: MediaQuery.of(context).size.width * 0.92);
-                  }
+                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                  final listings = isLoading 
+                    ? List.generate(3, (_) => Listing.skeleton())
+                    : snapshot.data ?? [];
                   
-                  // Filter listings with images for the hero carousel
-                  final heroListings = snapshot.data!.where((l) => l.imageUrl != null).take(5).toList();
+                  if (!isLoading && listings.isEmpty) return const SizedBox.shrink();
+                  
+                  final heroListings = listings.where((l) => l.imageUrl != null || isLoading).take(5).toList();
                   if (heroListings.isEmpty) return const SizedBox.shrink();
 
-                  return CarouselSlider(
+                  return Skeletonizer(
+                    enabled: isLoading,
+                    child: CarouselSlider(
                     options: CarouselOptions(
                       height: 210.0,
                       autoPlay: true,
@@ -667,28 +704,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: FutureBuilder<List<Listing>>(
                   future: _trendingListingsFuture,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                        itemCount: 3,
-                        itemBuilder: (context, index) => const SizedBox(
-                          width: 220,
-                          child: Padding(
-                            padding: EdgeInsets.only(right: AppPadding.md),
-                            child: ListingCardShimmer(),
-                          ),
-                        ),
-                      );
-                    } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                    final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                    
+                    if (!isLoading && (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)) {
                       return Center(child: Text('No trending items found.', style: textTheme.bodyMedium));
                     }
+
+                    final listings = isLoading 
+                      ? List.generate(5, (_) => Listing.skeleton())
+                      : snapshot.data!;
  
-                    final trending = List<Listing>.from(snapshot.data!)
+                    final trending = List<Listing>.from(listings)
                       ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
                     final topTrending = trending.take(5).toList();
  
-                    return ListView.builder(
+                    return Skeletonizer(
+                      enabled: isLoading,
+                      child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
@@ -749,23 +781,9 @@ class _HomeScreenState extends State<HomeScreen> {
             FutureBuilder<List<Listing>>(
               future: _recommendationsFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.md),
-                    sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.68,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => const ListingCardShimmer(),
-                        childCount: 4,
-                      ),
-                    ),
-                  );
-                } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                final isLoading = snapshot.connectionState == ConnectionState.waiting;
+                
+                if (!isLoading && (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)) {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
@@ -776,9 +794,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
+                final listings = isLoading 
+                  ? List.generate(4, (_) => Listing.skeleton())
+                  : snapshot.data!;
+
                 return SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.md),
-                  sliver: SliverGrid(
+                  sliver: Skeletonizer.sliver(
+                    enabled: isLoading,
+                    child: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
@@ -790,11 +814,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: ListingCard(
-                            listing: snapshot.data![index],
+                            listing: listings[index],
                           ),
                         );
                       },
-                      childCount: snapshot.data!.length,
+                      childCount: listings.length,
                     ),
                   ),
                 );

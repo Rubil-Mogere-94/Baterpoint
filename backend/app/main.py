@@ -1,7 +1,10 @@
 import os
 import logging
 import uuid
-from fastapi import FastAPI, Request
+from contextvars import ContextVar
+from pythonjsonlogger import jsonlogger
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_socketio import SocketManager
@@ -12,11 +15,33 @@ from slowapi.errors import RateLimitExceeded
 from .config import settings
 from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Context variable for request ID tracking
+request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="")
+
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
+        log_record['request_id'] = request_id_ctx_var.get()
+        if not log_record.get('timestamp'):
+            # this doesn't use record.created, so it's slightly off
+            from datetime import datetime
+            log_record['timestamp'] = datetime.utcnow().isoformat()
+        if log_record.get('level'):
+            log_record['level'] = log_record['level'].upper()
+        else:
+            log_record['level'] = record.levelname
+
+# Configure structured logging
+handler = logging.StreamHandler()
+formatter = CustomJsonFormatter('%(timestamp)s %(level)s %(name)s %(message)s')
+handler.setFormatter(formatter)
+root_logger = logging.getLogger()
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.INFO)
+
+# Suppress some noise
+logging.getLogger("uvicorn.access").disabled = True
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -31,7 +56,18 @@ app = FastAPI(
 # Limiter setup
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.exception_handler(RateLimitExceeded)
+async def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    logger.warning(f"Rate limit exceeded: {get_remote_address(request)}")
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "error": "rate_limit_exceeded",
+            "message": "Whoa there, trader! You're moving a bit too fast. Take a break and try again in a moment.",
+            "retry_after": exc.detail
+        },
+    )
 
 # CORS configuration
 if settings.BACKEND_CORS_ORIGINS:
@@ -47,15 +83,19 @@ if settings.BACKEND_CORS_ORIGINS:
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
     request_id = str(uuid.uuid4())
-    # Structured logging could be implemented here
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    return response
+    token = request_id_ctx_var.set(request_id)
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
+    finally:
+        request_id_ctx_var.reset(token)
 
 # SocketManager setup
 sio = SocketManager(app=app)
 
 # Include Routers
+logger.info("Initializing API routers...")
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(listings.router, prefix=settings.API_V1_STR)
 app.include_router(cart.router, prefix=settings.API_V1_STR)
@@ -66,6 +106,7 @@ app.include_router(chat.router, prefix=settings.API_V1_STR)
 app.include_router(rewards.router, prefix=settings.API_V1_STR)
 app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(coupons.router, prefix=settings.API_V1_STR)
+logger.info("API routers successfully initialized.")
 
 # Ensure static directories exist
 os.makedirs(settings.STATIC_DIR, exist_ok=True)
