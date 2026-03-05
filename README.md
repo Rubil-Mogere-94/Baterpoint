@@ -49,7 +49,7 @@ sudo ln -s /usr/bin/ld.lld-18 /usr/lib/llvm-18/bin/ld.lld
     ```
 4.  **Launch API**:
     ```bash
-    uvicorn main:app --reload
+    uvicorn app.main:app --reload
     ```
 
 ### Frontend Setup (Flutter)

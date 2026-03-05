@@ -6,6 +6,7 @@ python-dotenv
 pydantic-settings
 fastapi-cors
 passlib[bcrypt]
+bcrypt<4.2.0
 python-jose[cryptography]
 python-socketio
 fastapi-socketio
