@@ -9,6 +9,7 @@ import '../models/quest.dart';
 import '../services/listing_service.dart';
 import '../services/quest_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:page_transition/page_transition.dart';
 import '../widgets/listing_card.dart';
 import '../constants/ui_constants.dart';
 import '../providers/connectivity_provider.dart';

@@ -11,6 +11,7 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/environment_config.dart';
 
+import 'package:page_transition/page_transition.dart';
 import 'constants/theme.dart';
 
 void main() async {

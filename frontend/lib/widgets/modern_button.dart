@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import '../constants/theme.dart';
 
 enum ModernButtonType { primary, secondary, outlined, text }
@@ -92,7 +93,10 @@ class ModernButton extends StatelessWidget {
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : () {
+            Vibrate.feedback(FeedbackType.light);
+            onPressed?.call();
+          },
           style: style,
           child: buttonContent,
         );
@@ -102,7 +106,10 @@ class ModernButton extends StatelessWidget {
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return TextButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : () {
+            Vibrate.feedback(FeedbackType.light);
+            onPressed?.call();
+          },
           style: style,
           child: buttonContent,
         );
