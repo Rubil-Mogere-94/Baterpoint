@@ -15,6 +15,7 @@ import 'wishlist_screen.dart';
 import 'settings_screen.dart';
 import 'orders_screen.dart';
 import 'cart_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 
 class ProfileScreen extends StatefulWidget {

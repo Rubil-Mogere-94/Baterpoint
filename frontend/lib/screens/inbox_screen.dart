@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/chat_service.dart';
 import 'chat_screen.dart';
-import 'community_forum_screen.dart';
+
 
 class InboxScreen extends StatefulWidget {
   const InboxScreen({super.key});
@@ -123,16 +123,6 @@ class _InboxScreenState extends State<InboxScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.forum_outlined, color: Colors.blue),
-            tooltip: 'Community Forum',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CommunityForumScreen()),
-              );
-            },
-          ),
         ],
       ),
       body: RefreshIndicator(

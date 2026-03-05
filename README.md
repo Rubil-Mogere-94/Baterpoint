@@ -70,14 +70,43 @@ sudo ln -s /usr/bin/ld.lld-18 /usr/lib/llvm-18/bin/ld.lld
 ## Tech Stack
 
 - **Frontend**: Flutter 3.x, Provider, Socket.io, Lottie (Animations), Confetti.
-- **Backend**: Python 3.12, FastAPI, SQLAlchemy, Socket.io, SlowAPI (Rate Limiting).
-- **Observability**: Structured Logging with UUID Request ID tracing.
-- **DevOps**: GitHub Actions (Backend CI).
-
-## Testing
-
-The backend includes a comprehensive test suite using `pytest`.
-```bash
-cd backend
-pytest
+sudo ln -sf /usr/bin/ld.lld-18 /usr/lib/llvm-18/bin/ld.lld
 ```
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Rubil-Mogere-94/Baterpoint.git
+   ```
+
+2. **Backend Setup**:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
+
+3. **Frontend Setup**:
+   ```bash
+   cd frontend
+   flutter pub get
+   flutter run
+   ```
+
+## 📐 Project Structure
+
+```text
+lib/
+├── constants/     # Core Design Tokens (Theme, Radii, Spacing)
+├── models/        # Type-safe Data Models (Listing, User, Deal, etc.)
+├── providers/     # Business Logic & State (Auth, Theme)
+├── screens/       # Feature-specific UI Layouts
+├── services/      # API Clients & Environment Config
+└── widgets/       # Reusable UI Components
+```
+
+## 📜 License
+Internal Project - All Rights Reserved.
