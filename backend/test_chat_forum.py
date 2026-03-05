@@ -2,7 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.main import app, get_db, limiter
+from app.main import app, limiter
+from app.database import get_db
 from app.models import Base, UserModel, ChatMessageModel
 from datetime import datetime
 
