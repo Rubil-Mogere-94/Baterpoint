@@ -6,7 +6,7 @@ import 'dart:ui';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
-import '../services/offer_service.dart';
+
 import '../services/cart_service.dart';
 import '../constants/ui_constants.dart';
 import 'chat_screen.dart';
