@@ -6,6 +6,7 @@ import 'smart_match_screen.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';
 import 'inbox_screen.dart';
+import 'forum_screen.dart';
 import 'offers_screen.dart';
 import 'profile_screen.dart';
 
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     const SmartMatchScreen(),
     const ExploreScreen(),
     const InboxScreen(),
+    const ForumScreen(),
     const OffersScreen(),
     const ProfileScreen(),
   ];
@@ -62,8 +64,9 @@ class _MainScreenState extends State<MainScreen> {
                     _buildNavItem(1, Icons.auto_awesome_rounded, Icons.auto_awesome_outlined, 'Matches'),
                     _buildNavItem(2, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
                     _buildNavItem(3, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Inbox'),
-                    _buildNavItem(4, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),
-                    _buildNavItem(5, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                    _buildNavItem(4, Icons.forum_rounded, Icons.forum_outlined, 'Forum'),
+                    _buildNavItem(5, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),
+                    _buildNavItem(6, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
                   ],
                 ),
               ),

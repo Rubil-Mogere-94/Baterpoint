@@ -9,6 +9,7 @@ import '../models/quest.dart';
 import '../services/listing_service.dart';
 import '../services/quest_service.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:page_transition/page_transition.dart';
 import '../widgets/listing_card.dart';
 import '../constants/ui_constants.dart';
@@ -342,10 +343,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       );
                     }).toList(),
-                  );
-                },
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
             
             const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
             
@@ -357,7 +360,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   future: _dealFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return ShimmerLoading.rectangular(height: 140);
+                      return Skeletonizer(
+                        enabled: true,
+                        child: Container(
+                          height: 140,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: AppRadius.roundedXXL,
+                          ),
+                        ),
+                      );
                     } else if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
@@ -740,6 +752,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       },
+                    ),
                     );
                   },
                 ),
@@ -826,6 +839,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       childCount: listings.length,
+                    ),
                     ),
                   ),
                 );

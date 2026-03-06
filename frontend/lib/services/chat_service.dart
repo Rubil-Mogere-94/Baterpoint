@@ -53,18 +53,16 @@ class ChatService {
 
     socket.on('forum_message', (data) {
       if (onForumMessageReceived != null) {
-        // We reuse ChatMessage for forum messages for simplicity
-        // But some fields might be different, let's adapt
-        final msg = ChatMessage(
+        onForumMessageReceived!(ChatMessage(
           id: data['id'],
-          sender: data['sender'],
-          message: data['message'],
+          sender: data['sender_username'],
+          message: data['message_content'],
           imageUrl: data['image_url'],
+          forumCategory: data['forum_category'],
           isRead: true,
           timestamp: DateTime.parse(data['timestamp']),
           tradeId: null,
-        );
-        onForumMessageReceived!(msg);
+        ));
       }
     });
 
@@ -99,12 +97,14 @@ class ChatService {
     });
   }
 
-  void sendForumMessage(String category, String message, {String? imageUrl}) {
-    socket.emit('send_forum_message', {
-      'category': category,
-      'message': message,
-      'image_url': imageUrl,
-    });
+  void sendForumMessage(String category, String content, {String? imageUrl}) {
+    if (socket.connected) {
+      socket.emit('send_forum_message', {
+        'category': category,
+        'message': content,
+        'image_url': imageUrl,
+      });
+    }
   }
 
   Future<List<dynamic>> getInbox() async {
@@ -132,6 +132,7 @@ class ChatService {
         sender: m['sender_username'],
         message: m['message_content'],
         imageUrl: m['image_url'],
+        forumCategory: m['forum_category'],
         isRead: true,
         timestamp: DateTime.parse(m['timestamp']),
         tradeId: null,

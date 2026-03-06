@@ -43,6 +43,17 @@ async def update_user_me(
     db.refresh(current_user)
     return current_user
 
+@router.get("/by-email/{email}", response_model=User)
+async def get_user_by_email(
+    email: EmailStr,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    user = db.query(UserModel).filter(UserModel.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
 @router.get("/me/listings", response_model=List[Listing])
 async def read_own_listings(current_user: Annotated[UserModel, Depends(get_current_user)]):
     return [

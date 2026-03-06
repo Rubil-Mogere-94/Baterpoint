@@ -209,7 +209,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                                   context, 
                                   PageTransition(
                                     type: PageTransitionType.rightToLeftWithFade,
-                                    child: const CartScreen(),
+                                    child: CartScreen(),
                                   ),
                                 );
                               },

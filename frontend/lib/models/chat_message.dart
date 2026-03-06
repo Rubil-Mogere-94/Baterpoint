@@ -7,6 +7,7 @@ class ChatMessage {
   final bool isRead;
   final DateTime timestamp;
   final int? tradeId;
+  final String? forumCategory;
 
   ChatMessage({
     this.id,
@@ -16,6 +17,7 @@ class ChatMessage {
     this.isRead = false,
     required this.timestamp,
     this.tradeId,
+    this.forumCategory,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class ChatMessage {
       isRead: json['is_read'] ?? false,
       timestamp: DateTime.parse(json['timestamp']),
       tradeId: json['trade_id'],
+      forumCategory: json['forum_category'],
     );
   }
 }
