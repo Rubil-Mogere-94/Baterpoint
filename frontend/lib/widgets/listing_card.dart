@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
