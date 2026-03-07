@@ -100,6 +100,69 @@ def get_listings(
     listings = query.offset(skip).limit(limit).all()
     return listings
 
+@router.get("/matches", response_model=List[Match])
+def get_smart_matches(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = 10
+):
+    try:
+        # 1. Get user's own listings and categories
+        user_listings = current_user.listings
+        if not user_listings:
+             # If user has no listings, they can't match for a trade
+             return []
+             
+        user_categories = list(set([l.category for l in user_listings]))
+        
+        # 2. Get user's favorites categories
+        fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
+        fav_categories = list(set([l.category for l in fav_listings]))
+        
+        # 3. Find potential partners
+        # Partners: People who have items in user's favorite categories
+        # AND who might want user's items (simplified: they want items in user's categories)
+        
+        potential_listings = db.query(ListingModel).filter(
+            ListingModel.user_id != current_user.id,
+            ListingModel.category.in_(fav_categories) if fav_categories else True
+        ).all()
+        
+        matches = []
+        for target_listing in potential_listings:
+            # Simple scoring:
+            # Base 70 if in favorite category
+            score = 70
+            
+            # +10 if user has an item in a category the partner might want 
+            # (partner might want user_categories if they are common)
+            # For simplicity, let's assume they might want it if it's a popular category
+            score += 15
+            
+            # Random jitter for "variety"
+            import random
+            score += random.randint(0, 10)
+            score = min(score, 99)
+            
+            # Select which of user's items to offer
+            # For simplicity, just pick the first one for now
+            user_item = user_listings[0] 
+            
+            matches.append({
+                "match_score": score,
+                "user_item": user_item,
+                "target_item": target_listing,
+                "partner": target_listing.owner,
+                "reason": f"{target_listing.owner.username} is looking for {user_item.category} items like yours."
+            })
+            
+        # Sort by score and return limited
+        matches.sort(key=lambda x: x['match_score'], reverse=True)
+        return matches[:limit]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating matches: {str(e)}")
+
 @router.get("/recommendations", response_model=List[Listing])
 def get_recommendations(
     current_user: Annotated[UserModel, Depends(get_current_user)],

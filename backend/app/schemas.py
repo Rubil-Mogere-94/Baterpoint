@@ -230,3 +230,9 @@ class Order(BaseModel):
     shipping_address: Optional[str] = None
     created_at: datetime
     items: List[OrderItem] = []
+class Match(BaseModel):
+    match_score: int
+    user_item: Listing
+    target_item: Listing
+    partner: User
+    reason: str

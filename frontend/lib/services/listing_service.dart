@@ -161,17 +161,32 @@ class ListingService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'title': ?title,
-        'description': ?description,
-        'cashPrice': ?cashPrice,
-        'exchangeItem': ?exchangeItem,
-        'tradeType': ?tradeType,
-        'category': ?category,
+        if (title != null) 'title': title,
+        if (description != null) 'description': description,
+        if (cashPrice != null) 'cashPrice': cashPrice,
+        if (exchangeItem != null) 'exchangeItem': exchangeItem,
+        if (tradeType != null) 'tradeType': tradeType,
+        if (category != null) 'category': category,
       }),
     );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update listing: ${response.body}');
+    }
+  }
+
+  Future<List<Match>> fetchSmartMatches({int limit = 10}) async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('${EnvironmentConfig.apiUrl}/listings/matches?limit=$limit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Match>.from(l.map((model) => Match.fromJson(model)));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load smart matches');
     }
   }
 

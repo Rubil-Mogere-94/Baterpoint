@@ -2,9 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../constants/ui_constants.dart';
 import '../widgets/modern_button.dart';
-
+import '../models/match.dart' as model;
+import '../services/listing_service.dart';
 
 class SmartMatchScreen extends StatefulWidget {
   const SmartMatchScreen({super.key});
@@ -13,45 +16,40 @@ class SmartMatchScreen extends StatefulWidget {
   State<SmartMatchScreen> createState() => _SmartMatchScreenState();
 }
 
-class _SmartMatchScreenState extends State<SmartMatchScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  final List<Map<String, dynamic>> _matches = [
-    {
-      'match_score': 98,
-      'user_item': {'title': 'Vintage Camera', 'image': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=1000'},
-      'target_item': {'title': 'Electric Guitar', 'image': 'https://images.unsplash.com/photo-1550985543-f4423c9d7481?q=80&w=1000'},
-      'partner': {'name': 'Alex', 'avatar': 'https://i.pravatar.cc/150?u=30', 'distance': '2.5 km'},
-      'reason': 'Alex is looking for a Camera and has the Guitar you want.',
-    },
-    {
-      'match_score': 85,
-      'user_item': {'title': 'Mountain Bike', 'image': 'https://images.unsplash.com/photo-1576435728678-38d01d52e38b?q=80&w=1000'},
-      'target_item': {'title': 'Gaming Console', 'image': 'https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=1000'},
-      'partner': {'name': 'Sarah', 'avatar': 'https://i.pravatar.cc/150?u=42', 'distance': '5.0 km'},
-      'reason': 'High demand match in your area.',
-    },
-    {
-      'match_score': 72,
-      'user_item': {'title': 'Headphones', 'image': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1000'},
-      'target_item': {'title': 'Smart Watch', 'image': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000'},
-      'partner': {'name': 'Mike', 'avatar': 'https://i.pravatar.cc/150?u=12', 'distance': '1.2 km'},
-      'reason': 'Similar value items.',
-    },
-  ];
+class _SmartMatchScreenState extends State<SmartMatchScreen> {
+  final ListingService _listingService = ListingService();
+  List<model.Match> _matches = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..forward();
+    _fetchMatches();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _fetchMatches() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final matches = await _listingService.fetchSmartMatches();
+      if (mounted) {
+        setState(() {
+          _matches = matches;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -61,252 +59,248 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> with SingleTickerPr
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: false,
-            pinned: true,
-            backgroundColor: colorScheme.surface,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              title: Text(
-                'Smart Matches',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
+      body: Stack(
+        children: [
+          // Background Gradient blobs for premium feel
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primary.withValues(alpha: 0.05),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      colorScheme.primary.withOpacity(0.05),
-                      colorScheme.surface,
-                    ],
+            ).animate().fadeIn(duration: 1000.ms).scale(begin: const Offset(0.8, 0.8)),
+          ),
+          
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 140,
+                floating: false,
+                pinned: true,
+                stretch: true,
+                backgroundColor: colorScheme.surface.withValues(alpha: 0.8),
+                flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [StretchMode.blurBackground, StretchMode.zoomBackground],
+                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                  title: Text(
+                    'Smart Matches',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh_rounded),
+                      onPressed: _fetchMatches,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            actions: [
-              Container(
-                margin: const EdgeInsets.only(right: 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                  borderRadius: AppRadius.roundedLG,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.tune_rounded),
-                  onPressed: () {
-                    Vibrate.feedback(FeedbackType.light);
-                  },
-                ),
-              ),
-            ],
-          ),
-          
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.08),
-                  borderRadius: AppRadius.roundedXL,
-                  border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.auto_awesome, color: colorScheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        "We found ${ _matches.length} perfect trade opportunities based on your wishlist.",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                        ),
+              
+              if (_isLoading)
+                SliverFillRemaining(
+                  child: Skeletonizer(
+                    enabled: true,
+                    child: ListView.builder(
+                      itemCount: 3,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      itemBuilder: (context, index) => _buildMatchCardPlaceholder(),
+                    ),
+                  ),
+                )
+              else if (_errorMessage != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline_rounded, size: 48, color: colorScheme.error),
+                        const SizedBox(height: 16),
+                        Text('Something went wrong', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 8),
+                        Text(_errorMessage!, style: theme.textTheme.bodySmall),
+                        const SizedBox(height: 24),
+                        ModernButton(text: 'Retry', onPressed: _fetchMatches),
+                      ],
+                    ),
+                  ),
+                )
+              else if (_matches.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded, size: 64, color: colorScheme.primary.withValues(alpha: 0.2)),
+                          const SizedBox(height: 24),
+                          Text('No matches yet', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Try favoriting more items or adding your own listings to find perfect trade opportunities.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                )
+              else ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [colorScheme.primary, colorScheme.secondary],
+                        ),
+                        borderRadius: AppRadius.roundedXL,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.stars_rounded, color: Colors.white, size: 28),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Elite Matching Active",
+                                  style: theme.textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  "Analyzing ${ _matches.length} high-probability trades specifically for you.",
+                                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic).fadeIn(),
+                  ),
                 ),
-              ),
-            ),
-          ),
 
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final match = _matches[index];
-                return _buildMatchCard(context, match, index);
-              },
-              childCount: _matches.length,
-            ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return _buildPremiumMatchCard(context, _matches[index], index);
+                    },
+                    childCount: _matches.length,
+                  ),
+                ),
+              ],
+              
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            ],
           ),
-          
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  Widget _buildMatchCard(BuildContext context, Map<String, dynamic> match, int index) {
+  Widget _buildPremiumMatchCard(BuildContext context, model.Match match, int index) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: Interval(index * 0.1, 1.0, curve: Curves.easeOutQuint),
-          ),
-        ),
-        child: FadeTransition(
-          opacity: Tween<double>(begin: 0, end: 1).animate(
-            CurvedAnimation(
-              parent: _controller,
-              curve: Interval(index * 0.1, 1.0, curve: Curves.easeOut),
-            ),
-          ),
+      child: ClipRRect(
+        borderRadius: AppRadius.roundedXXL,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface,
+              color: colorScheme.surface.withValues(alpha: 0.7),
               borderRadius: AppRadius.roundedXXL,
-              boxShadow: AppShadows.medium,
-              border: Border.all(color: colorScheme.outline.withOpacity(0.05)),
+              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.1), width: 1.5),
             ),
             child: Column(
               children: [
                 // Header with Match Score
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [colorScheme.primary, colorScheme.secondary],
-                          ),
-                          borderRadius: AppRadius.roundedSM,
-                        ),
-                        child: Text(
-                          '${match['match_score']}% MATCH',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ),
+                      _buildScoreBadge(match.matchScore, colorScheme, theme),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          match['reason'],
+                          match.reason,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w700,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
                 
+                const Divider(height: 1, indent: 20, endIndent: 20),
+                
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Your Item
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text('YOU HAVE', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.outline)),
-                            const SizedBox(height: 8),
-                            _buildItemCircle(match['user_item']['image'], colorScheme),
-                            const SizedBox(height: 8),
-                            Text(
-                              match['user_item']['title'],
-                              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildMatchItem(match.userItem.title, match.userItem.imageUrl, "Your Item", colorScheme, theme),
                       
-                      // Connector
-                      SizedBox(
-                        width: 60,
-                        child: Column(
-                          children: [
-                            Icon(Icons.swap_horiz_rounded, size: 32, color: colorScheme.primary.withOpacity(0.5)),
-                          ],
-                        ),
-                      ),
+                      Column(
+                        children: [
+                          Icon(Icons.swap_horizontal_circle_rounded, size: 40, color: colorScheme.primary),
+                          const SizedBox(height: 4),
+                          Container(
+                            height: 2,
+                            width: 30,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.secondary]),
+                            ),
+                          ),
+                        ],
+                      ).animate(onPlay: (controller) => controller.repeat())
+                       .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5)),
                       
-                      // Their Item
-                      Expanded(
-                        child: Column(
-                          children: [
-                            Text('THEY HAVE', style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.outline)),
-                            const SizedBox(height: 8),
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                _buildItemCircle(match['target_item']['image'], colorScheme),
-                                Positioned(
-                                  bottom: -5,
-                                  right: -5,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.surface,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 12,
-                                      backgroundImage: CachedNetworkImageProvider(match['partner']['avatar']),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              match['target_item']['title'],
-                              style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                      _buildMatchItem(
+                        match.targetItem.title, 
+                        match.targetItem.imageUrl, 
+                        match.partner.username, 
+                        colorScheme, 
+                        theme,
+                        avatarUrl: match.partner.avatarUrl,
                       ),
                     ],
                   ),
                 ),
                 
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: SizedBox(
-                    width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                   child: ModernButton(
-                    text: 'Start Trade',
+                    text: 'Negotiate Trade',
                     onPressed: () {
-                      // Haptic feedback is already in ModernButton
+                      Vibrate.feedback(FeedbackType.medium);
+                      // Navigation logic would go here
                     },
-                  ),
                   ),
                 ),
               ],
@@ -314,30 +308,124 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> with SingleTickerPr
           ),
         ),
       ),
+    ).animate(delay: (index * 150).ms)
+     .slideY(begin: 0.3, end: 0, duration: 800.ms, curve: Curves.easeOutQuint)
+     .fadeIn(duration: 800.ms);
+  }
+
+  Widget _buildMatchItem(String title, String? imageUrl, String subtitle, ColorScheme colorScheme, ThemeData theme, {String? avatarUrl}) {
+    return Expanded(
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [colorScheme.surfaceVariant, colorScheme.surface],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: ClipOval(
+                    child: imageUrl != null 
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl, 
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: colorScheme.surfaceContainerHighest),
+                        )
+                      : Container(color: colorScheme.primaryContainer),
+                  ),
+                ),
+              ),
+              if (avatarUrl != null)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: AppShadows.small,
+                    ),
+                    child: CircleAvatar(
+                      radius: 14,
+                      backgroundImage: CachedNetworkImageProvider(avatarUrl),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.2),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.primary, 
+              fontWeight: FontWeight.w900,
+              fontSize: 9,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildItemCircle(String imageUrl, ColorScheme colorScheme) {
+  Widget _buildScoreBadge(int score, ColorScheme colorScheme, ThemeData theme) {
     return Container(
-      width: 80,
-      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+        color: colorScheme.primary.withValues(alpha: 0.1),
+        borderRadius: AppRadius.roundedSM,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.flash_on_rounded, size: 14, color: colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            '$score% MATCH',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
           ),
         ],
-        border: Border.all(color: colorScheme.surface, width: 3),
       ),
-      child: ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(color: colorScheme.surfaceContainerHighest),
+    );
+  }
+
+  Widget _buildMatchCardPlaceholder() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Container(
+        height: 250,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: AppRadius.roundedXXL,
         ),
       ),
     );
