@@ -344,11 +344,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }).toList(),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
+                  );
+                },
+              ),
+            ),
             
             const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
             
