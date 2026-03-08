@@ -109,12 +109,55 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
               
               if (_isLoading)
                 SliverFillRemaining(
-                  child: Skeletonizer(
-                    enabled: true,
-                    child: ListView.builder(
-                      itemCount: 3,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      itemBuilder: (context, index) => _buildMatchCardPlaceholder(),
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: colorScheme.primary.withValues(alpha: 0.1), width: 2),
+                              ),
+                            ),
+                            ...List.generate(3, (index) => 
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: colorScheme.primary.withValues(alpha: 0.1),
+                                ),
+                              ).animate(onPlay: (controller) => controller.repeat())
+                               .scale(begin: const Offset(0.5, 0.5), end: const Offset(1.5, 1.5), duration: (2000 + index * 400).ms, curve: Curves.easeOut)
+                               .fadeIn(duration: 500.ms)
+                               .fadeOut(delay: 1500.ms, duration: 500.ms)
+                            ),
+                            Icon(Icons.auto_awesome_rounded, size: 40, color: colorScheme.primary)
+                                .animate(onPlay: (controller) => controller.repeat())
+                                .shimmer(duration: 2000.ms),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          'Scanning for perfect trades...',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+                         .fadeIn(duration: 800.ms),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Our AI is analyzing thousands of items',
+                          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -161,41 +204,53 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [colorScheme.primary, colorScheme.secondary],
-                        ),
-                        borderRadius: AppRadius.roundedXL,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.stars_rounded, color: Colors.white, size: 28),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Elite Matching Active",
-                                  style: theme.textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  "Analyzing ${ _matches.length} high-probability trades specifically for you.",
-                                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
-                                ),
+                    child: ClipRRect(
+                      borderRadius: AppRadius.roundedXL,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                colorScheme.primary.withValues(alpha: 0.9), 
+                                colorScheme.secondary.withValues(alpha: 0.8)
                               ],
                             ),
+                            borderRadius: AppRadius.roundedXL,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colorScheme.primary.withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.stars_rounded, color: Colors.white, size: 28)
+                                  .animate(onPlay: (controller) => controller.repeat())
+                                  .shimmer(duration: 2000.ms),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Elite Matching Active",
+                                      style: theme.textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      "Analyzing ${ _matches.length} high-probability trades specifically for you.",
+                                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ).animate().slideY(begin: 0.1, end: 0, duration: 600.ms, curve: Curves.easeOutCubic).fadeIn(),
                   ),
@@ -222,91 +277,121 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
   Widget _buildPremiumMatchCard(BuildContext context, model.Match match, int index) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isHighScore = match.matchScore >= 90;
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: ClipRRect(
-        borderRadius: AppRadius.roundedXXL,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: colorScheme.surface.withValues(alpha: 0.7),
-              borderRadius: AppRadius.roundedXXL,
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.1), width: 1.5),
+      child: Stack(
+        children: [
+          if (isHighScore)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.roundedXXL,
+                  border: Border.all(color: colorScheme.secondary.withValues(alpha: 0.4), width: 2),
+                ),
+              ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+               .blur(begin: const Offset(0, 0), end: const Offset(4, 4), duration: 1500.ms)
+               .fadeIn(duration: 1500.ms),
             ),
-            child: Column(
-              children: [
-                // Header with Match Score
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      _buildScoreBadge(match.matchScore, colorScheme, theme),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          match.reason,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
+          
+          ClipRRect(
+            borderRadius: AppRadius.roundedXXL,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.7),
+                  borderRadius: AppRadius.roundedXXL,
+                  border: Border.all(
+                    color: isHighScore 
+                        ? colorScheme.secondary.withValues(alpha: 0.3) 
+                        : colorScheme.primary.withValues(alpha: 0.1), 
+                    width: 1.5
                   ),
                 ),
-                
-                const Divider(height: 1, indent: 20, endIndent: 20),
-                
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildMatchItem(match.userItem.title, match.userItem.imageUrl, "Your Item", colorScheme, theme),
-                      
-                      Column(
+                child: Column(
+                  children: [
+                    // Header with Match Score
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
                         children: [
-                          Icon(Icons.swap_horizontal_circle_rounded, size: 40, color: colorScheme.primary),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 2,
-                            width: 30,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.secondary]),
+                          _buildScoreBadge(match.matchScore, colorScheme, theme),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              match.reason,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
-                      ).animate(onPlay: (controller) => controller.repeat())
-                       .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5)),
-                      
-                      _buildMatchItem(
-                        match.targetItem.title, 
-                        match.targetItem.imageUrl, 
-                        match.partner.username, 
-                        colorScheme, 
-                        theme,
-                        avatarUrl: match.partner.avatarUrl,
                       ),
-                    ],
-                  ),
+                    ),
+                    
+                    const Divider(height: 1, indent: 20, endIndent: 20),
+                    
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildMatchItem(match.userItem.title, match.userItem.imageUrl, "Your Item", colorScheme, theme),
+                          
+                          Column(
+                            children: [
+                              Icon(
+                                isHighScore ? Icons.bolt_rounded : Icons.swap_horizontal_circle_rounded, 
+                                size: 40, 
+                                color: isHighScore ? colorScheme.secondary : colorScheme.primary
+                              ).animate(onPlay: (controller) => controller.repeat())
+                               .shimmer(duration: 2000.ms, color: Colors.white.withValues(alpha: 0.5)),
+                              const SizedBox(height: 4),
+                              Container(
+                                height: 2,
+                                width: 30,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: isHighScore 
+                                      ? [colorScheme.secondary, colorScheme.primary] 
+                                      : [colorScheme.primary, colorScheme.secondary]
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          _buildMatchItem(
+                            match.targetItem.title, 
+                            match.targetItem.imageUrl, 
+                            match.partner.username, 
+                            colorScheme, 
+                            theme,
+                            avatarUrl: match.partner.avatarUrl,
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      child: ModernButton(
+                        text: 'Negotiate Trade',
+                        onPressed: () {
+                          Vibrate.feedback(FeedbackType.medium);
+                          // Navigation logic would go here
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: ModernButton(
-                    text: 'Negotiate Trade',
-                    onPressed: () {
-                      Vibrate.feedback(FeedbackType.medium);
-                      // Navigation logic would go here
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     ).animate(delay: (index * 150).ms)
      .slideY(begin: 0.3, end: 0, duration: 800.ms, curve: Curves.easeOutQuint)
@@ -394,21 +479,26 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
   }
 
   Widget _buildScoreBadge(int score, ColorScheme colorScheme, ThemeData theme) {
+    final isHighScore = score >= 90;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.1),
+        color: (isHighScore ? colorScheme.secondary : colorScheme.primary).withValues(alpha: 0.1),
         borderRadius: AppRadius.roundedSM,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.flash_on_rounded, size: 14, color: colorScheme.primary),
+          Icon(
+            isHighScore ? Icons.bolt_rounded : Icons.flash_on_rounded, 
+            size: 14, 
+            color: isHighScore ? colorScheme.secondary : colorScheme.primary
+          ),
           const SizedBox(width: 4),
           Text(
             '$score% MATCH',
             style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.primary,
+              color: isHighScore ? colorScheme.secondary : colorScheme.primary,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,
             ),

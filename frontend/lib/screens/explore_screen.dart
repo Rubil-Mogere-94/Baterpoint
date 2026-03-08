@@ -17,9 +17,9 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  final ListingService _listingService = ListingService();
-  final PageController _pageController = PageController();
   late Future<List<Listing>> _exploreFeedFuture;
+  String _selectedCategory = 'All';
+  final List<String> _categories = ['All', 'Fashion', 'Electronics', 'Home', 'Collectibles', 'Books'];
 
   @override
   void initState() {
@@ -69,8 +69,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     color: Colors.white.withOpacity(0.15),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.search_rounded, color: Colors.white),
-                    onPressed: () {},
+                    icon: const Icon(Icons.tune_rounded, color: Colors.white),
+                    onPressed: () => _showFilterSheet(context),
                   ),
                 ),
               ),
@@ -78,32 +78,173 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Listing>>(
-        future: _exploreFeedFuture,
-        builder: (context, snapshot) {
-          final isLoading = snapshot.connectionState == ConnectionState.waiting;
-          if (!isLoading && snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
-          } else if (!isLoading && (!snapshot.hasData || snapshot.data!.isEmpty)) {
-            return const Center(child: Text('No items to explore.', style: TextStyle(color: Colors.white)));
-          }
+      body: Stack(
+        children: [
+          FutureBuilder<List<Listing>>(
+            future: _exploreFeedFuture,
+            builder: (context, snapshot) {
+              final isLoading = snapshot.connectionState == ConnectionState.waiting;
+              if (!isLoading && snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+              } else if (!isLoading && (!snapshot.hasData || snapshot.data!.isEmpty)) {
+                return const Center(child: Text('No items to explore.', style: TextStyle(color: Colors.white)));
+              }
 
-          final listings = isLoading 
-              ? List.generate(3, (_) => Listing.skeleton())
-              : snapshot.data!;
+              final listings = isLoading 
+                  ? List.generate(3, (_) => Listing.skeleton())
+                  : snapshot.data!.where((l) => _selectedCategory == 'All' || l.category.toLowerCase() == _selectedCategory.toLowerCase()).toList();
 
-          return Skeletonizer(
-            enabled: isLoading,
-            child: PageView.builder(
-              controller: _pageController,
-              scrollDirection: Axis.vertical,
-              itemCount: listings.length,
-              itemBuilder: (context, index) {
-                return _ExploreItemPage(listing: listings[index]);
-              },
+              if (listings.isEmpty && !isLoading) {
+                return Center(child: Text('No $_selectedCategory items found.', style: const TextStyle(color: Colors.white)));
+              }
+
+              return Skeletonizer(
+                enabled: isLoading,
+                child: PageView.builder(
+                  controller: _pageController,
+                  scrollDirection: Axis.vertical,
+                  itemCount: listings.length,
+                  itemBuilder: (context, index) {
+                    return _ExploreItemPage(listing: listings[index]);
+                  },
+                ),
+              );
+            },
+          ),
+          
+          // Category Slider
+          Positioned(
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
+            left: 0,
+            right: 0,
+            child: SizedBox(
+              height: 40,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final cat = _categories[index];
+                  final isSelected = _selectedCategory == cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        Vibrate.feedback(FeedbackType.light);
+                        setState(() {
+                          _selectedCategory = cat;
+                        });
+                      },
+                      child: ClipRRect(
+                        borderRadius: AppRadius.roundedSM,
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.white.withOpacity(0.1),
+                              borderRadius: AppRadius.roundedSM,
+                              border: Border.all(color: Colors.white.withOpacity(0.2)),
+                            ),
+                            child: Text(
+                              cat,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    Vibrate.feedback(FeedbackType.medium);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _SearchFilterSheet(),
+    );
+  }
+}
+
+class _SearchFilterSheet extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Filters', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 24),
+          Text('Sort By', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              FilterChip(label: const Text('Recent'), onSelected: (_) {}, selected: true),
+              FilterChip(label: const Text('Popular'), onSelected: (_) {}),
+              FilterChip(label: const Text('High Price'), onSelected: (_) {}),
+              FilterChip(label: const Text('Low Price'), onSelected: (_) {}),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text('Price Range', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+          RangeSlider(
+            values: const RangeValues(0, 1000),
+            max: 5000,
+            onChanged: (val) {},
+            activeColor: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 32),
+          Row(
+            gap: 12,
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Reset'),
+                ),
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Apply'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }

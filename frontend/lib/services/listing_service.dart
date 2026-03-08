@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/listing.dart';
 import '../models/deal.dart';
+import '../models/match.dart';
 import 'environment_config.dart';
 import 'auth_service.dart';
 
