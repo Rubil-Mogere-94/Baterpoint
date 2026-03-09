@@ -17,6 +17,8 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  final ListingService _listingService = ListingService();
+  late PageController _pageController;
   late Future<List<Listing>> _exploreFeedFuture;
   String _selectedCategory = 'All';
   final List<String> _categories = ['All', 'Fashion', 'Electronics', 'Home', 'Collectibles', 'Books'];
@@ -24,6 +26,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     _exploreFeedFuture = _listingService.fetchListings(limit: 20);
   }
 
@@ -227,7 +230,6 @@ class _SearchFilterSheet extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Row(
-            gap: 12,
             children: [
               Expanded(
                 child: OutlinedButton(
@@ -235,6 +237,7 @@ class _SearchFilterSheet extends StatelessWidget {
                   child: const Text('Reset'),
                 ),
               ),
+              const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),

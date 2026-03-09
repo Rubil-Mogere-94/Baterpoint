@@ -445,7 +445,7 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
                       shape: BoxShape.circle,
-                      boxShadow: AppShadows.small,
+                      boxShadow: AppShadows.soft,
                     ),
                     child: CircleAvatar(
                       radius: 14,
