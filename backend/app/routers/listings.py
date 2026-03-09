@@ -9,7 +9,7 @@ from jose import jwt
 
 from ..database import get_db
 from ..models import UserModel, ListingModel, FavoriteModel, DealModel, OfferModel
-from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate
+from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate, Match
 from ..dependencies import get_current_user, SECRET_KEY, ALGORITHM
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
