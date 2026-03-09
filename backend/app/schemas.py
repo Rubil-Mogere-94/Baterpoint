@@ -230,7 +230,9 @@ class Order(BaseModel):
     shipping_address: Optional[str] = None
     created_at: datetime
     items: List[OrderItem] = []
+
 class Match(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     match_score: int
     user_item: Listing
     target_item: Listing

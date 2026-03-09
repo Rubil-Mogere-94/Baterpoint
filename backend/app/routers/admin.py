@@ -23,7 +23,7 @@ def get_analytics(
     active_listings = db.query(ListingModel).count()
     
     return {
-        "daily_active_users_estimate": new_users_24h,
+        "estimated_dau": new_users_24h,
         "total_sales": total_sales,
-        "active_listings": active_listings
+        "total_active_listings": active_listings
     }
