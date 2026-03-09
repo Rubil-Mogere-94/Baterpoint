@@ -5,6 +5,7 @@ from typing import Annotated, Optional, List
 import shutil
 import uuid
 import os
+import random
 from jose import jwt
 
 from ..database import get_db
@@ -123,10 +124,11 @@ def get_smart_matches(
         # Partners: People who have items in user's favorite categories
         # AND who might want user's items (simplified: they want items in user's categories)
         
-        potential_listings = db.query(ListingModel).filter(
-            ListingModel.user_id != current_user.id,
-            ListingModel.category.in_(fav_categories) if fav_categories else True
-        ).all()
+        query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
+        if fav_categories:
+            query = query.filter(ListingModel.category.in_(fav_categories))
+        
+        potential_listings = query.all()
         
         matches = []
         for target_listing in potential_listings:
@@ -140,7 +142,6 @@ def get_smart_matches(
             score += 15
             
             # Random jitter for "variety"
-            import random
             score += random.randint(0, 10)
             score = min(score, 99)
             
