@@ -17,6 +17,7 @@ import '../providers/connectivity_provider.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'explore_screen.dart';
+import 'ai_valuator_screen.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.transparent, // Changed to transparent for holographic bg
       body: RefreshIndicator(
         onRefresh: () async => _fetchData(),
         color: colorScheme.primary,
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
               floating: true,
               pinned: true,
               snap: false,
-              backgroundColor: colorScheme.surface.withOpacity(0.8),
+              backgroundColor: Colors.transparent, // Completely transparent so Holographic shows
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               expandedHeight: 70,
@@ -198,6 +199,77 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 8),
               ],
+            ),
+            
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.sm),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageTransition(
+                        type: PageTransitionType.bottomToTop,
+                        child: const AiValuatorScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(AppPadding.md),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [colorScheme.primary.withOpacity(0.8), colorScheme.secondary.withOpacity(0.8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: AppRadius.roundedXL,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'AI Item Valuator',
+                                style: textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Scan items to discover their barter worth!',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+                      ],
+                    ),
+                  ).animate().shimmer(duration: 3.seconds, delay: 2.seconds),
+                ),
+              ),
             ),
             
             SliverToBoxAdapter(
@@ -681,7 +753,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // (Removed Mock Featured Artisans)
 
-            // Trending Section
+// Replaced "See All" with a "Discover" title that hints at vertical scroll
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
@@ -692,30 +764,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Trending Now', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                        Text('Items getting the most attention', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                        Text('Discover Video Feed', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                        Text('Swipe up for premium items', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
                       ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.fade,
-                            child: const ExploreScreen(),
-                          ),
-                        );
-                      },
-                      child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
-                    ),
+                    const Icon(Icons.swipe_up_outlined, color: Colors.grey),
                   ],
                 ),
               ),
             ),
             
+            // Full-width vertical Discover feed replacing the horizontal carousels
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 310, 
+                height: MediaQuery.of(context).size.height * 0.7, // Take up remaining space for the vertical feed
                 child: FutureBuilder<List<Listing>>(
                   future: _trendingListingsFuture,
                   builder: (context, snapshot) {
@@ -735,119 +797,139 @@ class _HomeScreenState extends State<HomeScreen> {
  
                     return Skeletonizer(
                       enabled: isLoading,
-                      child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                      itemCount: topTrending.length,
-                      itemBuilder: (context, index) {
-                        return SizedBox(
-                          width: 230,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 16.0, top: 12.0, bottom: 20.0), 
-                            child: ListingCard(
-                              listing: topTrending[index],
+                      child: PageView.builder(
+                        scrollDirection: Axis.vertical,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: topTrending.length,
+                        itemBuilder: (context, index) {
+                          final listing = topTrending[index];
+                          return Container(
+                            margin: const EdgeInsets.all(AppPadding.md),
+                            decoration: BoxDecoration(
+                              borderRadius: AppRadius.roundedXXL,
+                              image: listing.imageUrl != null 
+                                ? DecorationImage(
+                                    image: CachedNetworkImageProvider(listing.imageUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                              color: colorScheme.surfaceVariant,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                )
+                              ],
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: AppRadius.roundedXXL,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                                  stops: const [0.5, 1.0],
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(AppPadding.xl),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: colorScheme.primary,
+                                                borderRadius: AppRadius.roundedSM,
+                                              ),
+                                              child: Text(
+                                                listing.tradeType?.toUpperCase() ?? 'SELL',
+                                                style: textTheme.labelSmall?.copyWith(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 1.0,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              listing.title,
+                                              style: textTheme.displaySmall?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              "\$${listing.cashPrice?.toStringAsFixed(2) ?? '0.00'}",
+                                              style: textTheme.headlineMedium?.copyWith(
+                                                color: colorScheme.secondary,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          _buildActionButton(Icons.favorite_rounded, 'Like', () {}),
+                                          const SizedBox(height: 16),
+                                          _buildActionButton(Icons.comment_rounded, 'Offer', () {}),
+                                          const SizedBox(height: 16),
+                                          _buildActionButton(Icons.shopping_bag_rounded, 'Buy', () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
+                                            );
+                                          }, color: colorScheme.primary),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.lg)),
-
-            // (Removed Mock Recent Activity)
-
-            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
-            
-            // Recommended Section Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Picked for You', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                        Text('Based on your interests', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.fade,
-                            child: const ExploreScreen(),
-                          ),
-                        );
-                      },
-                      child: Text('See All', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w800)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // Recommended Grid
-            FutureBuilder<List<Listing>>(
-              future: _recommendationsFuture,
-              builder: (context, snapshot) {
-                final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                
-                if (!isLoading && (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)) {
-                  return SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppPadding.xxl),
-                        child: Text('No recommendations found.', style: textTheme.bodyMedium),
-                      ),
-                    ),
-                  );
-                }
-
-                final listings = isLoading 
-                  ? List.generate(4, (_) => Listing.skeleton())
-                  : snapshot.data!;
-
-                return SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.md),
-                  sliver: Skeletonizer.sliver(
-                    enabled: isLoading,
-                    child: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.68,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: ListingCard(
-                            listing: listings[index],
-                          ),
-                        );
-                      },
-                      childCount: listings.length,
-                    ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            
             const SliverToBoxAdapter(child: SizedBox(height: 100)), // Extra space for floating nav
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, {Color? color}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color ?? Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+        ],
       ),
     );
   }

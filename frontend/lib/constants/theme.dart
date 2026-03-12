@@ -244,4 +244,104 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: const Color(0xFF0F172A), // Slate 900
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF818CF8), // Indigo 400
+        secondary: Color(0xFF34D399), // Emerald 400
+        surface: Color(0xFF1E293B), // Slate 800
+        error: Color(0xFFF87171), // Red 400
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: Colors.white,
+        onError: Colors.white,
+      ),
+      textTheme: AppTypography.textTheme.apply(
+        bodyColor: Colors.white,
+        displayColor: Colors.white,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: const Color(0xFF1E293B),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: AppTypography.textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontFamily: GoogleFonts.outfit().fontFamily,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF818CF8),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF818CF8),
+          side: const BorderSide(color: Color(0xFF334155), width: 1.5),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF818CF8)),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: const Color(0xFF818CF8),
+          textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF818CF8)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF334155),
+        border: OutlineInputBorder(
+          borderRadius: AppRadii.radiusMd,
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadii.radiusMd,
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadii.radiusMd,
+          borderSide: const BorderSide(color: Color(0xFF818CF8), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppRadii.radiusMd,
+          borderSide: const BorderSide(color: Color(0xFFF87171), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 18),
+        hintStyle: AppTypography.textTheme.bodyMedium?.copyWith(color: Colors.white54),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF334155),
+        thickness: 1,
+        space: AppSpacing.xl,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF1E293B),
+        selectedItemColor: Color(0xFF818CF8),
+        unselectedItemColor: Colors.white54,
+        type: BottomNavigationBarType.fixed,
+        elevation: 20,
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1E293B),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadii.radiusLg,
+          side: const BorderSide(color: Color(0xFF334155), width: 0.5),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+    );
+  }
 }

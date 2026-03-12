@@ -9,6 +9,38 @@ from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/rewards", tags=["Rewards"])
 
+from pydantic import BaseModel
+
+class XPRequest(BaseModel):
+    xp_amount: int
+    reason: str
+
+@router.post("/xp/add", response_model=dict)
+def add_xp(
+    request: XPRequest,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    """
+    V4 Bater-Pass Engine:
+    Add XP to a user's account for completing actions (trades, listing views, etc.)
+    """
+    try:
+        # In a real app we'd have an XP tracking table.
+        # For V4 Gamification, we'll re-use 'loyalty_points' as XP for now.
+        current_user.loyalty_points += request.xp_amount
+        db.commit()
+        db.refresh(current_user)
+        
+        return {
+            "status": "success",
+            "message": f"Added {request.xp_amount} XP for {request.reason}",
+            "new_xp_total": current_user.loyalty_points
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding XP: {str(e)}")
+
 @router.get("/", response_model=List[Reward])
 def get_rewards(db: Annotated[Session, Depends(get_db)]):
     rewards = db.query(RewardModel).all()

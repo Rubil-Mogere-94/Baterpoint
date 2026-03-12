@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../constants/ui_constants.dart';
+import '../widgets/holographic_background.dart';
 
 import 'smart_match_screen.dart';
 import 'explore_screen.dart';
@@ -35,39 +36,42 @@ class _MainScreenState extends State<MainScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      extendBody: true, // Allows the body to flow behind the bottom nav
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          height: 72,
-          decoration: BoxDecoration(
-            color: colorScheme.surface.withOpacity(0.85),
-            borderRadius: AppRadius.roundedXXL,
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-            boxShadow: AppShadows.medium,
-          ),
-          child: ClipRRect(
-            borderRadius: AppRadius.roundedXXL,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-                    _buildNavItem(1, Icons.auto_awesome_rounded, Icons.auto_awesome_outlined, 'Matches'),
-                    _buildNavItem(2, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
-                    _buildNavItem(3, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Inbox'),
-                    _buildNavItem(4, Icons.forum_rounded, Icons.forum_outlined, 'Forum'),
-                    _buildNavItem(5, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),
-                    _buildNavItem(6, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-                  ],
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Let holographic background show through
+        extendBody: true, // Allows the body to flow behind the bottom nav
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            height: 72,
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.65), // Increased transparency for bottom nav
+              borderRadius: AppRadius.roundedXXL,
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              boxShadow: AppShadows.medium,
+            ),
+            child: ClipRRect(
+              borderRadius: AppRadius.roundedXXL,
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                      _buildNavItem(1, Icons.auto_awesome_rounded, Icons.auto_awesome_outlined, 'Matches'),
+                      _buildNavItem(2, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
+                      _buildNavItem(3, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Inbox'),
+                      _buildNavItem(4, Icons.forum_rounded, Icons.forum_outlined, 'Forum'),
+                      _buildNavItem(5, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),
+                      _buildNavItem(6, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                    ],
+                  ),
                 ),
               ),
             ),

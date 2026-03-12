@@ -41,8 +41,7 @@ class BaterpointApp extends StatelessWidget {
       title: 'Baterpoint',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // We can define darkTheme in AppTheme later if needed
-      // darkTheme: AppTheme.darkTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
