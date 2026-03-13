@@ -140,20 +140,16 @@ class _ForumScreenState extends State<ForumScreen> {
                 _loadMessages();
               });
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary : colorScheme.surface.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isSelected ? colorScheme.primary : Colors.white.withOpacity(0.2)),
-                    boxShadow: isSelected ? [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
-                  ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isSelected ? colorScheme.primary : colorScheme.surface.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: isSelected ? colorScheme.primary : Colors.white.withOpacity(0.2)),
+                boxShadow: isSelected ? [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
+              ),
               child: Row(
                 children: [
                   Text(cat['icon']!, style: const TextStyle(fontSize: 16)),
@@ -168,9 +164,6 @@ class _ForumScreenState extends State<ForumScreen> {
                   ),
                 ],
               ),
-                  ),
-                ),
-              ),
             ),
           );
         },
@@ -178,6 +171,7 @@ class _ForumScreenState extends State<ForumScreen> {
     ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1);
   }
 
+  Widget _buildMessageItem(ChatMessage message, ColorScheme colorScheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: ClipRRect(
@@ -193,42 +187,44 @@ class _ForumScreenState extends State<ForumScreen> {
               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: colorScheme.primary.withOpacity(0.1),
-                child: Text(
-                  message.sender[0].toUpperCase(),
-                  style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 12),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: colorScheme.primary.withOpacity(0.1),
+                      child: Text(
+                        message.sender[0].toUpperCase(),
+                        style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 12),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      message.sender,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _formatTimestamp(message.timestamp),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 11),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                message.sender,
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-              ),
-              const Spacer(),
-              Text(
-                _formatTimestamp(message.timestamp),
-                style: TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 11),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            message.message,
-            style: TextStyle(color: colorScheme.onSurface.withOpacity(0.9), height: 1.5, fontSize: 14),
-          ),
-          if (message.imageUrl != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(message.imageUrl!, fit: BoxFit.cover),
+                const SizedBox(height: 12),
+                Text(
+                  message.message,
+                  style: TextStyle(color: colorScheme.onSurface.withOpacity(0.9), height: 1.5, fontSize: 14),
+                ),
+                if (message.imageUrl != null) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(message.imageUrl!, fit: BoxFit.cover),
+                  ),
+                ],
+              ],
             ),
-          ],
           ),
         ),
       ),

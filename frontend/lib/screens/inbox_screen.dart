@@ -303,8 +303,9 @@ class _InboxScreenState extends State<InboxScreen> {
                             },
                           ),
                         ),
-                      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
-                    },
+                      ),
+                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
+                  },
                   ),
       ),
       floatingActionButton: FloatingActionButton(
