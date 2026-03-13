@@ -11,6 +11,8 @@ import 'forum_screen.dart';
 import 'offers_screen.dart';
 import 'profile_screen.dart';
 
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -88,33 +90,50 @@ class _MainScreenState extends State<MainScreen> {
     return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () {
+          Vibrate.feedback(FeedbackType.selection);
+          setState(() => _selectedIndex = index);
+        },
         child: AnimatedContainer(
           duration: AppAnimations.fast,
           curve: AppAnimations.curve,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: AppAnimations.fast,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isSelected ? colorScheme.primary.withOpacity(0.12) : Colors.transparent,
-                  borderRadius: AppRadius.roundedMD,
-                ),
-                child: Icon(
-                  isSelected ? activeIcon : inactiveIcon,
-                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.6),
-                  size: isSelected ? 26 : 24,
-                ),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedContainer(
+                    duration: AppAnimations.fast,
+                    width: isSelected ? 40 : 0,
+                    height: isSelected ? 40 : 0,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      boxShadow: isSelected ? [
+                        BoxShadow(
+                          color: colorScheme.primary.withOpacity(0.2),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        )
+                      ] : [],
+                    ),
+                  ),
+                  Icon(
+                    isSelected ? activeIcon : inactiveIcon,
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    size: isSelected ? 24 : 22,
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.6),
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  letterSpacing: isSelected ? 0.2 : 0,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
