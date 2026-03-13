@@ -48,112 +48,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colorScheme = theme.colorScheme;
     final user = auth.user;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Premium Header
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            stretch: true,
-            backgroundColor: colorScheme.surface,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Animated background gradient
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [colorScheme.primary, colorScheme.secondary.withOpacity(0.8)],
-                      ),
-                    ),
-                  ),
-                  // Abstract shapes
-                  Positioned(
-                    top: -50,
-                    right: -50,
-                    child: CircleAvatar(radius: 100, backgroundColor: Colors.white.withOpacity(0.1)),
-                  ),
-                  
-                  Padding(
-                    padding: const EdgeInsets.only(top: 60),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Hero(
-                          tag: 'profile_avatar',
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundColor: colorScheme.surface,
-                              backgroundImage: user?.avatarUrl != null 
-                                  ? CachedNetworkImageProvider(user!.avatarUrl!) 
-                                  : null,
-                              child: user?.avatarUrl == null 
-                                  ? Text(user?.username[0].toUpperCase() ?? 'U', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold))
-                                  : null,
-                            ),
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Premium Header
+            SliverAppBar(
+              expandedHeight: 220,
+              pinned: true,
+              stretch: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              flexibleSpace: FlexibleSpaceBar(
+                background: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Hero(
+                        tag: 'profile_avatar',
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundColor: colorScheme.surface,
+                            backgroundImage: user?.avatarUrl != null 
+                                ? CachedNetworkImageProvider(user!.avatarUrl!) 
+                                : null,
+                            child: user?.avatarUrl == null 
+                                ? Text(user?.username[0].toUpperCase() ?? 'U', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold))
+                                : null,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          user?.username ?? 'Trader',
-                          style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.verified_rounded, color: Colors.blue.shade200, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Verified Citizen',
-                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        user?.username ?? 'Trader',
+                        style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.verified_rounded, color: colorScheme.primary, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Verified Citizen',
+                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.settings_outlined, color: colorScheme.onSurface),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
+                ),
+              ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
-              ),
-            ],
-          ),
 
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              transform: Matrix4.translationValues(0, -32, 0),
+            SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Impact Dashboard Card
+                    // Impact Dashboard Card (Glassy)
                     _buildImpactCard(context),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                    // Stats Grid
+                    // Stats Grid (Glassy)
                     Row(
                       children: [
-                        Expanded(child: _buildMiniStat(context, 'Trust Score', '9.8', Icons.shield_rounded, Colors.green)),
+                        Expanded(child: _buildMiniStat(context, 'Trust Score', '9.8', Icons.shield_half_filled_rounded, Colors.green)),
                         const SizedBox(width: 16),
-                        Expanded(child: _buildMiniStat(context, 'Successful Trades', '${user?.successfulTrades ?? 0}', Icons.handshake_rounded, Colors.blue)),
+                        Expanded(child: _buildMiniStat(context, 'Trades', '${user?.successfulTrades ?? 0}', Icons.handshake_rounded, colorScheme.primary)),
                       ],
                     ),
                     const SizedBox(height: 32),
@@ -216,82 +189,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildImpactCard(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colorScheme.surfaceContainerHighest, colorScheme.surface],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('PLANET IMPACT', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.2)),
-                  const SizedBox(height: 4),
-                  const Text('42kg CO2 Saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.eco_rounded, color: Colors.green, size: 32),
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer.withOpacity(0.15),
+            borderRadius: AppRadius.roundedXXL,
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: 0.7,
-              minHeight: 8,
-              backgroundColor: colorScheme.outline.withOpacity(0.1),
-              color: Colors.green,
-            ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('PLANET IMPACT', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.2)),
+                      const SizedBox(height: 4),
+                      const Text('42kg CO2 Saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                    child: const Icon(Icons.eco_rounded, color: Colors.green, size: 32),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: 0.7,
+                  minHeight: 8,
+                  backgroundColor: colorScheme.outline.withOpacity(0.1),
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'You are in the top 5% of sustainable traders this month!',
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'You are in the top 5% of sustainable traders this month!',
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildMiniStat(BuildContext context, String label, String value, IconData icon, Color color) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 12),
-          Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-          Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600)),
-        ],
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.05),
+            borderRadius: AppRadius.roundedXL,
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 12),
+              Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+              Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
       ),
     );
   }
