@@ -7,6 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../constants/ui_constants.dart';
 import '../constants/theme.dart';
 import 'dart:ui';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
+import '../widgets/holographic_background.dart';
 
 
 class InboxScreen extends StatefulWidget {
@@ -124,21 +126,23 @@ class _InboxScreenState extends State<InboxScreen> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text('Messages', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-        centerTitle: false,
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text('Messages', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          centerTitle: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search_rounded),
+              onPressed: () {},
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
       body: RefreshIndicator(
         onRefresh: _loadInbox,
         child: _isLoading
@@ -178,9 +182,9 @@ class _InboxScreenState extends State<InboxScreen> {
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
+                          color: colorScheme.surface.withOpacity(0.7),
+                          borderRadius: AppRadius.roundedXL,
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.02),
@@ -190,8 +194,10 @@ class _InboxScreenState extends State<InboxScreen> {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: ListTile(
+                          borderRadius: AppRadius.roundedXL,
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             leading: Hero(
                               tag: 'avatar_${item['other_user_id']}',
@@ -281,6 +287,7 @@ class _InboxScreenState extends State<InboxScreen> {
                               ),
                             ),
                             onTap: () {
+                              Vibrate.feedback(FeedbackType.light);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -307,6 +314,6 @@ class _InboxScreenState extends State<InboxScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.add_comment_rounded, color: Colors.white),
       ),
-    );
+    ));
   }
 }

@@ -1,13 +1,17 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import '../services/chat_service.dart';
 import '../models/chat_message.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/holographic_background.dart';
+import '../constants/ui_constants.dart';
 
 class ChatScreen extends StatefulWidget {
   final int? tradeId;
@@ -190,6 +194,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isForum) {
       _chatService.sendForumMessage(widget.forumCategory!, text, imageUrl: imageUrl);
     } else {
+      Vibrate.feedback(FeedbackType.light);
       _chatService.sendMessage(
         text,
         tradeId: widget.tradeId,
@@ -237,49 +242,39 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            if (!_isForum && widget.recipientAvatar != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundImage: CachedNetworkImageProvider(widget.recipientAvatar!),
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          titleSpacing: 0,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Row(
+            children: [
+              if (!_isForum && widget.recipientAvatar != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundImage: CachedNetworkImageProvider(widget.recipientAvatar!),
+                  ),
                 ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(appBarTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                  if (appBarSubtitle.isNotEmpty)
+                    Text(appBarSubtitle, style: TextStyle(fontSize: 11, color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
+                ],
               ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(appBarTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                if (appBarSubtitle.isNotEmpty)
-                  Text(appBarSubtitle, style: TextStyle(fontSize: 11, color: Colors.indigo.shade600, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey.shade100, height: 1),
-        ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Colors.blue.shade50.withOpacity(0.3)],
+            ],
           ),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 itemCount: _messages.length,
@@ -340,93 +335,96 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
               ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 2),
-                      child: IconButton(
-                        icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF94A3B8), size: 28),
-                        onPressed: _isSendingImage ? null : _pickImage,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFF1F5F9)),
-                        ),
-                        child: TextField(
-                          controller: _messageController,
-                          onChanged: _onTextChanged,
-                          style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
-                          decoration: InputDecoration(
-                            hintText: 'Type your message...',
-                            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            isDense: true,
-                          ),
-                          maxLines: 5,
-                          minLines: 1,
-                          textCapitalization: TextCapitalization.sentences,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    _isSendingImage 
-                      ? const Padding(padding: EdgeInsets.only(bottom: 8), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
-                      : Container(
-                          margin: const EdgeInsets.only(bottom: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                            onPressed: () {
-                              if (_messageController.text.trim().isNotEmpty) {
-                                _sendMessage(_messageController.text.trim());
-                                _messageController.clear();
-                                if (!_isForum) _chatService.sendTypingStatus(false);
-                              }
-                            },
-                          ),
-                        ),
-                  ],
-                ),
-              ),
-            ),
+            _buildInputArea(theme),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildInputArea(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF94A3B8), size: 28),
+                    onPressed: _isSendingImage ? null : _pickImage,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: TextField(
+                        controller: _messageController,
+                        onChanged: _onTextChanged,
+                        style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
+                        decoration: InputDecoration(
+                          hintText: 'Type your message...',
+                          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          isDense: true,
+                        ),
+                        maxLines: 5,
+                        minLines: 1,
+                        textCapitalization: TextCapitalization.sentences,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _isSendingImage 
+                    ? const Padding(padding: EdgeInsets.only(bottom: 8), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
+                    : Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          onPressed: () {
+                            if (_messageController.text.trim().isNotEmpty) {
+                              _sendMessage(_messageController.text.trim());
+                              _messageController.clear();
+                              if (!_isForum) _chatService.sendTypingStatus(false);
+                            }
+                          },
+                        ),
+                      ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
+
 
 
 class _ChatBubble extends StatelessWidget {
@@ -478,22 +476,32 @@ class _ChatBubble extends StatelessWidget {
                 child: Container(
                   constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
                   decoration: BoxDecoration(
-                    color: isMe ? theme.colorScheme.primary : Colors.white,
+                    color: isMe ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white.withOpacity(0.7),
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 18),
+                      topLeft: const Radius.circular(20),
+                      topRight: const Radius.circular(20),
+                      bottomLeft: Radius.circular(isMe ? 20 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 20),
                     ),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Column(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(20),
+                    topRight: const Radius.circular(20),
+                    bottomLeft: Radius.circular(isMe ? 20 : 4),
+                    bottomRight: Radius.circular(isMe ? 4 : 20),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (imageUrl != null)
@@ -524,6 +532,7 @@ class _ChatBubble extends StatelessWidget {
                         ),
                     ],
                   ),
+                ),
                 ),
               ),
             ],

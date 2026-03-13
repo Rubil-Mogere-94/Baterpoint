@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import '../services/chat_service.dart';
 import '../models/chat_message.dart';
 import '../constants/ui_constants.dart';
 import '../constants/theme.dart';
+import '../widgets/holographic_background.dart';
 
 class ForumScreen extends StatefulWidget {
   const ForumScreen({super.key});
@@ -65,6 +67,7 @@ class _ForumScreenState extends State<ForumScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    Vibrate.feedback(FeedbackType.light);
     _chatService.sendForumMessage(_selectedCategory, text);
     _messageController.clear();
   }
@@ -81,18 +84,22 @@ class _ForumScreenState extends State<ForumScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text('Community Forum', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline_rounded),
-            onPressed: () {},
-          ),
-        ],
-      ),
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text('Community Forum', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+          centerTitle: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline_rounded),
+              onPressed: () {},
+            ),
+          ],
+        ),
       body: Column(
         children: [
           _buildCategoryBar(colorScheme),
@@ -111,7 +118,7 @@ class _ForumScreenState extends State<ForumScreen> {
           _buildInputArea(colorScheme),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildCategoryBar(ColorScheme colorScheme) {
@@ -127,20 +134,26 @@ class _ForumScreenState extends State<ForumScreen> {
           final isSelected = _selectedCategory == cat['id'];
           return GestureDetector(
             onTap: () {
+              Vibrate.feedback(FeedbackType.selection);
               setState(() {
                 _selectedCategory = cat['id']!;
                 _loadMessages();
               });
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? colorScheme.primary : colorScheme.surfaceVariant.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: isSelected ? [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? colorScheme.primary : colorScheme.surface.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isSelected ? colorScheme.primary : Colors.white.withOpacity(0.2)),
+                    boxShadow: isSelected ? [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : null,
+                  ),
               child: Row(
                 children: [
                   Text(cat['icon']!, style: const TextStyle(fontSize: 16)),
@@ -155,6 +168,9 @@ class _ForumScreenState extends State<ForumScreen> {
                   ),
                 ],
               ),
+                  ),
+                ),
+              ),
             ),
           );
         },
@@ -162,17 +178,21 @@ class _ForumScreenState extends State<ForumScreen> {
     ).animate().fadeIn(duration: 400.ms).slideX(begin: 0.1);
   }
 
-  Widget _buildMessageItem(ChatMessage message, ColorScheme colorScheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -209,50 +229,57 @@ class _ForumScreenState extends State<ForumScreen> {
               child: Image.network(message.imageUrl!, fit: BoxFit.cover),
             ),
           ],
-        ],
+          ),
+        ),
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1);
   }
 
   Widget _buildInputArea(ColorScheme colorScheme) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: 'Share something with the community...',
-                  hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 14),
-                  border: InputBorder.none,
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.8),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Share something with the community...',
+                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.5), fontSize: 14),
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                shape: BoxShape.circle,
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                ),
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
