@@ -16,6 +16,7 @@ class AppRadius {
   static const double lg = 16.0;
   static const double xl = 24.0;
   static const double xxl = 32.0;
+  static const double max = 999.0;
   
   static BorderRadius roundedXS = BorderRadius.circular(xs);
   static BorderRadius roundedSM = BorderRadius.circular(sm);
@@ -23,6 +24,7 @@ class AppRadius {
   static BorderRadius roundedLG = BorderRadius.circular(lg);
   static BorderRadius roundedXL = BorderRadius.circular(xl);
   static BorderRadius roundedXXL = BorderRadius.circular(xxl);
+  static BorderRadius roundedPill = BorderRadius.circular(max);
 }
 
 class AppShadows {

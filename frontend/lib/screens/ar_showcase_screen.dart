@@ -87,7 +87,7 @@ class _ARShowcaseScreenState extends State<ARShowcaseScreen> with SingleTickerPr
                   width: 320,
                   height: 480,
                   decoration: BoxDecoration(
-                    borderRadius: AppRadii.radiusXl,
+                    borderRadius: AppRadius.roundedXL,
                     boxShadow: [
                       BoxShadow(
                         color: Theme.of(context).colorScheme.secondary.withOpacity(0.4),
@@ -104,7 +104,7 @@ class _ARShowcaseScreenState extends State<ARShowcaseScreen> with SingleTickerPr
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: AppRadii.radiusXl,
+                    borderRadius: AppRadius.roundedXL,
                     child: widget.listing.imageUrl != null
                         ? CachedNetworkImage(
                             imageUrl: widget.listing.imageUrl!,

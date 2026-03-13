@@ -63,7 +63,7 @@ class ModernButton extends StatelessWidget {
           foregroundColor: AppColors.textInverse,
           disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return ElevatedButton(
@@ -80,7 +80,7 @@ class ModernButton extends StatelessWidget {
           foregroundColor: AppColors.textPrimary,
           disabledBackgroundColor: AppColors.surfaceVariant.withOpacity(0.5),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return ElevatedButton(
@@ -95,7 +95,7 @@ class ModernButton extends StatelessWidget {
         style = OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.divider, width: 1.5),
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return OutlinedButton(

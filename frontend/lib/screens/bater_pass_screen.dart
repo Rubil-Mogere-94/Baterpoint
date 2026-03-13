@@ -109,7 +109,7 @@ class _BaterPassScreenState extends State<BaterPassScreen> with SingleTickerProv
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.4 : 0.8),
-                          borderRadius: AppRadii.radiusXl,
+                          borderRadius: AppRadius.roundedXL,
                           border: Border.all(color: Colors.amber.withOpacity(0.3), width: 2),
                         ),
                         child: Column(
@@ -128,7 +128,7 @@ class _BaterPassScreenState extends State<BaterPassScreen> with SingleTickerProv
                                   height: 16,
                                   decoration: BoxDecoration(
                                     color: Colors.black12,
-                                    borderRadius: AppRadii.radiusPill,
+                                    borderRadius: AppRadius.roundedPill,
                                   ),
                                 ),
                                 AnimatedFractionallySizedBox(
@@ -139,7 +139,7 @@ class _BaterPassScreenState extends State<BaterPassScreen> with SingleTickerProv
                                     height: 16,
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(colors: [Colors.orange, Colors.amberAccent]),
-                                      borderRadius: AppRadii.radiusPill,
+                                      borderRadius: AppRadius.roundedPill,
                                       boxShadow: [
                                         BoxShadow(color: Colors.amber.withOpacity(0.5), blurRadius: 10)
                                       ]
@@ -184,7 +184,7 @@ class _BaterPassScreenState extends State<BaterPassScreen> with SingleTickerProv
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface.withOpacity(isDark ? 0.3 : 0.7),
-                        borderRadius: AppRadii.radiusLg,
+                        borderRadius: AppRadius.roundedLG,
                         border: Border.all(color: isLocked ? Colors.grey.withOpacity(0.2) : Theme.of(context).colorScheme.primary.withOpacity(0.3)),
                       ),
                       child: Row(

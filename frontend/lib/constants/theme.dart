@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'ui_constants.dart';
+export 'ui_constants.dart';
 
 class AppColors {
   // Brand Colors - Clean monochromatic with a vibrant primary
@@ -108,46 +110,6 @@ class AppSpacing {
   static const double xxl = 48.0;
 }
 
-class AppRadii {
-  static const double sm = 8.0;
-  static const double md = 12.0;
-  static const double lg = 16.0;
-  static const double xl = 24.0;
-  static const double max = 999.0; // Pill shape
-
-  static final BorderRadius radiusSm = BorderRadius.circular(sm);
-  static final BorderRadius radiusMd = BorderRadius.circular(md);
-  static final BorderRadius radiusLg = BorderRadius.circular(lg);
-  static final BorderRadius radiusXl = BorderRadius.circular(xl);
-  static final BorderRadius radiusPill = BorderRadius.circular(max);
-}
-
-class AppShadows {
-  static final List<BoxShadow> soft = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.04),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
-  
-  static final List<BoxShadow> medium = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      blurRadius: 20,
-      offset: const Offset(0, 10),
-    ),
-  ];
-
-  static final List<BoxShadow> heavy = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.12),
-      blurRadius: 30,
-      offset: const Offset(0, 15),
-    ),
-  ];
-}
-
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
@@ -180,7 +142,7 @@ class AppTheme {
           foregroundColor: AppColors.textInverse,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
@@ -189,7 +151,7 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           side: const BorderSide(color: AppColors.divider, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
@@ -203,19 +165,19 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceVariant,
         border: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 18),
@@ -237,7 +199,7 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.radiusLg,
+          borderRadius: AppRadius.roundedLG,
           side: const BorderSide(color: AppColors.divider, width: 0.5),
         ),
         margin: EdgeInsets.zero,
@@ -280,7 +242,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.white),
         ),
       ),
@@ -289,7 +251,7 @@ class AppTheme {
           foregroundColor: const Color(0xFF818CF8),
           side: const BorderSide(color: Color(0xFF334155), width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-          shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusPill),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           textStyle: AppTypography.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700, color: const Color(0xFF818CF8)),
         ),
       ),
@@ -303,19 +265,19 @@ class AppTheme {
         filled: true,
         fillColor: const Color(0xFF334155),
         border: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: const BorderSide(color: Color(0xFF818CF8), width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadii.radiusMd,
+          borderRadius: AppRadius.roundedMD,
           borderSide: const BorderSide(color: Color(0xFFF87171), width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 18),
@@ -337,7 +299,7 @@ class AppTheme {
         color: const Color(0xFF1E293B),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadii.radiusLg,
+          borderRadius: AppRadius.roundedLG,
           side: const BorderSide(color: Color(0xFF334155), width: 0.5),
         ),
         margin: EdgeInsets.zero,

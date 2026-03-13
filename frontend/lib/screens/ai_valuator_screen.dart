@@ -98,7 +98,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor.withOpacity(isDark ? 0.3 : 0.7),
-                    borderRadius: AppRadii.radiusXl,
+                    borderRadius: AppRadius.roundedXL,
                     border: Border.all(
                       color: isDark ? Colors.white12 : Colors.black12,
                       width: 1,
@@ -137,7 +137,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
                           onPressed: _isScanning ? null : _evaluateItem,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.primary,
-                            shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusLg)
+                            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG)
                           ),
                           child: _isScanning
                               ? const SizedBox(
@@ -200,7 +200,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
         padding: const EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: AppRadii.radiusXl,
+          borderRadius: AppRadius.roundedXL,
           border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5), width: 2),
           boxShadow: [
             BoxShadow(
@@ -237,7 +237,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: AppRadii.radiusMd,
+                borderRadius: AppRadius.roundedMD,
               ),
               child: Text(
                 '"${_result!['ai_comment']}"',

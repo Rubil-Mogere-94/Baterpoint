@@ -9,6 +9,7 @@ import '../services/cart_service.dart';
 import '../services/auth_service.dart';
 import '../services/environment_config.dart';
 import '../constants/ui_constants.dart';
+import '../widgets/holographic_background.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Listing? listing;
@@ -148,7 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               padding: const EdgeInsets.all(AppPadding.xl),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
@@ -185,7 +186,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusLg),
+                        shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                       ),
@@ -211,12 +212,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingCart) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Fast Checkout', style: TextStyle(fontWeight: FontWeight.w900)),
-        centerTitle: true,
-      ),
-      body: Stack(
+    final theme = Theme.of(context);
+    
+    double subtotal = 0.0;
+    if (widget.listing != null) {
+      subtotal = widget.listing!.cashPrice ?? 0.0;
+    } else if (_cart != null) {
+      subtotal = _cart!.items.fold(0.0, (sum, item) => sum + (item.listing.cashPrice ?? 0.0));
+    }
+    
+    double discountAmount = subtotal * (_discountPercentage / 100);
+    double shippingFee = subtotal > 0 ? 5.99 : 0.0; 
+    double total = (subtotal - discountAmount) + shippingFee;
+
+    return HolographicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: const Text('Fast Checkout', style: TextStyle(fontWeight: FontWeight.w900)),
+          centerTitle: true,
+        ),
+        body: Stack(
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.all(AppPadding.md),
@@ -227,7 +244,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   padding: const EdgeInsets.all(AppPadding.md),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
-                    borderRadius: AppRadii.radiusLg,
+                    borderRadius: AppRadius.roundedLG,
                     border: Border.all(color: theme.dividerColor),
                   ),
                   child: Column(
@@ -268,7 +285,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         decoration: InputDecoration(
                           hintText: 'Promo / Gift Code',
                           errorText: _couponError,
-                          border: OutlineInputBorder(borderRadius: AppRadii.radiusMd),
+                          border: OutlineInputBorder(borderRadius: AppRadius.roundedMD),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           suffixIcon: _appliedCouponCode != null 
                               ? const Icon(Icons.check_circle, color: Colors.green)
@@ -281,7 +298,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       onPressed: _isApplyingCoupon || _appliedCouponCode != null ? null : _applyCoupon,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusMd),
+                        shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
                         backgroundColor: theme.colorScheme.secondary,
                         foregroundColor: Colors.white,
                       ),
@@ -303,7 +320,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   padding: const EdgeInsets.all(AppPadding.md),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.05),
-                    borderRadius: AppRadii.radiusLg,
+                    borderRadius: AppRadius.roundedLG,
                   ),
                   child: Column(
                     children: [
@@ -349,7 +366,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: ElevatedButton(
                     onPressed: _isProcessing ? null : _processPayment,
                     style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: AppRadii.radiusLg),
+                      shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: Colors.white,
                     ),
@@ -370,7 +387,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           )
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildListingRow(Listing listing) {
