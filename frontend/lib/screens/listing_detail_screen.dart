@@ -309,15 +309,15 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.emerald.withOpacity(0.1),
+            color: const Color(0xFF10B981).withOpacity(0.1),
             borderRadius: AppRadius.roundedXL,
-            border: Border.all(color: Colors.emerald.withOpacity(0.2)),
+            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(color: Colors.emerald, shape: BoxShape.circle),
+                decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
                 child: const Icon(Icons.eco_rounded, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 16),
@@ -325,7 +325,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Eco Impact', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.emerald)),
+                    Text('Eco Impact', style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF10B981))),
                     SizedBox(height: 2),
                     Text(
                       'This trade saves ~12kg of CO2 emissions.',

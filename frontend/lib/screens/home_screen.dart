@@ -12,6 +12,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:page_transition/page_transition.dart';
 import '../widgets/listing_card.dart';
+import '../widgets/modern_button.dart';
 import '../widgets/holographic_background.dart';
 import '../constants/ui_constants.dart';
 import '../constants/theme.dart';
@@ -458,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(listing.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 8),
-                  ModernButton(text: 'View Detail', type: ModernButtonType.small, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
+                  ModernButton(text: 'View Detail', type: ModernButtonType.secondary, isFullWidth: false, height: 40, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
                 ],
               ),
             ),
