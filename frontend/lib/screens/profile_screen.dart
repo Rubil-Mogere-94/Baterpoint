@@ -16,6 +16,7 @@ import 'settings_screen.dart';
 import 'orders_screen.dart';
 import 'cart_screen.dart';
 import 'admin_dashboard_screen.dart';
+import '../widgets/holographic_background.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -124,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Stats Grid (Glassy)
                     Row(
                       children: [
-                        Expanded(child: _buildMiniStat(context, 'Trust Score', '9.8', Icons.shield_half_filled_rounded, Colors.green)),
+                        Expanded(child: _buildMiniStat(context, 'Trust Score', '9.8', Icons.shield_rounded, Colors.green)),
                         const SizedBox(width: 16),
                         Expanded(child: _buildMiniStat(context, 'Trades', '${user?.successfulTrades ?? 0}', Icons.handshake_rounded, colorScheme.primary)),
                       ],
