@@ -7,6 +7,7 @@ import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';
 import '../widgets/modern_button.dart';
 import '../widgets/modern_text_field.dart';
+import '../widgets/holographic_background.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

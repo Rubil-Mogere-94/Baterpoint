@@ -8,6 +8,7 @@ import '../constants/ui_constants.dart';
 import 'register_screen.dart';
 import '../widgets/modern_button.dart';
 import '../widgets/modern_text_field.dart';
+import '../widgets/holographic_background.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

@@ -4,9 +4,9 @@ import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class HolographicBackground extends StatefulWidget {
-  final Widget child;
+  final Widget? child;
   
-  const HolographicBackground({super.key, required this.child});
+  const HolographicBackground({super.key, this.child});
 
   @override
   State<HolographicBackground> createState() => _HolographicBackgroundState();
@@ -63,7 +63,7 @@ class _HolographicBackgroundState extends State<HolographicBackground> with Sing
         ),
         
         // The actual content of the screen
-        widget.child,
+        widget.child ?? const SizedBox.shrink(),
       ],
     );
   }
