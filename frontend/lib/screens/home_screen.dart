@@ -12,7 +12,9 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:page_transition/page_transition.dart';
 import '../widgets/listing_card.dart';
+import '../widgets/holographic_background.dart';
 import '../constants/ui_constants.dart';
+import '../constants/theme.dart';
 import '../providers/connectivity_provider.dart';
 import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
@@ -37,8 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dealTimer;
   Duration _dealRemaining = Duration.zero;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -49,21 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _trendingListingsFuture = _listingService.fetchListings(sortBy: 'view_count', order: 'desc', limit: 10);
       _recommendationsFuture = _listingService.fetchRecommendations(limit: 10).catchError((e) {
-        debugPrint('Recommendations error: $e');
         return _listingService.fetchListings(sortBy: 'created_at', order: 'desc', limit: 10);
       });
-      _questsFuture = _questService.fetchQuests().catchError((e) {
-        debugPrint('Quests error: $e');
-        return <UserQuest>[];
-      });
+      _questsFuture = _questService.fetchQuests().catchError((e) => <UserQuest>[]);
       _dealFuture = _listingService.fetchDealOfTheHour();
     });
     
     _dealFuture.then((deal) {
       if (mounted) {
-        setState(() {
-          _dealRemaining = deal.endTime.difference(DateTime.now());
-        });
+        setState(() => _dealRemaining = deal.endTime.difference(DateTime.now()));
         _dealTimer?.cancel();
         _dealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           if (mounted) {
@@ -94,842 +88,397 @@ class _HomeScreenState extends State<HomeScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Changed to transparent for holographic bg
-      body: RefreshIndicator(
-        onRefresh: () async => _fetchData(),
-        color: colorScheme.primary,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              pinned: true,
-              snap: false,
-              backgroundColor: Colors.transparent, // Completely transparent so Holographic shows
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              expandedHeight: 70,
-              flexibleSpace: Column(
-                children: [
-                   Consumer<ConnectivityProvider>(
-                    builder: (context, connectivity, _) {
-                      if (connectivity.isOffline) {
-                        return Container(
-                          width: double.infinity,
-                          color: colorScheme.errorContainer,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.wifi_off_rounded, size: 14, color: colorScheme.onErrorContainer),
-                              const SizedBox(width: 8),
-                              Text(
-                                'YOU ARE OFFLINE',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.onErrorContainer,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ).animate().slideY(begin: -1, end: 0);
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                  ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                      child: FlexibleSpaceBar(
-                        background: Container(color: Colors.transparent),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [colorScheme.primary, colorScheme.secondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: AppRadius.roundedMD,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 22),
-                  ),
-                  const SizedBox(width: 14),
-                  Text(
-                    'Baterpoint',
-                    style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.onSurface,
-                      letterSpacing: -1.0,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 26),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                      );
-                    },
-                  ),
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          const HolographicBackground(),
+          RefreshIndicator(
+            onRefresh: () async => _fetchData(),
+            color: colorScheme.primary,
+            edgeOffset: 100,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildAppBar(context, colorScheme, textTheme),
+                
+                // AI Valuator CTA
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: _buildAiValuatorCard(colorScheme, textTheme),
+                  ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1),
                 ),
-                const SizedBox(width: 8),
+                
+                // Search Bar Placeholder
+                _buildSearchBar(colorScheme, textTheme),
+
+                // Featured Carousel
+                SliverToBoxAdapter(
+                  child: _buildTrendingCarousel(),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                // Deal of the Hour
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildDealCard(colorScheme, textTheme),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                // Daily Quest
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildQuestCard(colorScheme, textTheme),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+                // Discover Title
+                _buildSectionHeader('Discover Feed', 'Swipe through verified listings', textTheme),
+
+                // Main Feed (PageView)
+                _buildMainFeed(colorScheme, textTheme),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
-            
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md, vertical: AppPadding.sm),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      PageTransition(
-                        type: PageTransitionType.bottomToTop,
-                        child: const AiValuatorScreen(),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(AppPadding.md),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [colorScheme.primary.withOpacity(0.8), colorScheme.secondary.withOpacity(0.8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: AppRadius.roundedXL,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'AI Item Valuator',
-                                style: textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Scan items to discover their barter worth!',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
-                      ],
-                    ),
-                  ).animate().shimmer(duration: 3.seconds, delay: 2.seconds),
-                ),
-              ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context, ColorScheme colorScheme, TextTheme textTheme) {
+    return SliverAppBar(
+      floating: true,
+      pinned: true,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      expandedHeight: 80,
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.secondary]),
+              borderRadius: AppRadius.roundedMD,
+              boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 10)],
             ),
-            
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(AppPadding.md, AppPadding.md, AppPadding.md, AppPadding.lg),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ExploreScreen()),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: AppRadius.roundedXL,
-                      border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-                      boxShadow: AppShadows.soft,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.search_rounded, color: colorScheme.primary, size: 22),
-                        const SizedBox(width: 14),
-                        Text(
-                          'Find your next treasure...',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(Icons.tune_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.5), size: 20),
-                      ],
-                    ),
+            child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Baterpoint',
+            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -1.0),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 28),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
+        ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(color: Colors.transparent),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiValuatorCard(ColorScheme colorScheme, TextTheme textTheme) {
+    return InkWell(
+      onTap: () => Navigator.push(context, PageTransition(type: PageTransitionType.bottomToTop, child: const AiValuatorScreen())),
+      borderRadius: AppRadius.roundedXXL,
+      child: ClipRRect(
+        borderRadius: AppRadius.roundedXXL,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [colorScheme.primary.withOpacity(0.8), colorScheme.secondary.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: AppRadius.roundedXXL,
+              boxShadow: [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 5))],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                  child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('AI Treasure Scan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+                      Text('Discover your item\'s hidden value instantly', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                    ],
                   ),
                 ),
-              ),
+                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            SliverToBoxAdapter(
-              child: FutureBuilder<List<Listing>>(
-                future: _trendingListingsFuture,
-                builder: (context, snapshot) {
-                  final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                  final listings = isLoading 
-                    ? List.generate(3, (_) => Listing.skeleton())
-                    : snapshot.data ?? [];
-                  
-                  if (!isLoading && listings.isEmpty) return const SizedBox.shrink();
-                  
-                  final heroListings = listings.where((l) => l.imageUrl != null || isLoading).take(5).toList();
-                  if (heroListings.isEmpty) return const SizedBox.shrink();
-
-                  return Skeletonizer(
-                    enabled: isLoading,
-                    child: CarouselSlider(
-                    options: CarouselOptions(
-                      height: 210.0,
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      viewportFraction: 0.92,
-                      aspectRatio: 16/9,
-                      initialPage: 0,
-                      autoPlayInterval: const Duration(seconds: 7),
-                      autoPlayCurve: Curves.fastOutSlowIn,
-                    ),
-                    items: heroListings.map((listing) {
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
-                              );
-                            },
-                            child: Container(
-                              width: MediaQuery.of(context).size.width,
-                              margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                              decoration: BoxDecoration(
-                                borderRadius: AppRadius.roundedXXL,
-                                image: DecorationImage(
-                                  image: CachedNetworkImageProvider(listing.imageUrl!),
-                                  fit: BoxFit.cover,
-                                ),
-                                boxShadow: AppShadows.medium,
-                              ),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: AppRadius.roundedXXL,
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                                    stops: const [0.4, 1.0],
-                                  ),
-                                ),
-                                padding: const EdgeInsets.all(AppPadding.lg),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primary,
-                                        borderRadius: AppRadius.roundedSM,
-                                      ),
-                                      child: Text(
-                                        listing.tradeType?.toUpperCase() ?? '',
-                                        style: textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.0,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      listing.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.headlineSmall?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      listing.category,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: Colors.white.withOpacity(0.8),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  );
-                },
-              ),
+  Widget _buildSearchBar(ColorScheme colorScheme, TextTheme textTheme) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: InkWell(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ExploreScreen())),
+          borderRadius: AppRadius.roundedXL,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.4),
+              borderRadius: AppRadius.roundedXL,
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            
-            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
-            
-            // Deal of the Hour
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                child: FutureBuilder<Deal>(
-                  future: _dealFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Skeletonizer(
-                        enabled: true,
-                        child: Container(
-                          height: 140,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: AppRadius.roundedXXL,
-                          ),
-                        ),
-                      );
-                    } else if (snapshot.hasError) {
-                      return const SizedBox.shrink();
-                    }
-                    
-                    final deal = snapshot.data!;
-                    final minutes = _dealRemaining.inMinutes % 60;
-                    final seconds = _dealRemaining.inSeconds % 60;
-                    
-                    return Container(
-                      padding: const EdgeInsets.all(AppPadding.lg),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [colorScheme.primary, colorScheme.tertiary],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: AppRadius.roundedXXL,
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: AppRadius.roundedSM,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.bolt_rounded, color: Colors.amber, size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'FLASH DEAL',
-                                        style: textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  '${deal.discountPercentage}% OFF',
-                                  style: textTheme.headlineMedium?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w900,
-                                    height: 1.0,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  deal.listing.title,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.timer_outlined, color: Colors.white70, size: 14),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Ends in ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'monospace',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            children: [
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: AppRadius.roundedXL,
-                                  image: deal.listing.imageUrl != null 
-                                    ? DecorationImage(
-                                        image: CachedNetworkImageProvider(deal.listing.imageUrl!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: deal.listing)),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: colorScheme.primary,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
-                                ),
-                                child: const Text('View Deal', style: TextStyle(fontWeight: FontWeight.w900)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                ),
-              ),
+            child: Row(
+              children: [
+                Icon(Icons.search_rounded, color: colorScheme.primary, size: 20),
+                const SizedBox(width: 12),
+                Text('Search listings...', style: TextStyle(color: colorScheme.onSurfaceVariant.withOpacity(0.6))),
+                const Spacer(),
+                Icon(Icons.tune_rounded, color: colorScheme.onSurfaceVariant.withOpacity(0.4), size: 18),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
-            
-            // Daily Quests
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                child: FutureBuilder<List<UserQuest>>(
-                  future: _questsFuture,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
-                    
-                    final activeQuests = snapshot.data!.where((q) => !q.completed).toList();
-                    if (activeQuests.isEmpty) return const SizedBox.shrink();
-                    
-                    final currentQuest = activeQuests.first;
-                    final progress = currentQuest.progress / currentQuest.quest.goalValue;
-                    
-                    return Container(
-                      padding: const EdgeInsets.all(AppPadding.lg),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: AppRadius.roundedXXL,
-                        border: Border.all(color: colorScheme.outline.withOpacity(0.1)),
-                        boxShadow: AppShadows.soft,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: colorScheme.secondary.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(Icons.auto_awesome_rounded, color: colorScheme.secondary, size: 20),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Daily Quest',
-                                    style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primaryContainer.withOpacity(0.5),
-                                  borderRadius: AppRadius.roundedSM,
-                                ),
-                                child: Text(
-                                  '+${currentQuest.quest.pointsReward} XP',
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: colorScheme.primary,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            currentQuest.quest.title,
-                            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            currentQuest.quest.description,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      height: 10,
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                                        borderRadius: AppRadius.roundedXS,
-                                      ),
-                                    ),
-                                    AnimatedFractionallySizedBox(
-                                      duration: AppAnimations.slow,
-                                      widthFactor: progress.clamp(0.0, 1.0),
-                                      child: Container(
-                                        height: 10,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.7)],
-                                          ),
-                                          borderRadius: AppRadius.roundedXS,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: colorScheme.primary.withOpacity(0.2),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Text(
-                                '${(progress * 100).toInt()}%',
-                                style: textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (currentQuest.progress >= currentQuest.quest.goalValue) ...[
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  try {
-                                    final result = await _questService.claimReward(currentQuest.id);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Reward Claimed! ${result['points_awarded']} points added.'),
-                                          backgroundColor: colorScheme.primary,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
-                                        ),
-                                      );
-                                      _fetchData();
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(content: Text(e.toString())),
-                                      );
-                                    }
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colorScheme.primary,
-                                  foregroundColor: colorScheme.onPrimary,
-                                  elevation: 4,
-                                  shadowColor: colorScheme.primary.withOpacity(0.3),
-                                  shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
-                                ),
-                                child: const Text('Claim Reward', style: TextStyle(fontWeight: FontWeight.w900)),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
+  Widget _buildTrendingCarousel() {
+    return FutureBuilder<List<Listing>>(
+      future: _trendingListingsFuture,
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final listings = isLoading ? List.generate(3, (_) => Listing.skeleton()) : snapshot.data ?? [];
+        if (!isLoading && listings.isEmpty) return const SizedBox.shrink();
+
+        return Skeletonizer(
+          enabled: isLoading,
+          child: CarouselSlider(
+            options: CarouselOptions(
+              height: 220,
+              autoPlay: true,
+              enlargeCenterPage: true,
+              viewportFraction: 0.9,
+              autoPlayInterval: const Duration(seconds: 6),
             ),
+            items: listings.take(5).map((l) => _buildCarouselItem(l)).toList(),
+          ),
+        );
+      },
+    );
+  }
 
-            const SliverToBoxAdapter(child: SizedBox(height: AppPadding.xl)),
+  Widget _buildCarouselItem(Listing listing) {
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing))),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.roundedXXL,
+          image: listing.imageUrl != null ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover) : null,
+          boxShadow: AppShadows.medium,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.roundedXXL,
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.8)]),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(listing.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18), maxLines: 1),
+              Text(listing.category, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            // (Removed Mock Featured Artisans)
+  Widget _buildDealCard(ColorScheme colorScheme, TextTheme textTheme) {
+    return FutureBuilder<Deal>(
+      future: _dealFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final deal = snapshot.data!;
+        final minutes = _dealRemaining.inMinutes % 60;
+        final seconds = _dealRemaining.inSeconds % 60;
 
-// Replaced "See All" with a "Discover" title that hints at vertical scroll
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppPadding.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
+        return ClipRRect(
+          borderRadius: AppRadius.roundedXXL,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [colorScheme.tertiary.withOpacity(0.8), colorScheme.primary.withOpacity(0.8)]),
+                borderRadius: AppRadius.roundedXXL,
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Discover Video Feed', style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                        Text('Swipe up for premium items', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+                        const Text('LIMITED TIME DEAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)),
+                        const SizedBox(height: 8),
+                        Text('${deal.discountPercentage}% OFF', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                        Text(deal.listing.title, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1),
+                        const SizedBox(height: 12),
+                        Text('${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')} LEFT', style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontWeight: FontWeight.w900)),
                       ],
                     ),
-                    const Icon(Icons.swipe_up_outlined, color: Colors.grey),
-                  ],
-                ),
+                  ),
+                  Container(
+                    width: 70, height: 70,
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.roundedXL,
+                      image: deal.listing.imageUrl != null ? DecorationImage(image: CachedNetworkImageProvider(deal.listing.imageUrl!), fit: BoxFit.cover) : null,
+                    ),
+                  ),
+                ],
               ),
             ),
-            
-            // Full-width vertical Discover feed replacing the horizontal carousels
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.7, // Take up remaining space for the vertical feed
-                child: FutureBuilder<List<Listing>>(
-                  future: _trendingListingsFuture,
-                  builder: (context, snapshot) {
-                    final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                    
-                    if (!isLoading && (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)) {
-                      return Center(child: Text('No trending items found.', style: textTheme.bodyMedium));
-                    }
+          ),
+        );
+      },
+    );
+  }
 
-                    final listings = isLoading 
-                      ? List.generate(5, (_) => Listing.skeleton())
-                      : snapshot.data!;
- 
-                    final trending = List<Listing>.from(listings)
-                      ..sort((a, b) => b.viewCount.compareTo(a.viewCount));
-                    final topTrending = trending.take(5).toList();
- 
-                    return Skeletonizer(
-                      enabled: isLoading,
-                      child: PageView.builder(
-                        scrollDirection: Axis.vertical,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: topTrending.length,
-                        itemBuilder: (context, index) {
-                          final listing = topTrending[index];
-                          return Container(
-                            margin: const EdgeInsets.all(AppPadding.md),
-                            decoration: BoxDecoration(
-                              borderRadius: AppRadius.roundedXXL,
-                              image: listing.imageUrl != null 
-                                ? DecorationImage(
-                                    image: CachedNetworkImageProvider(listing.imageUrl!),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
-                              color: colorScheme.surfaceVariant,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                )
-                              ],
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: AppRadius.roundedXXL,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                                  stops: const [0.5, 1.0],
-                                ),
-                              ),
-                              padding: const EdgeInsets.all(AppPadding.xl),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                              decoration: BoxDecoration(
-                                                color: colorScheme.primary,
-                                                borderRadius: AppRadius.roundedSM,
-                                              ),
-                                              child: Text(
-                                                listing.tradeType?.toUpperCase() ?? 'SELL',
-                                                style: textTheme.labelSmall?.copyWith(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w900,
-                                                  letterSpacing: 1.0,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 12),
-                                            Text(
-                                              listing.title,
-                                              style: textTheme.displaySmall?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              "\$${listing.cashPrice?.toStringAsFixed(2) ?? '0.00'}",
-                                              style: textTheme.headlineMedium?.copyWith(
-                                                color: colorScheme.secondary,
-                                                fontWeight: FontWeight.w900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Column(
-                                        children: [
-                                          _buildActionButton(Icons.favorite_rounded, 'Like', () {}),
-                                          const SizedBox(height: 16),
-                                          _buildActionButton(Icons.comment_rounded, 'Offer', () {}),
-                                          const SizedBox(height: 16),
-                                          _buildActionButton(Icons.shopping_bag_rounded, 'Buy', () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
-                                            );
-                                          }, color: colorScheme.primary),
-                                        ],
-                                      )
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+  Widget _buildQuestCard(ColorScheme colorScheme, TextTheme textTheme) {
+    return FutureBuilder<List<UserQuest>>(
+      future: _questsFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+        final quest = snapshot.data!.first;
+        final progress = (quest.progress / quest.quest.goalValue).clamp(0.0, 1.0);
+
+        return ClipRRect(
+          borderRadius: AppRadius.roundedXXL,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withOpacity(0.4),
+                borderRadius: AppRadius.roundedXXL,
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('ACTIVE QUEST', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Colors.blueGrey)),
+                      Text('+${quest.quest.pointsReward} XP', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 10)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(quest.quest.title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                  const SizedBox(height: 16),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(value: progress, minHeight: 8, backgroundColor: colorScheme.outline.withOpacity(0.1), color: colorScheme.primary),
+                  ),
+                ],
               ),
             ),
+          ),
+        );
+      },
+    );
+  }
 
-            const SliverToBoxAdapter(child: SizedBox(height: 100)), // Extra space for floating nav
+  Widget _buildMainFeed(ColorScheme colorScheme, TextTheme textTheme) {
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 500,
+        child: FutureBuilder<List<Listing>>(
+          future: _trendingListingsFuture,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            return PageView.builder(
+              scrollDirection: Axis.vertical,
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) => _buildFeedItem(snapshot.data![index]),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedItem(Listing listing) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(borderRadius: AppRadius.roundedXXL, boxShadow: AppShadows.soft),
+      child: ClipRRect(
+        borderRadius: AppRadius.roundedXXL,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            listing.imageUrl != null ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) : Container(color: Colors.grey),
+            Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(listing.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                  ModernButton(text: 'View Detail', type: ModernButtonType.small, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, {Color? color}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color ?? Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-        ],
+  Widget _buildSectionHeader(String title, String subtitle, TextTheme textTheme) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+            Text(subtitle, style: textTheme.bodySmall?.copyWith(color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

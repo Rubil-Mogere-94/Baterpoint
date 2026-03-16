@@ -4,14 +4,16 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../widgets/modern_button.dart';
+import '../widgets/holographic_background.dart';
 import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import '../services/listing_service.dart';
-
 import '../services/cart_service.dart';
 import '../constants/ui_constants.dart';
+import '../constants/theme.dart';
 import 'chat_screen.dart';
 import 'edit_listing_screen.dart';
 import 'checkout_screen.dart';
@@ -30,7 +32,6 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   late Listing _currentListing;
   bool _isLoading = false;
   final ListingService _listingService = ListingService();
-
   final CartService _cartService = CartService();
 
   @override
@@ -52,7 +53,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to refresh listing: $e'),
+            content: Text('Failed to refresh: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -69,494 +70,381 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final isOwner = authProvider.user?.id == _currentListing.userId;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _isLoading 
-              ? Center(
-                  key: const ValueKey('loading'), 
-                  child: CircularProgressIndicator(color: colorScheme.primary),
-                )
-              : CustomScrollView(
-                  key: const ValueKey('content'),
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverAppBar(
-                      expandedHeight: 400.0,
-                      pinned: true,
-                      stretch: true,
-                      backgroundColor: colorScheme.surface,
-                      iconTheme: const IconThemeData(color: Colors.white),
-                      actionsIconTheme: const IconThemeData(color: Colors.white),
-                      leading: Container(
-                        margin: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          shape: BoxShape.circle,
+          const HolographicBackground(),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 450.0,
+                pinned: true,
+                stretch: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                flexibleSpace: FlexibleSpaceBar(
+                  stretchModes: const [StretchMode.zoomBackground],
+                  background: Hero(
+                    tag: 'listing_image_${_currentListing.id}',
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _currentListing.imageUrl != null
+                            ? CachedNetworkImage(
+                                imageUrl: _currentListing.imageUrl!,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(color: colorScheme.surface),
+                        // Soft overlay for top legibility
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.4),
+                                Colors.transparent,
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.4),
+                              ],
+                              stops: const [0.0, 0.2, 0.7, 1.0],
+                            ),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                          onPressed: () {
-                            Vibrate.feedback(FeedbackType.light);
-                            Navigator.pop(context, true);
-                          },
-                        ),
-                      ),
-                      flexibleSpace: FlexibleSpaceBar(
-                        background: Hero(
-                          tag: 'listing_image_${_currentListing.id}',
-                          child: _currentListing.imageUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: _currentListing.imageUrl!,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    child: const Icon(Icons.broken_image, size: 64, color: Colors.grey),
-                                  ),
-                                )
-                              : Container(
-                                  color: colorScheme.surfaceContainerHighest,
-                                  child: const Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
-                                ),
-                        ),
-                      ),
-                      actions: [
-                        if (isOwner) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: CircleAvatar(
-                              backgroundColor: Colors.black.withOpacity(0.3),
-                              child: IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.white),
-                                onPressed: () async {
-                                  Vibrate.feedback(FeedbackType.light);
-                                  final result = await Navigator.push(
-                                    context,
-                                    PageTransition(
-                                      type: PageTransitionType.rightToLeftWithFade,
-                                      child: EditListingScreen(listing: _currentListing),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _refreshListing();
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: CircleAvatar(
-                              backgroundColor: Colors.black.withOpacity(0.3),
-                              child: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                onPressed: () {
-                                  Vibrate.feedback(FeedbackType.medium);
-                                  _showDeleteDialog(context, _listingService);
-                                },
-                              ),
-                            ),
-                          ),
-                        ] else ...[
-                          Container(
-                            margin: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.favorite_border, color: Colors.white),
-                              onPressed: () {
-                                Vibrate.feedback(FeedbackType.light);
-                              },
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.share, color: Colors.white),
-                              onPressed: () {
-                                Vibrate.feedback(FeedbackType.light);
-                              },
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.shopping_cart, color: Colors.white),
-                              onPressed: () {
-                                Vibrate.feedback(FeedbackType.light);
-                                Navigator.push(
-                                  context, 
-                                  PageTransition(
-                                    type: PageTransitionType.rightToLeftWithFade,
-                                    child: CartScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
                       ],
                     ),
-                    SliverToBoxAdapter(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  ),
+                ),
+                actions: [
+                  if (isOwner) ...[
+                    _buildAppBarAction(Icons.edit, () async {
+                      final result = await Navigator.push(
+                        context,
+                        PageTransition(
+                          type: PageTransitionType.fade,
+                          child: EditListingScreen(listing: _currentListing),
                         ),
-                        transform: Matrix4.translationValues(0, -24, 0),
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 120),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  _currentListing.category.toUpperCase(),
-                                  style: TextStyle(
-                                    color: colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _currentListing.title,
-                                      style: textTheme.headlineMedium?.copyWith(
-                                        fontWeight: FontWeight.w900,
-                                        color: colorScheme.onSurface,
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                  if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
-                                    Container(
-                                      margin: const EdgeInsets.only(left: 16),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Text(
-                                        '\$${_currentListing.cashPrice}',
-                                        style: textTheme.titleLarge?.copyWith(
-                                          color: colorScheme.onPrimaryContainer,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [const Color(0xFF10B981).withOpacity(0.1), const Color(0xFF34D399).withOpacity(0.05)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.eco_rounded, color: Color(0xFF10B981), size: 24),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Eco-Impact',
-                                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
-                                          ),
-                                          Text(
-                                            'Trading this item saves ~12kg of CO2 vs buying new.',
-                                            style: TextStyle(fontSize: 12, color: Color(0xFF064E3B)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                      );
+                      if (result == true) _refreshListing();
+                    }),
+                    _buildAppBarAction(Icons.delete, () => _showDeleteDialog(context), isDestructive: true),
+                  ] else ...[
+                    _buildAppBarAction(Icons.favorite_border, () {}),
+                    _buildAppBarAction(Icons.share, () {}),
+                  ],
+                  const SizedBox(width: 8),
+                ],
+              ),
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 32, 24, 140),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header info
+                        _buildCategoryBadge(colorScheme),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _currentListing.title,
+                                style: textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.1,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(height: 32),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 24,
-                                      backgroundColor: colorScheme.surfaceContainerHighest,
-                                      backgroundImage: _currentListing.ownerAvatar != null
-                                          ? CachedNetworkImageProvider(_currentListing.ownerAvatar!)
-                                          : null,
-                                      child: _currentListing.ownerAvatar == null
-                                          ? Text(
-                                              (_currentListing.ownerUsername ?? 'U').substring(0, 1).toUpperCase(),
-                                              style: TextStyle(
-                                                color: colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                _currentListing.ownerUsername ?? 'User',
-                                                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.star_rounded, color: Colors.amber.shade500, size: 16),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${_currentListing.ownerRating} ',
-                                                style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-                                              ),
-                                              Text(
-                                                '(${_currentListing.ownerReviews} reviews)',
-                                                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary),
-                                      onPressed: () {
-                                         Vibrate.feedback(FeedbackType.light);
-                                         Navigator.push(
-                                          context,
-                                          PageTransition(
-                                            type: PageTransitionType.fade,
-                                            child: ChatScreen(
-                                              tradeId: _currentListing.id,
-                                              recipientId: _currentListing.userId,
-                                              recipientName: _currentListing.ownerUsername,
-                                              recipientAvatar: _currentListing.ownerAvatar,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
-                                Text(
-                                  'Looking For',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        colorScheme.secondaryContainer.withOpacity(0.5),
-                                        colorScheme.surface,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: colorScheme.secondary.withOpacity(0.2)),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Text(
-                                          _currentListing.exchangeItem!,
-                                          style: textTheme.titleMedium?.copyWith(
-                                            color: colorScheme.secondary,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
-                              ],
-                              Text(
-                                'Description',
-                                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                _currentListing.description ?? 'No description provided.',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  height: 1.6,
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Customer Reviews',
-                                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  if (_currentListing.reviews.isNotEmpty)
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.star, color: Colors.amber, size: 20),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _currentListing.averageRating.toStringAsFixed(1),
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                              if (!isOwner) ...[
-                                const SizedBox(height: 12),
-                                OutlinedButton.icon(
-                                  onPressed: () => _showAddReviewDialog(context),
-                                  icon: const Icon(Icons.rate_review_rounded),
-                                  label: const Text('Write a Review'),
-                                  style: OutlinedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 16),
-                              if (_currentListing.reviews.isEmpty)
-                                Text('No reviews yet. Be the first!', style: TextStyle(color: colorScheme.onSurfaceVariant))
-                              else
-                                ..._currentListing.reviews.map((review) => _buildReviewItem(review)),
-                            ],
+                            ),
+                            if (_currentListing.cashPrice != null && _currentListing.cashPrice! > 0)
+                              _buildPriceTag(colorScheme, textTheme),
+                          ],
+                        ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
+
+                        const SizedBox(height: 24),
+                        _buildEcoCard(),
+                        
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('Seller'),
+                        const SizedBox(height: 16),
+                        _buildSellerCard(colorScheme, textTheme),
+
+                        if (_currentListing.exchangeItem != null && _currentListing.exchangeItem!.isNotEmpty) ...[
+                          const SizedBox(height: 32),
+                          _buildSectionTitle('Wants to Trade For'),
+                          const SizedBox(height: 12),
+                          _buildExchangeCard(colorScheme, textTheme),
+                        ],
+
+                        const SizedBox(height: 32),
+                        _buildSectionTitle('Details'),
+                        const SizedBox(height: 12),
+                        Text(
+                          _currentListing.description ?? 'No description provided.',
+                          style: textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.6,
                           ),
                         ),
-                      ),
+
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildSectionTitle('Reviews'),
+                            if (_currentListing.reviews.isNotEmpty)
+                              _buildRatingChip(colorScheme),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        if (_currentListing.reviews.isEmpty)
+                          Text('No reviews yet.', style: TextStyle(color: colorScheme.onSurfaceVariant))
+                        else
+                          ..._currentListing.reviews.map((r) => _buildReviewItem(r, colorScheme, textTheme)),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
+              ),
+            ],
           ),
+          // Premium Glass Bottom Bar
           if (!isOwner)
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(AppPadding.lg, 16, AppPadding.lg, MediaQuery.of(context).padding.bottom + 16),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  border: Border(top: BorderSide(color: colorScheme.outline.withOpacity(0.1))),
-                  boxShadow: AppShadows.medium,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ModernButton(
-                        text: 'Add to Cart',
-                        type: ModernButtonType.outlined,
-                        onPressed: () => _addToCart(context),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ModernButton(
-                        text: 'Buy Now',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            PageTransition(
-                              type: PageTransitionType.bottomToTop,
-                              child: CheckoutScreen(listing: _currentListing),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: _buildBottomBar(context, colorScheme),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildReviewItem(Review review) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildAppBarAction(IconData icon, VoidCallback onTap, {bool isDestructive = false}) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: isDestructive ? Colors.redAccent : Colors.white, size: 20),
+        onPressed: () {
+          Vibrate.feedback(FeedbackType.light);
+          onTap();
+        },
+      ),
+    );
+  }
+
+  Widget _buildCategoryBadge(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
+      ),
+      child: Text(
+        _currentListing.category.toUpperCase(),
+        style: TextStyle(
+          color: colorScheme.primary,
+          fontWeight: FontWeight.w900,
+          fontSize: 10,
+          letterSpacing: 1.2,
+        ),
+      ),
+    ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.8, 0.8));
+  }
+
+  Widget _buildPriceTag(ColorScheme colorScheme, TextTheme textTheme) {
+    return Container(
+      margin: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [colorScheme.primary, colorScheme.secondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Text(
+        '\$${_currentListing.cashPrice}',
+        style: textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEcoCard() {
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.emerald.withOpacity(0.1),
+            borderRadius: AppRadius.roundedXL,
+            border: Border.all(color: Colors.emerald.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(color: Colors.emerald, shape: BoxShape.circle),
+                child: const Icon(Icons.eco_rounded, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Eco Impact', style: TextStyle(fontWeight: FontWeight.w900, color: Colors.emerald)),
+                    SizedBox(height: 2),
+                    Text(
+                      'This trade saves ~12kg of CO2 emissions.',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1);
+  }
+
+  Widget _buildSellerCard(ColorScheme colorScheme, TextTheme textTheme) {
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.4),
+            borderRadius: AppRadius.roundedXL,
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: colorScheme.primaryContainer,
+                backgroundImage: _currentListing.ownerAvatar != null ? CachedNetworkImageProvider(_currentListing.ownerAvatar!) : null,
+                child: _currentListing.ownerAvatar == null ? Text((_currentListing.ownerUsername ?? 'U')[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)) : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(_currentListing.ownerUsername ?? 'Trader', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                        const SizedBox(width: 4),
+                        Icon(Icons.verified_rounded, color: Colors.blue.shade400, size: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                        const SizedBox(width: 4),
+                        Text('${_currentListing.ownerRating} ', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                        Text('(${_currentListing.ownerReviews} reviews)', style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.primary, size: 20),
+                ),
+                onPressed: () {
+                  Vibrate.feedback(FeedbackType.light);
+                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: ChatScreen(tradeId: _currentListing.id, recipientId: _currentListing.userId, recipientName: _currentListing.ownerUsername, recipientAvatar: _currentListing.ownerAvatar)));
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1);
+  }
+
+  Widget _buildExchangeCard(ColorScheme colorScheme, TextTheme textTheme) {
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [colorScheme.secondary.withOpacity(0.1), colorScheme.surface.withOpacity(0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: AppRadius.roundedXL,
+            border: Border.all(color: colorScheme.secondary.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.swap_horiz_rounded, color: colorScheme.secondary, size: 28),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  _currentListing.exchangeItem!,
+                  style: textTheme.titleMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewItem(Review review, ColorScheme colorScheme, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: colorScheme.surface.withOpacity(0.4),
         borderRadius: AppRadius.roundedXL,
-        border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,178 +452,114 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: colorScheme.primary.withOpacity(0.1),
-                    child: Text(
-                      (review.username?[0] ?? 'U').toUpperCase(),
-                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 12),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    review.username ?? 'Anonymous',
-                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
-              Row(
-                children: List.generate(5, (index) => Icon(
-                  index < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
-                  size: 14,
-                  color: index < review.rating ? Colors.amber : colorScheme.outline,
-                )),
-              ),
+              Text(review.username ?? 'Anonymous', style: const TextStyle(fontWeight: FontWeight.w900)),
+              Row(children: List.generate(5, (i) => Icon(i < review.rating ? Icons.star_rounded : Icons.star_border_rounded, size: 14, color: i < review.rating ? Colors.amber : colorScheme.outline))),
             ],
           ),
           if (review.comment != null) ...[
             const SizedBox(height: 10),
-            Text(
-              review.comment!,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
+            Text(review.comment!, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5)),
           ],
         ],
       ),
     );
   }
 
-  Future<void> _addToCart(BuildContext context) async {
-    try {
-      await _cartService.addToCart(_currentListing.id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Added to Cart!'),
-            action: SnackBarAction(
-              label: 'View Cart',
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen())),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error adding to cart: $e')));
-      }
-    }
-  }
-
-  void _showDeleteDialog(BuildContext context, ListingService listingService) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surface,
-        title: Text('Delete Listing', style: TextStyle(color: colorScheme.onSurface)),
-        content: Text('Are you sure you want to delete this listing? This action cannot be undone.', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: colorScheme.primary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await listingService.deleteListing(_currentListing.id);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  Navigator.pop(context, true);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error deleting listing: $e')),
-                  );
-                }
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
-            child: const Text('Delete'),
-          ),
+  Widget _buildRatingChip(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+      child: Row(
+        children: [
+          const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+          const SizedBox(width: 4),
+          Text(_currentListing.averageRating.toStringAsFixed(1), style: const TextStyle(fontWeight: FontWeight.w900)),
         ],
       ),
     );
   }
 
-  void _showAddReviewDialog(BuildContext context) {
-    int rating = 5;
-    final commentController = TextEditingController();
+  Widget _buildSectionTitle(String title) {
+    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5));
+  }
+
+  Widget _buildBottomBar(BuildContext context, ColorScheme colorScheme) {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).padding.bottom + 20),
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.7),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: ModernButton(
+                  text: 'Add to Cart',
+                  type: ModernButtonType.outlined,
+                  onPressed: () => _addToCart(context),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: ModernButton(
+                  text: 'Buy Now',
+                  onPressed: () {
+                    Vibrate.feedback(FeedbackType.heavy);
+                    Navigator.push(context, PageTransition(type: PageTransitionType.bottomToTop, child: CheckoutScreen(listing: _currentListing)));
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addToCart(BuildContext context) async {
+    try {
+      Vibrate.feedback(FeedbackType.medium);
+      await _cartService.addToCart(_currentListing.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Added to Cart!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
+            action: SnackBarAction(label: 'View', textColor: Colors.white, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CartScreen()))),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Write a Review', style: TextStyle(fontWeight: FontWeight.bold)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          index < rating ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: Colors.amber,
-                          size: 32,
-                        ),
-                        onPressed: () => setState(() => rating = index + 1),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: commentController,
-                    decoration: InputDecoration(
-                      labelText: 'Comment (Optional)',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    maxLines: 3,
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      await _listingService.addReview(
-                        listingId: _currentListing.id,
-                        rating: rating,
-                        comment: commentController.text,
-                      );
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        _refreshListing();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Review submitted successfully!')),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(e.toString())),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Submit', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          }
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Delete?'),
+        content: const Text('Once deleted, this treasure is gone forever.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Keep')),
+          TextButton(
+            onPressed: () async {
+              await _listingService.deleteListing(_currentListing.id);
+              if (context.mounted) {
+                Navigator.pop(context);
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
     );
   }
 }

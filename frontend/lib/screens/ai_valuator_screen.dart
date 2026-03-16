@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:http/http.dart' as http;
 import '../constants/theme.dart';
+import '../widgets/holographic_background.dart';
 import '../services/environment_config.dart';
 
 class AiValuatorScreen extends StatefulWidget {
@@ -22,6 +24,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
 
   Future<void> _evaluateItem() async {
     if (_itemController.text.trim().isEmpty) return;
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _isScanning = true;
@@ -31,231 +34,244 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
 
     try {
       final apiUrl = EnvironmentConfig.apiUrl;
-      // In a real app, handle URI encoding properly. 
       final uri = Uri.parse('$apiUrl/api/v1/ai/evaluate?item_name=${Uri.encodeComponent(_itemController.text)}&description=${Uri.encodeComponent(_descController.text)}');
       
       final response = await http.post(uri);
 
       if (response.statusCode == 200) {
-        setState(() {
-          _result = json.decode(response.body);
-        });
+        setState(() => _result = json.decode(response.body));
       } else {
-        setState(() {
-          _error = "AI got confused. Try again.";
-        });
+        setState(() => _error = "AI got confused. Try again.");
       }
     } catch (e) {
-      setState(() {
-        _error = "Connection error. Is the AI server running?";
-      });
+      setState(() => _error = "Connection error. Is the AI server running?");
     } finally {
-      setState(() {
-        _isScanning = false;
-      });
+      setState(() => _isScanning = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('AI Valuator'),
+        elevation: 0,
+        title: Text('AI VALUATOR', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 2)),
         centerTitle: true,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0xFF0F172A), const Color(0xFF1E1B4B)]
-                : [const Color(0xFFEEF2FF), const Color(0xFFE0E7FF)],
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.pop(context),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  "Discover the hidden value of your items.",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isDark ? Colors.white70 : AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0),
-                const SizedBox(height: AppSpacing.xl),
-
-                // Input Card (Glassmorphism effect)
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor.withOpacity(isDark ? 0.3 : 0.7),
-                    borderRadius: AppRadius.roundedXL,
-                    border: Border.all(
-                      color: isDark ? Colors.white12 : Colors.black12,
-                      width: 1,
+      ),
+      body: Stack(
+        children: [
+          const HolographicBackground(),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 12),
+                  Text(
+                    "Discover the hidden value of your items.",
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark ? Colors.indigo.withOpacity(0.1) : Colors.indigo.withOpacity(0.05),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _itemController,
-                        decoration: InputDecoration(
-                          hintText: 'What is it? (e.g. vintage camera)',
-                          prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      TextField(
-                        controller: _descController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: 'Condition? Brand? Add details...',
-                          prefixIcon: Icon(Icons.description, color: Theme.of(context).colorScheme.primary),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xl),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isScanning ? null : _evaluateItem,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG)
-                          ),
-                          child: _isScanning
-                              ? const SizedBox(
-                                  height: 24, width: 24, 
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                                )
-                              : const Text('Scan & Evaluate', style: TextStyle(fontSize: 16)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
+                    textAlign: TextAlign.center,
+                  ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0),
+                  const SizedBox(height: 40),
 
-                const SizedBox(height: AppSpacing.xxl),
+                  // Input Card
+                  _buildInputCard(colorScheme),
+                  
+                  const SizedBox(height: 40),
 
-                // Results Area
-                Expanded(
-                  child: Center(
-                    child: _buildResultsArea(isDark),
-                  ),
-                ),
-              ],
+                  // Results Area
+                  _buildResultsArea(colorScheme, textTheme),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildResultsArea(bool isDark) {
+  Widget _buildInputCard(ColorScheme colorScheme) {
+    return ClipRRect(
+      borderRadius: AppRadius.roundedXXL,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: colorScheme.surface.withOpacity(0.4),
+            borderRadius: AppRadius.roundedXXL,
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withOpacity(0.1),
+                blurRadius: 30,
+              )
+            ],
+          ),
+          child: Column(
+            children: [
+              TextField(
+                controller: _itemController,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  hintText: 'What is it? (e.g. vintage camera)',
+                  prefixIcon: Icon(Icons.search, color: colorScheme.primary),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _descController,
+                maxLines: 2,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Condition? Brand? Add details...',
+                  prefixIcon: Icon(Icons.description, color: colorScheme.primary),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isScanning ? null : _evaluateItem,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedLG),
+                    elevation: 10,
+                    shadowColor: colorScheme.primary.withOpacity(0.3),
+                  ),
+                  child: _isScanning
+                      ? const SizedBox(
+                          height: 24, width: 24, 
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                        )
+                      : const Text('SCAN & VALUATE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.95, 0.95)),
+    );
+  }
+
+  Widget _buildResultsArea(ColorScheme colorScheme, TextTheme textTheme) {
     if (_isScanning) {
       return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.document_scanner, size: 80, color: Theme.of(context).colorScheme.primary)
-              .animate(onPlay: (controller) => controller.repeat())
-              .shimmer(duration: 1500.ms, color: Colors.white54)
-              .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 800.ms, curve: Curves.easeInOut)
-              .then().scale(begin: const Offset(1.1, 1.1), end: const Offset(0.9, 0.9), duration: 800.ms, curve: Curves.easeInOut),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            "Analyzing market trends...",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.all(40),
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
+            child: Icon(Icons.document_scanner, size: 80, color: colorScheme.primary)
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(duration: 1500.ms, color: Colors.white54)
+                .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 800.ms, curve: Curves.easeInOut)
+                .then().scale(begin: const Offset(1.1, 1.1), end: const Offset(0.9, 0.9), duration: 800.ms, curve: Curves.easeInOut),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            "Synthesizing market data...",
+            style: textTheme.titleMedium?.copyWith(color: colorScheme.primary, fontWeight: FontWeight.w900),
           ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 2.seconds),
         ],
       );
     }
 
     if (_error != null) {
-      return Text(
-        _error!,
-        style: TextStyle(color: Theme.of(context).colorScheme.error),
-      ).animate().shake();
+      return Center(
+        child: Text(_error!, style: TextStyle(color: colorScheme.error, fontWeight: FontWeight.w700)).animate().shake(),
+      );
     }
 
     if (_result != null) {
-      return Container(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
-          borderRadius: AppRadius.roundedXL,
-          border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5), width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-              blurRadius: 40,
-              spreadRadius: 10,
-            )
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Estimated Value",
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.monetization_on, color: Theme.of(context).colorScheme.secondary, size: 40),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  "${_result!['estimated_value']}",
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontSize: 48,
-                  ),
-                ),
+      return ClipRRect(
+        borderRadius: AppRadius.roundedXXL,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withOpacity(0.6),
+              borderRadius: AppRadius.roundedXXL,
+              border: Border.all(color: colorScheme.secondary.withOpacity(0.4), width: 2),
+              boxShadow: [
+                BoxShadow(color: colorScheme.secondary.withOpacity(0.2), blurRadius: 40, spreadRadius: 10)
               ],
-            ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
-            const SizedBox(height: AppSpacing.lg),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: AppRadius.roundedMD,
-              ),
-              child: Text(
-                '"${_result!['ai_comment']}"',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontStyle: FontStyle.italic,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ).animate().fadeIn(delay: 600.ms),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              "Confidence: ${(_result!['confidence_score'] * 100).toStringAsFixed(1)}%",
-              style: Theme.of(context).textTheme.labelMedium,
-            ).animate().fadeIn(delay: 800.ms),
-          ],
+            ),
+            child: Column(
+              children: [
+                const Text("ESTIMATED VALUE", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("\$", style: textTheme.displayMedium?.copyWith(color: colorScheme.secondary, fontWeight: FontWeight.w300)),
+                    Text(
+                      "${_result!['estimated_value']}",
+                      style: textTheme.displayLarge?.copyWith(
+                        color: colorScheme.secondary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 64,
+                      ),
+                    ),
+                  ],
+                ).animate().scale(delay: 200.ms, duration: 400.ms, curve: Curves.easeOutBack),
+                const SizedBox(height: 32),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondary.withOpacity(0.05),
+                    borderRadius: AppRadius.roundedXL,
+                    border: Border.all(color: colorScheme.secondary.withOpacity(0.1)),
+                  ),
+                  child: Text(
+                    '"${_result!['ai_comment']}"',
+                    style: textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic, height: 1.5, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
+                  ),
+                ).animate().fadeIn(delay: 600.ms),
+                const SizedBox(height: 24),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: LinearProgressIndicator(
+                    value: _result!['confidence_score'],
+                    minHeight: 12,
+                    backgroundColor: Colors.white10,
+                    color: colorScheme.secondary,
+                  ),
+                ).animate().fadeIn(delay: 800.ms),
+                const SizedBox(height: 8),
+                Text(
+                  "Match Reliability: ${(_result!['confidence_score'] * 100).toStringAsFixed(0)}%",
+                  style: textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.secondary.withOpacity(0.8)),
+                ).animate().fadeIn(delay: 800.ms),
+              ],
+            ),
+          ),
         ),
-      ).animate().scale(curve: Curves.easeOutCirc, duration: 500.ms).fadeIn();
+      ).animate().scale(curve: Curves.easeOutCirc, duration: 600.ms).fadeIn();
     }
 
     return const SizedBox.shrink();
