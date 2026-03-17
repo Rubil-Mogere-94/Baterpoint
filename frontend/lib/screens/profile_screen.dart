@@ -119,6 +119,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Impact Dashboard Card (Glassy)
+                    _buildSocialStats(context),
+                    const SizedBox(height: 24),
+
                     _buildImpactCard(context),
                     const SizedBox(height: 24),
 
@@ -168,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    _buildMyListings(context),
+                    _buildMyListingsGrid(context),
                     
                     const SizedBox(height: 48),
                     SizedBox(
@@ -301,82 +304,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMyListings(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildMyListingsGrid(BuildContext context) {
     return FutureBuilder<List<Listing>>(
       future: _myListingsFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: AppRadius.roundedXXL,
-              border: Border.all(color: colorScheme.outline.withOpacity(0.08)),
-            ),
-            child: Center(
-              child: Column(
-                children: [
-                  Icon(Icons.inventory_2_outlined, size: 32, color: colorScheme.onSurfaceVariant.withOpacity(0.4)),
-                  const SizedBox(height: 8),
-                  Text('No active listings', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-          );
+          return const SizedBox.shrink();
         }
+        final listings = snapshot.data!;
         
-        return SizedBox(
-          height: 130,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final listing = snapshot.data![index];
-              return GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
-                ),
-                child: Container(
-                  width: 110,
-                  margin: const EdgeInsets.only(right: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: AppRadius.roundedXL,
-                    color: colorScheme.surfaceContainerHighest,
-                    image: listing.imageUrl != null
-                        ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover)
-                        : null,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: AppRadius.roundedXL,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-                        stops: const [0.5, 1.0],
-                      ),
-                    ),
-                    alignment: Alignment.bottomLeft,
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      listing.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              );
-            },
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
+            childAspectRatio: 1,
           ),
+          itemCount: listings.length,
+          itemBuilder: (context, index) {
+            final listing = listings[index];
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  image: listing.imageUrl != null
+                      ? DecorationImage(image: CachedNetworkImageProvider(listing.imageUrl!), fit: BoxFit.cover)
+                      : null,
+                  color: Colors.grey[900],
+                ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  Widget _buildSocialStats(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildStatItem('Posts', '12'),
+        _buildStatItem('Followers', '1.2k'),
+        _buildStatItem('Following', '482'),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String label, String count) {
+    return Column(
+      children: [
+        Text(count, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildMyListings(BuildContext context) {
+    // Keeping for reference or removing if purely grid
+    return const SizedBox.shrink();
   }
 }

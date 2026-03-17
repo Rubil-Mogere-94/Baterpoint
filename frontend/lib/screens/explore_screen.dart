@@ -8,6 +8,7 @@ import '../models/listing.dart';
 import '../services/listing_service.dart';
 import '../screens/listing_detail_screen.dart';
 import '../constants/ui_constants.dart';
+import '../widgets/heart_animation.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -253,10 +254,26 @@ class _SearchFilterSheet extends StatelessWidget {
   }
 }
 
-class _ExploreItemPage extends StatelessWidget {
+class _ExploreItemPage extends StatefulWidget {
   final Listing listing;
 
   const _ExploreItemPage({required this.listing});
+
+  @override
+  State<_ExploreItemPage> createState() => _ExploreItemPageState();
+}
+
+class _ExploreItemPageState extends State<_ExploreItemPage> {
+  bool _showHeart = false;
+  bool _isLiked = false;
+
+  void _handleDoubleTap() {
+    Vibrate.feedback(FeedbackType.heavy);
+    setState(() {
+      _showHeart = true;
+      _isLiked = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -265,19 +282,20 @@ class _ExploreItemPage extends StatelessWidget {
       children: [
         // Full Screen Image
         GestureDetector(
+          onDoubleTap: _handleDoubleTap,
           onTap: () {
             Vibrate.feedback(FeedbackType.light);
             Navigator.push(
               context,
               PageTransition(
                 type: PageTransitionType.fade,
-                child: ListingDetailScreen(listing: listing),
+                child: ListingDetailScreen(listing: widget.listing),
               ),
             );
           },
-          child: listing.imageUrl != null
+          child: widget.listing.imageUrl != null
               ? CachedNetworkImage(
-                  imageUrl: listing.imageUrl!,
+                  imageUrl: widget.listing.imageUrl!,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(color: Colors.grey[900]),
                   errorWidget: (context, url, error) => Container(
@@ -289,6 +307,12 @@ class _ExploreItemPage extends StatelessWidget {
                   color: Colors.grey[900],
                   child: const Icon(Icons.image_not_supported_rounded, color: Colors.white54, size: 48),
                 ),
+        ),
+
+        // Heart Animation Overlay
+        HeartAnimation(
+          isVisible: _showHeart,
+          onCompleted: () => setState(() => _showHeart = false),
         ),
 
         // Multi-stop Gradient Overlay
@@ -345,17 +369,17 @@ class _ExploreItemPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundImage: listing.ownerAvatar != null
-                        ? CachedNetworkImageProvider(listing.ownerAvatar!)
+                    backgroundImage: widget.listing.ownerAvatar != null
+                        ? CachedNetworkImageProvider(widget.listing.ownerAvatar!)
                         : null,
                     backgroundColor: Colors.white24,
-                    child: listing.ownerAvatar == null
+                    child: widget.listing.ownerAvatar == null
                         ? const Icon(Icons.person_rounded, size: 14, color: Colors.white)
                         : null,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    listing.ownerUsername ?? 'Unknown Trader',
+                    widget.listing.ownerUsername ?? 'Unknown Trader',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -366,7 +390,7 @@ class _ExploreItemPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                listing.title,
+                widget.listing.title,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 26,
@@ -376,9 +400,9 @@ class _ExploreItemPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              if (listing.cashPrice != null)
+              if (widget.listing.cashPrice != null)
                 Text(
-                  '\$${listing.cashPrice}',
+                  '\$${widget.listing.cashPrice}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -396,7 +420,12 @@ class _ExploreItemPage extends StatelessWidget {
           right: 12,
           child: Column(
             children: [
-              _SideActionButton(icon: Icons.favorite_border_rounded, label: 'Save', onTap: () {}),
+              _SideActionButton(
+                icon: _isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                iconColor: _isLiked ? Colors.red : Colors.white,
+                label: 'Save',
+                onTap: () => setState(() => _isLiked = !_isLiked),
+              ),
               const SizedBox(height: 20),
               _SideActionButton(icon: Icons.chat_bubble_outline_rounded, label: 'Chat', onTap: () {}),
               const SizedBox(height: 20),
@@ -409,7 +438,7 @@ class _ExploreItemPage extends StatelessWidget {
                     context,
                     PageTransition(
                       type: PageTransitionType.fade,
-                      child: ListingDetailScreen(listing: listing),
+                      child: ListingDetailScreen(listing: widget.listing),
                     ),
                   );
                 },
@@ -461,10 +490,16 @@ class _ExploreItemPage extends StatelessWidget {
 
 class _SideActionButton extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String label;
   final VoidCallback onTap;
 
-  const _SideActionButton({required this.icon, required this.label, required this.onTap});
+  const _SideActionButton({
+    required this.icon,
+    this.iconColor = Colors.white,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +521,7 @@ class _SideActionButton extends StatelessWidget {
                   color: Colors.white.withOpacity(0.15),
                   border: Border.all(color: Colors.white.withOpacity(0.25)),
                 ),
-                child: Icon(icon, color: Colors.white, size: 26),
+                child: Icon(icon, color: iconColor, size: 26),
               ),
             ),
           ),
