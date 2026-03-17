@@ -25,6 +25,7 @@ import 'package:provider/provider.dart';
 import '../models/story.dart';
 import '../widgets/story_circle.dart';
 import '../widgets/heart_animation.dart';
+import 'story_view_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -453,46 +454,93 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeedItem(Listing listing) {
-    final index = 0; // Index for heart animation tracking if needed, simplified for now
-    return GestureDetector(
-      onDoubleTap: () {
-        Vibrate.feedback(FeedbackType.heavy);
-        setState(() {
-          _showHeart = true;
-          // In a real app we'd track per-item, for this demo we'll show on the active one
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(borderRadius: AppRadius.roundedXXL, boxShadow: AppShadows.soft),
-        child: ClipRRect(
-          borderRadius: AppRadius.roundedXXL,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              listing.imageUrl != null ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) : Container(color: Colors.grey),
-              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
-              
-              HeartAnimation(
-                isVisible: _showHeart,
-                onCompleted: () => setState(() => _showHeart = false),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(listing.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 8),
-                    ModernButton(text: 'View Detail', type: ModernButtonType.secondary, isFullWidth: false, height: 40, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
-                  ],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
+        borderRadius: AppRadius.roundedXXL,
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
+                  child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 16) : null,
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Text(listing.ownerUsername ?? 'Trader', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const Spacer(),
+                const Icon(Icons.more_horiz, color: Colors.grey, size: 20),
+              ],
+            ),
           ),
-        ),
+          
+          // Image Area
+          GestureDetector(
+            onDoubleTap: () {
+              Vibrate.feedback(FeedbackType.heavy);
+              setState(() => _showHeart = true);
+            },
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  listing.imageUrl != null 
+                    ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) 
+                    : Container(color: Colors.grey[900]),
+                  
+                  HeartAnimation(
+                    isVisible: _showHeart,
+                    onCompleted: () => setState(() => _showHeart = false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Action Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              children: [
+                IconButton(icon: const Icon(Icons.favorite_border_rounded, size: 26), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.send_rounded, size: 24), onPressed: () {}),
+                const Spacer(),
+                IconButton(icon: const Icon(Icons.bookmark_border_rounded, size: 26), onPressed: () {}),
+              ],
+            ),
+          ),
+
+          // Info
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodySmall,
+                    children: [
+                      TextSpan(text: listing.ownerUsername ?? 'Trader', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      const TextSpan(text: ' '),
+                      TextSpan(text: listing.title, style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(listing.category, style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -526,7 +574,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: StoryCircle(
               story: stories[index],
               onTap: () {
-                // TODO: Implement story viewing
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StoryViewScreen(stories: stories, initialIndex: index),
+                  ),
+                );
               },
             ),
           );
