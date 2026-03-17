@@ -52,32 +52,36 @@ class _ExploreScreenState extends State<ExploreScreen> {
             Navigator.maybePop(context);
           },
         ),
-        title: const Text(
-          'Discover',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
+        title: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: const TextField(
+                style: TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search items, traders...',
+                  hintStyle: TextStyle(color: Colors.white60, fontSize: 14),
+                  prefixIcon: Icon(Icons.search_rounded, color: Colors.white70, size: 20),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
           ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.15),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.tune_rounded, color: Colors.white),
-                    onPressed: () => _showFilterSheet(context),
-                  ),
-                ),
-              ),
+            child: IconButton(
+              icon: const Icon(Icons.tune_rounded, color: Colors.white),
+              onPressed: () => _showFilterSheet(context),
             ),
           ),
         ],
@@ -118,7 +122,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           
           // Category Slider
           Positioned(
-            top: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 5,
             left: 0,
             right: 0,
             child: SizedBox(
