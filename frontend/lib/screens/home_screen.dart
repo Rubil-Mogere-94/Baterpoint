@@ -22,6 +22,8 @@ import 'notifications_screen.dart';
 import 'explore_screen.dart';
 import 'ai_valuator_screen.dart';
 import 'package:provider/provider.dart';
+import '../models/story.dart';
+import '../widgets/story_circle.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -112,6 +114,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 // Search Bar Placeholder
                 _buildSearchBar(colorScheme, textTheme),
+
+                // Stories Bar
+                SliverToBoxAdapter(
+                  child: _buildStoryBar(),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // Featured Carousel
                 SliverToBoxAdapter(
@@ -480,6 +489,29 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(subtitle, style: textTheme.bodySmall?.copyWith(color: Colors.grey)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStoryBar() {
+    final stories = Story.getMockStories();
+    return SizedBox(
+      height: 110,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: stories.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: StoryCircle(
+              story: stories[index],
+              onTap: () {
+                // TODO: Implement story viewing
+              },
+            ),
+          );
+        },
       ),
     );
   }
