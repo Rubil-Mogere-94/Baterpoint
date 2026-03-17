@@ -24,6 +24,7 @@ import 'ai_valuator_screen.dart';
 import 'package:provider/provider.dart';
 import '../models/story.dart';
 import '../widgets/story_circle.dart';
+import '../widgets/heart_animation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,6 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<Deal> _dealFuture;
   Timer? _dealTimer;
   Duration _dealRemaining = Duration.zero;
+  bool _showHeart = false;
+  int _activeHeartIndex = -1;
 
   @override
   void initState() {
@@ -450,29 +453,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeedItem(Listing listing) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(borderRadius: AppRadius.roundedXXL, boxShadow: AppShadows.soft),
-      child: ClipRRect(
-        borderRadius: AppRadius.roundedXXL,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            listing.imageUrl != null ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) : Container(color: Colors.grey),
-            Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(listing.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 8),
-                  ModernButton(text: 'View Detail', type: ModernButtonType.secondary, isFullWidth: false, height: 40, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
-                ],
+    final index = 0; // Index for heart animation tracking if needed, simplified for now
+    return GestureDetector(
+      onDoubleTap: () {
+        Vibrate.feedback(FeedbackType.heavy);
+        setState(() {
+          _showHeart = true;
+          // In a real app we'd track per-item, for this demo we'll show on the active one
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(borderRadius: AppRadius.roundedXXL, boxShadow: AppShadows.soft),
+        child: ClipRRect(
+          borderRadius: AppRadius.roundedXXL,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              listing.imageUrl != null ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) : Container(color: Colors.grey),
+              Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.7)]))),
+              
+              HeartAnimation(
+                isVisible: _showHeart,
+                onCompleted: () => setState(() => _showHeart = false),
               ),
-            ),
-          ],
+
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(listing.title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 8),
+                    ModernButton(text: 'View Detail', type: ModernButtonType.secondary, isFullWidth: false, height: 40, onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ListingDetailScreen(listing: listing)))),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
