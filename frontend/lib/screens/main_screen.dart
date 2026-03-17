@@ -10,6 +10,7 @@ import 'inbox_screen.dart';
 import 'forum_screen.dart';
 import 'offers_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/create_listing_modal.dart';
 
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 
@@ -175,14 +176,7 @@ class _MainScreenState extends State<MainScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        height: 300,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: const Center(child: Text('Create Listing Modal Coming Soon')),
-      ),
+      builder: (context) => const CreateListingModal(),
     );
   }
 }

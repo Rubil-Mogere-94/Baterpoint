@@ -21,6 +21,8 @@ import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'explore_screen.dart';
 import 'ai_valuator_screen.dart';
+import 'inbox_screen.dart';
+import 'forum_screen.dart';
 import 'package:provider/provider.dart';
 import '../models/story.dart';
 import '../widgets/story_circle.dart';
@@ -197,7 +199,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 28),
+          icon: Icon(Icons.forum_outlined, color: colorScheme.onSurface, size: 24),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ForumScreen())),
+        ),
+        IconButton(
+          icon: Icon(Icons.chat_bubble_outline_rounded, color: colorScheme.onSurface, size: 24),
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const InboxScreen())),
+        ),
+        IconButton(
+          icon: Icon(Icons.notifications_none_rounded, color: colorScheme.onSurface, size: 26),
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
         ),
         const SizedBox(width: 8),
