@@ -289,6 +289,25 @@ class _NotificationTile extends StatelessWidget {
                           height: 1.4,
                         ),
                       ),
+                      if (notification.title.contains('Offer') || notification.title.contains('Match'))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: SizedBox(
+                            height: 32,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accentColor.withOpacity(0.1),
+                                foregroundColor: accentColor,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                              child: const Text('View'),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
