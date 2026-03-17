@@ -357,7 +357,7 @@ class _ExploreItemPageState extends State<_ExploreItemPage> {
                       border: Border.all(color: Colors.white.withOpacity(0.2)),
                     ),
                     child: Text(
-                      listing.category.toUpperCase(),
+                      widget.listing.category.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,

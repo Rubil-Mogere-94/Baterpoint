@@ -399,10 +399,28 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
-                      ),
                   const SizedBox(width: 8),
                   IconButton(icon: const Icon(Icons.mic_none_rounded, color: Color(0xFF94A3B8), size: 26), onPressed: () {}),
                   IconButton(icon: const Icon(Icons.image_outlined, color: Color(0xFF94A3B8), size: 26), onPressed: _isSendingImage ? null : _pickImage),
+                  _isSendingImage 
+                    ? const Padding(padding: EdgeInsets.only(bottom: 8), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)))
+                    : Container(
+                        margin: const EdgeInsets.only(bottom: 4, left: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          onPressed: () {
+                            if (_messageController.text.trim().isNotEmpty) {
+                              _sendMessage(_messageController.text.trim());
+                              _messageController.clear();
+                              if (!_isForum) _chatService.sendTypingStatus(false);
+                            }
+                          },
+                        ),
+                      ),
                 ],
               ),
             ),

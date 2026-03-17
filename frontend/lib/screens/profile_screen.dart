@@ -127,8 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen())),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
-                          foregroundColor: isDark ? Colors.white : Colors.black,
+                          backgroundColor: (Theme.of(context).brightness == Brightness.dark) ? Colors.white12 : Colors.black.withOpacity(0.05),
+                          foregroundColor: (Theme.of(context).brightness == Brightness.dark) ? Colors.white : Colors.black,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(vertical: 8),

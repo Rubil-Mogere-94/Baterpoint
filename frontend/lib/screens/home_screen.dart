@@ -26,6 +26,7 @@ import '../models/story.dart';
 import '../widgets/story_circle.dart';
 import '../widgets/heart_animation.dart';
 import 'story_view_screen.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
