@@ -171,10 +171,14 @@ class _InboxScreenState extends State<InboxScreen> {
                       ),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _inboxItems.length,
-                    itemBuilder: (context, index) {
+                : Column(
+                    children: [
+                      _buildActiveNow(colorScheme, textTheme),
+                      Expanded(
+                        child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 0),
+                            itemCount: _inboxItems.length,
+                            itemBuilder: (context, index) {
                       final item = _inboxItems[index];
                       final isUnread = item['unread_count'] > 0;
                       final avatarUrl = item['other_user_avatar'];
@@ -307,6 +311,9 @@ class _InboxScreenState extends State<InboxScreen> {
                     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
                   },
                   ),
+              ),
+            ],
+          ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _startNewChat,
