@@ -322,6 +322,76 @@ class _InboxScreenState extends State<InboxScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.add_comment_rounded, color: Colors.white),
       ),
-    ));
+    );
+  }
+
+  Widget _buildActiveNow(ColorScheme colorScheme, TextTheme textTheme) {
+    return Container(
+      height: 110,
+      padding: const EdgeInsets.symmetric(vertical: 0),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        itemCount: _inboxItems.isEmpty ? 5 : _inboxItems.length + 2,
+        itemBuilder: (context, index) {
+          final isActual = index < _inboxItems.length;
+          final name = isActual ? _inboxItems[index]['other_user_username'] : 'User $index';
+          final avatarUrl = isActual ? _inboxItems[index]['other_user_avatar'] : null;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: Column(
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: colorScheme.primary.withOpacity(0.1),
+                        backgroundImage: avatarUrl != null ? CachedNetworkImageProvider(avatarUrl) : null,
+                        child: avatarUrl == null ? Text(name[0].toUpperCase()) : null,
+                      ),
+                    ),
+                    Positioned(
+                      right: 2,
+                      bottom: 2,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withOpacity(0.3),
+                              blurRadius: 4,
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  name.split(' ')[0],
+                  style: textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 }

@@ -26,10 +26,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const SmartMatchScreen(),
+    const Center(child: Text('Create Placeholder')), // Center item logic will handle this
     const ExploreScreen(),
-    const InboxScreen(),
-    const ForumScreen(),
-    const OffersScreen(),
     const ProfileScreen(),
   ];
 
@@ -67,11 +65,9 @@ class _MainScreenState extends State<MainScreen> {
                     children: [
                       _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
                       _buildNavItem(1, Icons.auto_awesome_rounded, Icons.auto_awesome_outlined, 'Matches'),
-                      _buildNavItem(2, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
-                      _buildNavItem(3, Icons.chat_bubble_rounded, Icons.chat_bubble_outline_rounded, 'Inbox'),
-                      _buildNavItem(4, Icons.forum_rounded, Icons.forum_outlined, 'Forum'),
-                      _buildNavItem(5, Icons.local_offer_rounded, Icons.local_offer_outlined, 'Offers'),
-                      _buildNavItem(6, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                      _buildCreateButton(colorScheme),
+                      _buildNavItem(3, Icons.explore_rounded, Icons.explore_outlined, 'Explore'),
+                      _buildNavItem(4, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
                     ],
                   ),
                 ),
@@ -141,6 +137,51 @@ class _MainScreenState extends State<MainScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCreateButton(ColorScheme colorScheme) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          Vibrate.feedback(FeedbackType.medium);
+          _showCreateModal(context);
+        },
+        child: Container(
+          height: 48,
+          width: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [colorScheme.primary, colorScheme.secondary],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              )
+            ],
+          ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: 300,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        child: const Center(child: Text('Create Listing Modal Coming Soon')),
       ),
     );
   }
