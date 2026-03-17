@@ -80,139 +80,83 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final now = DateTime.now();
+    final today = _notifications.where((n) => n.timestamp.isAfter(now.subtract(const Duration(days: 1)))).toList();
+    final earlier = _notifications.where((n) => n.timestamp.isBefore(now.subtract(const Duration(days: 1)))).toList();
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w900)),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.md),
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  _notifications = _notifications
-                      .map((n) => NotificationModel(
-                            id: n.id,
-                            title: n.title,
-                            body: n.body,
-                            timestamp: n.timestamp,
-                            isRead: true,
-                            icon: n.icon,
-                            accentColor: n.accentColor,
-                          ))
-                      .toList();
-                });
-              },
-              child: const Text(
-                'Clear all',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
-            ),
+        title: const Text('Activity', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
+        centerTitle: false,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
           ),
-        ],
+        ),
       ),
       body: HolographicBackground(
         child: _notifications.isEmpty
-            ? Center(
-                child: ClipRRect(
-                  borderRadius: AppRadius.roundedXXL,
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
-                      margin: const EdgeInsets.all(AppSpacing.xl),
-                      decoration: BoxDecoration(
-                        color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
-                        borderRadius: AppRadius.roundedXXL,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.notifications_none_rounded,
-                            size: 72,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          Text(
-                            'All caught up!',
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'No new notifications right now.',
-                            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              )
+            ? _buildEmptyState(theme, isDark)
             : CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  const SliverToBoxAdapter(child: SizedBox(height: 110)),
-
-                  // Unread count badge
-                  if (_notifications.any((n) => !n.isRead))
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.xs,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.md, vertical: AppSpacing.xs),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4F46E5).withOpacity(0.15),
-                                borderRadius: AppRadius.roundedPill,
-                                border: Border.all(
-                                  color: const Color(0xFF4F46E5).withOpacity(0.3),
-                                ),
-                              ),
-                              child: Text(
-                                '${_notifications.where((n) => !n.isRead).length} New',
-                                style: const TextStyle(
-                                  color: Color(0xFF4F46E5),
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
-
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final notification = _notifications[index];
-                        return _NotificationTile(
-                          notification: notification,
-                          isDark: isDark,
-                          index: index,
-                        );
-                      },
-                      childCount: _notifications.length,
-                    ),
-                  ),
-
+                  const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                  if (today.isNotEmpty) ...[
+                    _buildSectionHeader('Today'),
+                    _buildNotificationList(today, isDark),
+                  ],
+                  if (earlier.isNotEmpty) ...[
+                    _buildSectionHeader('Earlier'),
+                    _buildNotificationList(earlier, isDark),
+                  ],
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        child: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationList(List<NotificationModel> list, bool isDark) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final notification = list[index];
+          return _NotificationTile(
+            notification: notification,
+            isDark: isDark,
+            index: index,
+          );
+        },
+        childCount: list.length,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme, bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.notifications_none_rounded, size: 72, color: Colors.grey.shade400),
+          const SizedBox(height: AppSpacing.md),
+          Text('Activity Feed is empty', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        ],
       ),
     );
   }
