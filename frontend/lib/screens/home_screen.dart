@@ -453,6 +453,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showActionHint(String action) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$action functionality coming soon!'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor: Colors.white12,
+      ),
+    );
+  }
+
   Widget _buildFeedItem(Listing listing) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -510,11 +522,11 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Row(
               children: [
-                IconButton(icon: const Icon(Icons.favorite_border_rounded, size: 26), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.send_rounded, size: 24), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.favorite_border_rounded, size: 26), onPressed: () => _showActionHint('Like')),
+                IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24), onPressed: () => _showActionHint('Comment')),
+                IconButton(icon: const Icon(Icons.send_rounded, size: 24), onPressed: () => _showActionHint('Share')),
                 const Spacer(),
-                IconButton(icon: const Icon(Icons.bookmark_border_rounded, size: 26), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.bookmark_border_rounded, size: 26), onPressed: () => _showActionHint('Save')),
               ],
             ),
           ),

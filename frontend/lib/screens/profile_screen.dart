@@ -120,6 +120,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     // Impact Dashboard Card (Glassy)
                     _buildSocialStats(context),
+                    const SizedBox(height: 16),
+                    // Instagram-style Edit Profile Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen())),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
+                          foregroundColor: isDark ? Colors.white : Colors.black,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        child: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
                     const SizedBox(height: 24),
 
                     _buildImpactCard(context),
@@ -152,24 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
 
                     const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('My Active Trades', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
-                        OutlinedButton.icon(
-                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfileScreen())),
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: const Text('Edit Profile'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            side: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
-                            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedMD),
-                          ),
-                        ),
-                      ],
-                    ),
+                    Text('My Active Trades', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 12),
                     _buildMyListingsGrid(context),
                     
