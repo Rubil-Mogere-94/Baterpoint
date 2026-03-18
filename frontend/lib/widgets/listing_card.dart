@@ -279,10 +279,10 @@ class ListingCard extends StatelessWidget {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
-    ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
   }
 }
