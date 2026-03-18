@@ -477,15 +477,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFeedItem(Listing listing) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withOpacity(0.4),
+        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.7),
         borderRadius: AppRadius.roundedXXL,
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.05),
+          width: 1,
+        ),
+        boxShadow: isDark ? [] : [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
       ),
-      child: Column(
-        children: [
+      child: ClipRRect(
+        borderRadius: AppRadius.roundedXXL,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Column(
+            children: [
           // Header
           Padding(
             padding: const EdgeInsets.all(12),
@@ -544,22 +555,52 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Info
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                RichText(
-                  text: TextSpan(
-                    style: Theme.of(context).textTheme.bodySmall,
-                    children: [
-                      TextSpan(text: listing.ownerUsername ?? 'Trader', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                      const TextSpan(text: ' '),
-                      TextSpan(text: listing.title, style: const TextStyle(color: Colors.white70)),
-                    ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          children: [
+                            TextSpan(
+                              text: listing.ownerUsername ?? 'Trader',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                            ),
+                            const TextSpan(text: '  '),
+                            TextSpan(
+                              text: listing.title,
+                              style: TextStyle(
+                                color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                    borderRadius: AppRadius.roundedSM,
+                  ),
+                  child: Text(
+                    listing.category.toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(listing.category, style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ),

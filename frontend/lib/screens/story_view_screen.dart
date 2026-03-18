@@ -87,10 +87,26 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
               itemCount: widget.stories.length,
               itemBuilder: (context, index) {
                 final s = widget.stories[index];
-                return CachedNetworkImage(
-                  imageUrl: s.contentUrl ?? 'https://picsum.photos/seed/${s.id}/1080/1920',
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.white24)),
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    double value = 1.0;
+                    if (_pageController.position.haveDimensions) {
+                      value = _pageController.page! - index;
+                      value = (1 - (value.abs() * 0.1)).clamp(0.0, 1.0);
+                    }
+                    return Center(
+                      child: Transform.scale(
+                        scale: value,
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: CachedNetworkImage(
+                    imageUrl: s.contentUrl ?? 'https://picsum.photos/seed/${s.id}/1080/1920',
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: Colors.white24)),
+                  ),
                 );
               },
             ),
@@ -115,34 +131,51 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
                 }).toList(),
               ),
             ),
-
+ 
             // Header Info
             Positioned(
               top: 70,
-              left: 20,
-              right: 20,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundImage: CachedNetworkImageProvider(story.avatarUrl),
+              left: 15,
+              right: 15,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: Colors.white.withOpacity(0.12)),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 4),
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: CachedNetworkImageProvider(story.avatarUrl),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          story.username,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '• 2h',
+                          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    story.username,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '2h',
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
@@ -214,11 +247,14 @@ class _ProgressBar extends StatelessWidget {
 
   Container _buildContainer(double width, Color color) {
     return Container(
-      height: 3.0,
+      height: 3.5,
       width: width,
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(3.0),
+        boxShadow: color == Colors.white ? [
+          BoxShadow(color: Colors.white.withOpacity(0.4), blurRadius: 4, spreadRadius: 1),
+        ] : [],
       ),
     );
   }

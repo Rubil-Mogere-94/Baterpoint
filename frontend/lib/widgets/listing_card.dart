@@ -22,18 +22,25 @@ class ListingCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: isDark ? Colors.white.withOpacity(0.04) : Colors.white.withOpacity(0.8),
         borderRadius: AppRadius.roundedXL,
-        boxShadow: AppShadows.soft,
-        border: Border.all(color: colorScheme.outline.withOpacity(0.06)),
+        boxShadow: isDark ? [] : AppShadows.soft,
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.12) : theme.colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: ClipRRect(
         borderRadius: AppRadius.roundedXL,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
             onTap: () async {
               Vibrate.feedback(FeedbackType.light);
               await Navigator.push(
@@ -94,13 +101,20 @@ class ListingCard extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: AppRadius.roundedSM,
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+                            filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.4),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0.25),
+                                    Colors.white.withOpacity(0.05),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
                                 borderRadius: AppRadius.roundedSM,
-                                border: Border.all(color: Colors.white.withOpacity(0.15)),
+                                border: Border.all(color: Colors.white.withOpacity(0.3)),
                               ),
                               child: Text(
                                 listing.category.toUpperCase(),
@@ -109,6 +123,9 @@ class ListingCard extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                   color: Colors.white,
                                   letterSpacing: 1.2,
+                                  shadows: [
+                                    Shadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2)),
+                                  ],
                                 ),
                               ),
                             ),
@@ -147,11 +164,13 @@ class ListingCard extends StatelessWidget {
                                       isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
                                       color: isFavorite ? const Color(0xFFEF4444) : Colors.white,
                                       size: 18,
-                                    ),
+                                    ).animate(target: isFavorite ? 1 : 0)
+                                     .scale(begin: const Offset(1, 1), end: const Offset(1.3, 1.3), duration: 200.ms, curve: Curves.easeOutBack)
+                                     .then().scale(begin: const Offset(1.3, 1.3), end: const Offset(1, 1), duration: 150.ms),
                                   ),
                                 ),
                               ),
-                            ).animate(target: isFavorite ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2), duration: 200.ms, curve: Curves.elasticOut);
+                            );
                           },
                         ),
                       ),

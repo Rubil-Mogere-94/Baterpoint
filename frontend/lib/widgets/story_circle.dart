@@ -26,37 +26,48 @@ class StoryCircle extends StatelessWidget {
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: story.isUnseen
-                  ? const LinearGradient(
-                      colors: [
-                        Color(0xFF833AB4), // Purple
-                        Color(0xFFF77737), // Orange
-                        Color(0xFFE1306C), // Pink
-                      ],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    )
-                  : LinearGradient(
-                      colors: [
-                        colorScheme.outline.withOpacity(0.2),
-                        colorScheme.outline.withOpacity(0.2),
-                      ],
-                    ),
+              boxShadow: story.isUnseen ? [
+                BoxShadow(color: const Color(0xFFE1306C).withOpacity(0.3), blurRadius: 10, spreadRadius: 1),
+              ] : [],
             ),
             child: Container(
               padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.black, // Dark mode background
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                gradient: story.isUnseen
+                    ? const LinearGradient(
+                        colors: [
+                          Color(0xFF833AB4),
+                          Color(0xFFF77737),
+                          Color(0xFFE1306C),
+                          Color(0xFF833AB4),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : LinearGradient(
+                        colors: [
+                          colorScheme.outline.withOpacity(0.2),
+                          colorScheme.outline.withOpacity(0.2),
+                        ],
+                      ),
               ),
-              child: CircleAvatar(
-                radius: 30,
-                backgroundImage: CachedNetworkImageProvider(story.avatarUrl),
-                backgroundColor: colorScheme.surface,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+                child: CircleAvatar(
+                  radius: 30,
+                  backgroundImage: CachedNetworkImageProvider(story.avatarUrl),
+                  backgroundColor: colorScheme.surface,
+                ),
               ),
-            ),
+            ).animate(onPlay: (controller) => controller.repeat(), target: story.isUnseen ? 1 : 0)
+             .rotate(duration: 3.seconds, curve: Curves.linear),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           SizedBox(
             width: 75,
             child: Text(
@@ -73,6 +84,10 @@ class StoryCircle extends StatelessWidget {
           ),
         ],
       ),
+    ).animate().scale(
+      begin: const Offset(0.9, 0.9),
+      duration: 400.ms,
+      curve: Curves.easeOutBack,
     );
   }
 }

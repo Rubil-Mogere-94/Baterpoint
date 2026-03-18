@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-import '../constants/theme.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:ui';
 
-enum ModernButtonType { primary, secondary, outlined, text }
+enum ModernButtonType { primary, secondary, outlined, text, glass }
 
 class ModernButton extends StatelessWidget {
   final String text;
@@ -21,11 +20,14 @@ class ModernButton extends StatelessWidget {
     this.isLoading = false,
     this.icon,
     this.isFullWidth = true,
-    this.height = 56.0, // Modern larger tap target
+    this.height = 56.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     Widget buttonContent = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -37,7 +39,7 @@ class ModernButton extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
               valueColor: AlwaysStoppedAnimation<Color>(
-                type == ModernButtonType.primary ? AppColors.textInverse : AppColors.primary,
+                type == ModernButtonType.primary ? Colors.white : theme.colorScheme.primary,
               ),
             ),
           )
@@ -50,19 +52,50 @@ class ModernButton extends StatelessWidget {
         if (text.isNotEmpty && !isLoading)
           Text(
             text,
-            style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.3),
+            style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0, fontSize: 13),
           ),
       ],
     );
+
+    if (type == ModernButtonType.glass) {
+      return Container(
+        height: height,
+        width: isFullWidth ? double.infinity : null,
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.roundedPill,
+          border: Border.all(color: Colors.white.withOpacity(0.15)),
+        ),
+        child: ClipRRect(
+          borderRadius: AppRadius.roundedPill,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: ElevatedButton(
+              onPressed: isLoading ? null : () {
+                Vibrate.feedback(FeedbackType.light);
+                onPressed?.call();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.08),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
+              ),
+              child: buttonContent,
+            ),
+          ),
+        ),
+      );
+    }
 
     final ButtonStyle style;
     switch (type) {
       case ModernButtonType.primary:
         style = ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textInverse,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.3),
-          elevation: 0,
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+          elevation: 8,
+          shadowColor: theme.colorScheme.primary.withOpacity(0.4),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
@@ -73,16 +106,16 @@ class ModernButton extends StatelessWidget {
           },
           style: style,
           child: buttonContent,
-        );
+        ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+         .shimmer(duration: 3.seconds, color: Colors.white24);
       case ModernButtonType.secondary:
         style = ElevatedButton.styleFrom(
-          backgroundColor: AppColors.surfaceVariant,
-          foregroundColor: AppColors.textPrimary,
-          disabledBackgroundColor: AppColors.surfaceVariant.withOpacity(0.5),
+          backgroundColor: theme.colorScheme.surfaceVariant,
+          foregroundColor: theme.colorScheme.onSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
-        );
+        ) ;
         return ElevatedButton(
           onPressed: isLoading ? null : () {
             Vibrate.feedback(FeedbackType.light);
@@ -93,8 +126,8 @@ class ModernButton extends StatelessWidget {
         );
       case ModernButtonType.outlined:
         style = OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.divider, width: 1.5),
+          foregroundColor: theme.colorScheme.primary,
+          side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.2), width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
@@ -108,7 +141,7 @@ class ModernButton extends StatelessWidget {
         );
       case ModernButtonType.text:
         style = TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: theme.colorScheme.primary,
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
         return TextButton(
@@ -119,6 +152,9 @@ class ModernButton extends StatelessWidget {
           style: style,
           child: buttonContent,
         );
+      case ModernButtonType.glass:
+        // Already handled above
+        return const SizedBox.shrink();
     }
   }
 }

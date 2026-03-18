@@ -113,48 +113,76 @@ class _CartScreenState extends State<CartScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : isEmpty
-                ? Center(
+                  ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.xl),
                       child: ClipRRect(
                         borderRadius: AppRadius.roundedXXL,
                         child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                           child: Container(
-                            padding: const EdgeInsets.all(AppSpacing.xl),
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
                             decoration: BoxDecoration(
-                              color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                              color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
                               borderRadius: AppRadius.roundedXXL,
                               border: Border.all(
-                                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                                color: (isDark ? Colors.white : Colors.black).withOpacity(0.12),
                               ),
+                              boxShadow: [
+                                BoxShadow(color: theme.colorScheme.primary.withOpacity(0.05), blurRadius: 40),
+                              ],
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.shopping_cart_outlined,
-                                  size: 72,
-                                  color: Colors.grey.shade400,
-                                ).animate().scale(curve: Curves.easeOutBack, duration: 600.ms),
-                                const SizedBox(height: AppSpacing.md),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: theme.colorScheme.primary.withOpacity(0.05),
+                                      ),
+                                    ).animate(onPlay: (controller) => controller.repeat())
+                                      .scale(begin: const Offset(1, 1), end: const Offset(1.3, 1.3), duration: 2.seconds, curve: Curves.easeInOut)
+                                      .fadeOut(duration: 2.seconds),
+                                    Icon(
+                                      Icons.shopping_cart_outlined,
+                                      size: 72,
+                                      color: theme.colorScheme.primary.withOpacity(0.8),
+                                    ).animate().scale(curve: Curves.easeOutBack, duration: 600.ms)
+                                     .then(delay: 1.seconds).shimmer(duration: 2.seconds, color: Colors.white54),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
                                 Text(
                                   'Your cart is empty',
-                                  style: theme.textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w800),
+                                  style: theme.textTheme.headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5),
                                 ).animate().fadeIn(delay: 200.ms),
-                                const SizedBox(height: AppSpacing.sm),
+                                const SizedBox(height: 12),
                                 Text(
-                                  'Add items to start your order.',
-                                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                                  'Explore the marketplace to find\nyour next great deal.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey, height: 1.5),
+                                  textAlign: TextAlign.center,
                                 ).animate().fadeIn(delay: 300.ms),
-                                const SizedBox(height: AppSpacing.xl),
-                                ElevatedButton.icon(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(Icons.explore_rounded),
-                                  label: const Text('Browse Items'),
-                                ).animate().fadeIn(delay: 400.ms)
-                                    .slideY(begin: 0.2, end: 0, delay: 400.ms),
+                                const SizedBox(height: 40),
+                                SizedBox(
+                                  width: 200,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
+                                    ),
+                                    child: const Text('BROWSE MARKET', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 1.2)),
+                                  ).animate().fadeIn(delay: 400.ms)
+                                      .slideY(begin: 0.2, end: 0, delay: 400.ms),
+                                ),
                               ],
                             ),
                           ),
@@ -217,11 +245,14 @@ class _CartItemTile extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
               borderRadius: AppRadius.roundedXL,
               border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.12),
               ),
+              boxShadow: isDark ? [] : [
+                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
