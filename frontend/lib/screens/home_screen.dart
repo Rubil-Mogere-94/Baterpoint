@@ -497,114 +497,116 @@ class _HomeScreenState extends State<HomeScreen> {
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Column(
             children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
-                  child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 16) : null,
-                ),
-                const SizedBox(width: 10),
-                Text(listing.ownerUsername ?? 'Trader', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const Spacer(),
-                const Icon(Icons.more_horiz, color: Colors.grey, size: 20),
-              ],
-            ),
-          ),
-          
-          // Image Area
-          GestureDetector(
-            onDoubleTap: () {
-              Vibrate.feedback(FeedbackType.heavy);
-              setState(() => _showHeart = true);
-            },
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  listing.imageUrl != null 
-                    ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) 
-                    : Container(color: Colors.grey[900]),
-                  
-                  HeartAnimation(
-                    isVisible: _showHeart,
-                    onCompleted: () => setState(() => _showHeart = false),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Action Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              children: [
-                IconButton(icon: const Icon(Icons.favorite_border_rounded, size: 26), onPressed: () => _showActionHint('Like')),
-                IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24), onPressed: () => _showActionHint('Comment')),
-                IconButton(icon: const Icon(Icons.send_rounded, size: 24), onPressed: () => _showActionHint('Share')),
-                const Spacer(),
-                IconButton(icon: const Icon(Icons.bookmark_border_rounded, size: 26), onPressed: () => _showActionHint('Save')),
-              ],
-            ),
-          ),
-
-          // Info
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
                   children: [
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          children: [
-                            TextSpan(
-                              text: listing.ownerUsername ?? 'Trader',
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundImage: listing.ownerAvatar != null ? CachedNetworkImageProvider(listing.ownerAvatar!) : null,
+                      child: listing.ownerAvatar == null ? const Icon(Icons.person, size: 16) : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(listing.ownerUsername ?? 'Trader', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const Spacer(),
+                    const Icon(Icons.more_horiz, color: Colors.grey, size: 20),
+                  ],
+                ),
+              ),
+              
+              // Image Area
+              GestureDetector(
+                onDoubleTap: () {
+                  Vibrate.feedback(FeedbackType.heavy);
+                  setState(() => _showHeart = true);
+                },
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      listing.imageUrl != null 
+                        ? CachedNetworkImage(imageUrl: listing.imageUrl!, fit: BoxFit.cover) 
+                        : Container(color: Colors.grey[900]),
+                      
+                      HeartAnimation(
+                        isVisible: _showHeart,
+                        onCompleted: () => setState(() => _showHeart = false),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Action Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    IconButton(icon: const Icon(Icons.favorite_border_rounded, size: 26), onPressed: () => _showActionHint('Like')),
+                    IconButton(icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24), onPressed: () => _showActionHint('Comment')),
+                    IconButton(icon: const Icon(Icons.send_rounded, size: 24), onPressed: () => _showActionHint('Share')),
+                    const Spacer(),
+                    IconButton(icon: const Icon(Icons.bookmark_border_rounded, size: 26), onPressed: () => _showActionHint('Save')),
+                  ],
+                ),
+              ),
+
+              // Info
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              children: [
+                                TextSpan(
+                                  text: listing.ownerUsername ?? 'Trader',
+                                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                                ),
+                                const TextSpan(text: '  '),
+                                TextSpan(
+                                  text: listing.title,
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const TextSpan(text: '  '),
-                            TextSpan(
-                              text: listing.title,
-                              style: TextStyle(
-                                color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                        borderRadius: AppRadius.roundedSM,
+                      ),
+                      child: Text(
+                        listing.category.toUpperCase(),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                    borderRadius: AppRadius.roundedSM,
-                  ),
-                  child: Text(
-                    listing.category.toUpperCase(),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
