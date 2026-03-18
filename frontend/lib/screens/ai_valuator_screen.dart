@@ -175,6 +175,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
   }
 
   Widget _buildResultsArea(ColorScheme colorScheme, TextTheme textTheme) {
+    final theme = Theme.of(context);
     if (_isScanning) {
       return Column(
         children: [

@@ -48,16 +48,21 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   String _formatTime(String timestamp) {
-    final time = DateTime.parse(timestamp).toLocal();
-    final now = DateTime.now();
-    final difference = now.difference(time);
+    if (timestamp.isEmpty) return '';
+    try {
+      final time = DateTime.parse(timestamp).toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(time);
 
-    if (difference.inDays == 0) {
-      return DateFormat.jm().format(time); // 5:30 PM
-    } else if (difference.inDays < 7) {
-      return DateFormat.E().format(time); // Mon, Tue
-    } else {
-      return DateFormat.MMMd().format(time); // Oct 12
+      if (difference.inDays == 0) {
+        return DateFormat.jm().format(time); // 5:30 PM
+      } else if (difference.inDays < 7) {
+        return DateFormat.E().format(time); // Mon, Tue
+      } else {
+        return DateFormat.MMMd().format(time); // Oct 12
+      }
+    } catch (e) {
+      return '';
     }
   }
 
@@ -179,152 +184,152 @@ class _InboxScreenState extends State<InboxScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 0),
                             itemCount: _inboxItems.length,
                             itemBuilder: (context, index) {
-                      final item = _inboxItems[index];
-                      final isUnread = item['unread_count'] > 0;
-                      final avatarUrl = item['other_user_avatar'];
+                              final item = _inboxItems[index];
+                              final isUnread = (item['unread_count'] ?? 0) > 0;
+                              final avatarUrl = item['other_user_avatar'];
 
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surface.withOpacity(0.7),
-                          borderRadius: AppRadius.roundedXL,
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.02),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: AppRadius.roundedXL,
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            leading: Hero(
-                              tag: 'avatar_${item['other_user_id']}',
-                              child: Stack(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 28,
-                                    backgroundColor: colorScheme.primary.withOpacity(0.1),
-                                    backgroundImage: avatarUrl != null 
-                                      ? CachedNetworkImageProvider(avatarUrl)
-                                      : null,
-                                    child: avatarUrl == null
-                                        ? Text(
-                                            item['other_user_username'][0].toUpperCase(),
-                                            style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 18),
-                                          )
-                                        : null,
-                                  ),
-                                  if (isUnread)
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-                                        width: 16,
-                                        height: 16,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF10B981),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: Colors.white, width: 3),
+                              return Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surface.withOpacity(0.7),
+                                  borderRadius: AppRadius.roundedXL,
+                                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: AppRadius.roundedXL,
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      leading: Hero(
+                                        tag: 'avatar_${item['other_user_id']}',
+                                        child: Stack(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 28,
+                                              backgroundColor: colorScheme.primary.withOpacity(0.1),
+                                              backgroundImage: avatarUrl != null 
+                                                ? CachedNetworkImageProvider(avatarUrl)
+                                                : null,
+                                              child: avatarUrl == null
+                                                  ? Text(
+                                                      (item['other_user_username'] ?? 'U')[0].toUpperCase(),
+                                                      style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 18),
+                                                    )
+                                                  : null,
+                                            ),
+                                            if (isUnread)
+                                              Positioned(
+                                                right: 0,
+                                                bottom: 0,
+                                                child: Container(
+                                                  width: 16,
+                                                  height: 16,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFF10B981),
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(color: Colors.white, width: 3),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
+                                      title: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              item['other_user_username'] ?? 'Unknown User',
+                                              style: textTheme.titleMedium?.copyWith(
+                                                fontWeight: isUnread ? FontWeight.w900 : FontWeight.w700,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Text(
+                                            _formatTime(item['last_message_time'] ?? ''),
+                                            style: textTheme.labelSmall?.copyWith(
+                                              color: isUnread ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                              fontWeight: isUnread ? FontWeight.w900 : FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      subtitle: Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                item['last_message'] ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: textTheme.bodyMedium?.copyWith(
+                                                  color: isUnread ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                                                  fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
+                                                ),
+                                              ),
+                                            ),
+                                            if ((item['unread_count'] ?? 0) > 0)
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 8),
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: colorScheme.primary,
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  '${item['unread_count']}',
+                                                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      onTap: () {
+                                        Vibrate.feedback(FeedbackType.light);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatScreen(
+                                              recipientId: item['other_user_id'],
+                                              recipientEmail: item['other_user_email'],
+                                              recipientName: item['other_user_username'],
+                                              recipientAvatar: item['other_user_avatar'],
+                                              tradeId: item['listing_id'],
+                                            ),
+                                          ),
+                                        ).then((_) => _loadInbox());
+                                      },
                                     ),
-                                ],
-                              ),
-                            ),
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    item['other_user_username'],
-                                    style: textTheme.titleMedium?.copyWith(
-                                      fontWeight: isUnread ? FontWeight.w900 : FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Text(
-                                  _formatTime(item['last_message_time']),
-                                  style: textTheme.labelSmall?.copyWith(
-                                    color: isUnread ? colorScheme.primary : colorScheme.onSurfaceVariant.withOpacity(0.5),
-                                    fontWeight: isUnread ? FontWeight.w900 : FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      item['last_message'],
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.bodyMedium?.copyWith(
-                                        color: isUnread ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
-                                        fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (item['unread_count'] > 0)
-                                    Container(
-                                      margin: const EdgeInsets.only(left: 8),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.primary,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        '${item['unread_count']}',
-                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            onTap: () {
-                              Vibrate.feedback(FeedbackType.light);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatScreen(
-                                    recipientId: item['other_user_id'],
-                                    recipientEmail: item['other_user_email'],
-                                    recipientName: item['other_user_username'],
-                                    recipientAvatar: item['other_user_avatar'],
-                                    tradeId: item['listing_id'],
-                                  ),
-                                ),
-                              ).then((_) => _loadInbox());
+                              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
                             },
                           ),
-                        ),
                       ),
-                    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.1, curve: Curves.easeOutQuad);
-                  },
+                    ],
                   ),
               ),
-            ],
-          ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _startNewChat,
-        backgroundColor: colorScheme.primary,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: const Icon(Icons.add_comment_rounded, color: Colors.white),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _startNewChat,
+          backgroundColor: colorScheme.primary,
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: const Icon(Icons.add_comment_rounded, color: Colors.white),
+        ),
       ),
     );
   }
-}
 
   Widget _buildActiveNow(ColorScheme colorScheme, TextTheme textTheme) {
     return Container(
@@ -336,7 +341,7 @@ class _InboxScreenState extends State<InboxScreen> {
         itemCount: _inboxItems.isEmpty ? 5 : _inboxItems.length + 2,
         itemBuilder: (context, index) {
           final isActual = index < _inboxItems.length;
-          final name = isActual ? _inboxItems[index]['other_user_username'] : 'User $index';
+          final name = isActual ? (_inboxItems[index]['other_user_username'] ?? 'User') : 'User $index';
           final avatarUrl = isActual ? _inboxItems[index]['other_user_avatar'] : null;
 
           return Padding(

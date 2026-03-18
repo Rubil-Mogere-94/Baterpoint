@@ -29,7 +29,6 @@ class ModernButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     Widget buttonContent = Row(
       mainAxisSize: MainAxisSize.min,
@@ -102,15 +101,19 @@ class ModernButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
           minimumSize: Size(isFullWidth ? double.infinity : 0, height),
         );
-        return ElevatedButton(
+        Widget btn = ElevatedButton(
           onPressed: isLoading ? null : () {
             Vibrate.feedback(FeedbackType.light);
             onPressed?.call();
           },
           style: style,
           child: buttonContent,
-        ).animate(onPlay: (controller) => controller.repeat(reverse: true))
-         .shimmer(duration: 3.seconds, color: Colors.white24);
+        );
+        // Using explicit Animate constructor to avoid extension issues if any
+        return Animate(
+          onPlay: (controller) => controller.repeat(reverse: true),
+          child: btn,
+        ).shimmer(duration: const Duration(seconds: 3), color: Colors.white24);
       case ModernButtonType.secondary:
         style = ElevatedButton.styleFrom(
           backgroundColor: theme.colorScheme.surfaceVariant,
@@ -156,7 +159,6 @@ class ModernButton extends StatelessWidget {
           child: buttonContent,
         );
       case ModernButtonType.glass:
-        // Already handled above
         return const SizedBox.shrink();
     }
   }
