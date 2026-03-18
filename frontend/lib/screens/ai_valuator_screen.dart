@@ -237,7 +237,7 @@ class _AiValuatorScreenState extends State<AiValuatorScreen> {
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: isDark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.6),
+              color: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.6),
               borderRadius: AppRadius.roundedXXL,
               border: Border.all(color: colorScheme.primary.withOpacity(0.3), width: 1),
               boxShadow: [

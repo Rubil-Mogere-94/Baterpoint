@@ -324,6 +324,7 @@ class _InboxScreenState extends State<InboxScreen> {
       ),
     );
   }
+}
 
   Widget _buildActiveNow(ColorScheme colorScheme, TextTheme textTheme) {
     return Container(

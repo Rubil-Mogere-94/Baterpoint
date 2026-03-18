@@ -1,4 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../constants/theme.dart';
 import 'dart:ui';
 
 enum ModernButtonType { primary, secondary, outlined, text, glass }
