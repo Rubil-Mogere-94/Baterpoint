@@ -187,6 +187,7 @@ class ListingUpdate(BaseModel):
     exchangeItem: Optional[str] = None
     category: Optional[str] = None
     tradeType: Optional[str] = None
+    sustainability_tags: Optional[List[str]] = None
 
 # --- New Amazon-like Schemas ---
 

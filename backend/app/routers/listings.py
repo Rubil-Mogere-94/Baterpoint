@@ -31,13 +31,24 @@ def create_listing(
     exchangeItem: Optional[str] = Form(None),
     category: str = Form(...),
     tradeType: str = Form(...),
-    image: UploadFile = File(...)
+    image: UploadFile = File(...),
+    sustainability_tags: Optional[str] = Form(None) # Expecting JSON string or comma-separated
 ):
     try:
         try:
             float_price = float(cashPrice) if cashPrice and str(cashPrice).strip() != "" else None
         except (ValueError, TypeError):
             float_price = None
+
+        tags = []
+        if sustainability_tags:
+            import json
+            try:
+                tags = json.loads(sustainability_tags)
+                if not isinstance(tags, list):
+                    tags = [str(tags)]
+            except:
+                tags = [t.strip() for t in sustainability_tags.split(",") if t.strip()]
 
         file_extension = image.filename.split(".")[-1]
         unique_filename = f"{uuid.uuid4()}.{file_extension}"
@@ -47,13 +58,13 @@ def create_listing(
             shutil.copyfileobj(image.file, buffer)
             
         # Construct full URL based on request
-        # This assumes the app mounts /static at the root
         base_url = str(request.base_url).rstrip("/")
         image_url = f"{base_url}/static/images/{unique_filename}"
 
         new_listing = ListingModel(
             title=title, description=description, price=float_price, exchange_item=exchangeItem,
-            trade_type=tradeType, category=category, image_url=image_url, user_id=current_user.id
+            trade_type=tradeType, category=category, image_url=image_url, user_id=current_user.id,
+            sustainability_tags=tags
         )
         db.add(new_listing)
         db.commit()
@@ -65,7 +76,8 @@ def create_listing(
             "tradeType": new_listing.trade_type, "category": new_listing.category, 
             "imageUrl": new_listing.image_url, "user_id": new_listing.user_id, "view_count": new_listing.view_count,
             "owner_username": current_user.username, "owner_rating": current_user.overall_rating, 
-            "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url
+            "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url,
+            "sustainability_tags": new_listing.sustainability_tags
         }
     except Exception as e:
         db.rollback()
@@ -79,6 +91,7 @@ def get_listings(
     tradeType: Optional[str] = None,
     sortBy: Optional[str] = None,
     order: Optional[str] = 'desc',
+    tag: Optional[str] = None,
     skip: int = 0,
     limit: int = 20
 ):
@@ -92,6 +105,9 @@ def get_listings(
 
     if tradeType:
         query = query.filter(ListingModel.trade_type == tradeType)
+    
+    if tag:
+        query = query.filter(ListingModel.sustainability_tags.contains([tag]))
 
     if sortBy == 'price':
         query = query.order_by(desc(ListingModel.price) if order == 'desc' else ListingModel.price)
