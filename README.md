@@ -9,9 +9,13 @@ Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing vis
 - **Modern Typography**: Powered by Google Fonts (Outfit and Inter) for a sleek, contemporary look.
 - **Micro-animations**: Enhanced with `flutter_animate`, shimmer loaders, and celebratory confetti effects.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **Authentication**: Secure JWT-based login and registration.
+- **AI-Powered Recommendations**: Personalized listing suggestions using semantic embeddings (`all-MiniLM-L6-v2`) and cosine similarity.
+- **Seller Analytics**: Comprehensive dashboard for sellers to track views, offers, conversion rates, and revenue.
+- **Authentication**: Secure JWT-based login, registration, and **Google Social Login** (OAuth2).
+- **Push Notifications**: Real-time alerts for new offers, messages, and order updates via Firebase Cloud Messaging (FCM).
+- **Sustainability Badges**: Eco-conscious trading with badges for "upcycled", "locally made", and "eco-friendly" items.
 - **Barter Focus**: Multi-item bundle trading and a "Handshake" confirmation system.
 - **Loyalty Shop**: Redeem points for exclusive profile badges and status upgrades.
 - **Gamified Quests**: Real-time progress tracking for listing views, favorites, and chat engagement.
@@ -45,7 +49,13 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-# Create .env with DATABASE_URL and SECRET_KEY
+
+# Create .env with the following:
+# DATABASE_URL=sqlite:///./test.db
+# SECRET_KEY=your_secret_key
+# GOOGLE_CLIENT_ID=your_google_client_id
+# FIREBASE_SERVICE_ACCOUNT_PATH=path/to/firebase_service_account.json
+
 uvicorn app.main:app --reload
 ```
 
@@ -60,13 +70,18 @@ flutter run
 ## 📐 Project Structure
 
 ```text
+backend/app/
+├── models.py      # SQLAlchemy Database Models
+├── schemas.py     # Pydantic Schemas
+├── services/      # Business Logic (Recommendations, FCM)
+└── routers/       # API Endpoints (Analytics, AI, etc.)
+
 frontend/lib/
 ├── constants/     # Core Design Tokens (Theme, UI Constants)
 ├── models/        # Type-safe Data Models
-├── providers/     # State Management (Auth, Theme)
-├── screens/       # Feature Screens (AI Valuator, BaterPass, etc.)
-├── services/      # API Clients & Environment Config
-└── widgets/       # Reusable UI Components (ListingCard, Shimmer, etc.)
+├── providers/     # State Management (Auth, Analytics, Recommendations)
+├── services/      # API Clients (ListingService, AuthService)
+└── screens/       # Feature Screens (AI Valuator, Analytics Dashboard)
 ```
 
 ## 📜 License

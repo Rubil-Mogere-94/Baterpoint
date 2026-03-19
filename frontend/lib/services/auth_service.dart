@@ -28,6 +28,22 @@ class AuthService {
     }
   }
 
+  Future<String?> googleLogin(String idToken) async {
+    final response = await http.post(
+      Uri.parse('${EnvironmentConfig.apiUrl}/google?token=$idToken'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final token = data['access_token'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, token);
+      return token;
+    } else {
+      throw Exception('Google login failed: ${response.body}');
+    }
+  }
+
   Future<User> register(String username, String email, String password) async {
     final response = await http.post(
       Uri.parse('${EnvironmentConfig.apiUrl}/register/'),
@@ -76,9 +92,9 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'username': ?username,
-        'email': ?email,
-        'password': ?password,
+        if (username != null) 'username': username,
+        if (email != null) 'email': email,
+        if (password != null) 'password': password,
       }),
     );
 
