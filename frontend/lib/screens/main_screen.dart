@@ -6,9 +6,6 @@ import '../widgets/holographic_background.dart';
 import 'smart_match_screen.dart';
 import 'explore_screen.dart';
 import 'home_screen.dart';
-import 'inbox_screen.dart';
-import 'forum_screen.dart';
-import 'offers_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/create_listing_modal.dart';
 

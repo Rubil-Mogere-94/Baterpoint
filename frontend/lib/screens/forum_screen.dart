@@ -248,7 +248,7 @@ class _ForumScreenState extends State<ForumScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(

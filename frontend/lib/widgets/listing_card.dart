@@ -8,7 +8,6 @@ import '../models/listing.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../screens/listing_detail_screen.dart';
-import '../constants/ui_constants.dart';
 import '../constants/theme.dart';
 
 class ListingCard extends StatelessWidget {

@@ -116,7 +116,7 @@ class ModernButton extends StatelessWidget {
         ).shimmer(duration: const Duration(seconds: 3), color: Colors.white24);
       case ModernButtonType.secondary:
         style = ElevatedButton.styleFrom(
-          backgroundColor: theme.colorScheme.surfaceVariant,
+          backgroundColor: theme.colorScheme.surfaceContainerHighest,
           foregroundColor: theme.colorScheme.onSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),

@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean, func, Text
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean, func, Text, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 
 class UserModel(Base):
+    # ... rest of UserModel ...
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -42,6 +43,7 @@ class ListingModel(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     view_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    sustainability_tags = Column(JSON, default=[]) # e.g., ["upcycled", "eco-friendly"]
     
     owner = relationship("UserModel", back_populates="listings")
     favorites = relationship("FavoriteModel", back_populates="listing")

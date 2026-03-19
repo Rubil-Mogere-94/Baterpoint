@@ -411,7 +411,7 @@ class _SmartMatchScreenState extends State<SmartMatchScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [colorScheme.surfaceVariant, colorScheme.surface],
+                    colors: [colorScheme.surfaceContainerHighest, colorScheme.surface],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

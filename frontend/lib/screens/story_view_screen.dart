@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/story.dart';
-import '../constants/ui_constants.dart';
 
 class StoryViewScreen extends StatefulWidget {
   final List<Story> stories;

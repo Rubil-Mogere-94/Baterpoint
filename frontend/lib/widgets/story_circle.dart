@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/story.dart';
-import '../constants/ui_constants.dart';
 
 class StoryCircle extends StatelessWidget {
   final Story story;

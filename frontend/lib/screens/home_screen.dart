@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _dealTimer;
   Duration _dealRemaining = Duration.zero;
   bool _showHeart = false;
-  int _activeHeartIndex = -1;
+  final int _activeHeartIndex = -1;
 
   @override
   void initState() {

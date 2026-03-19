@@ -299,7 +299,7 @@ class _OfferCard extends StatelessWidget {
                                 width: 64,
                                 height: 64,
                                 fit: BoxFit.cover,
-                                placeholder: (_, __) => Container(
+                                placeholder: (_, _) => Container(
                                   width: 64,
                                   height: 64,
                                   color: Colors.grey.withOpacity(0.15),
@@ -307,7 +307,7 @@ class _OfferCard extends StatelessWidget {
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   ),
                                 ),
-                                errorWidget: (_, __, ___) => Container(
+                                errorWidget: (_, _, _) => Container(
                                   width: 64,
                                   height: 64,
                                   color: Colors.grey.withOpacity(0.1),

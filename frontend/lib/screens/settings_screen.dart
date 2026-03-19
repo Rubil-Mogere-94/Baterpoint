@@ -282,7 +282,7 @@ class _SettingsSwitchTile extends StatelessWidget {
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: theme.colorScheme.secondary,
+      activeThumbColor: theme.colorScheme.secondary,
     );
   }
 }

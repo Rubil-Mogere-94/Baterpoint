@@ -11,7 +11,6 @@ import '../services/chat_service.dart';
 import '../models/chat_message.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/holographic_background.dart';
-import '../constants/ui_constants.dart';
 
 class ChatScreen extends StatefulWidget {
   final int? tradeId;

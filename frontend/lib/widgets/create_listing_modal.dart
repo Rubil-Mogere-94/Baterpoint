@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../constants/ui_constants.dart';
 
 class CreateListingModal extends StatelessWidget {
   const CreateListingModal({super.key});

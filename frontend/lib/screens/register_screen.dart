@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:page_transition/page_transition.dart';
 import 'dart:ui';
 import '../providers/auth_provider.dart';
 import '../constants/ui_constants.dart';

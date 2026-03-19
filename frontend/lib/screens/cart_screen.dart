@@ -265,7 +265,7 @@ class _CartItemTile extends StatelessWidget {
                     width: 90,
                     height: 90,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: 90,
                       height: 90,
                       color: Colors.grey.withOpacity(0.1),

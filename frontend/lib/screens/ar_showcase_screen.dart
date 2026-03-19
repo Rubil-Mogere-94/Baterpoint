@@ -126,7 +126,7 @@ class _ARShowcaseScreenState extends State<ARShowcaseScreen> with SingleTickerPr
             right: 20,
             child: Column(
               children: [
-                const Icon(Icons.360_rounded, color: Colors.white, size: 32),
+                const Icon(Icons.360rounded, color: Colors.white, size: 32),
                 const SizedBox(height: 8),
                 Text(
                   "TILT TO INSPECT",
