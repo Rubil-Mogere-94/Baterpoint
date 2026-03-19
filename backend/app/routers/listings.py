@@ -212,7 +212,8 @@ def get_recommendations(
              "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
              "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
              "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
-             "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
+             "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url,
+             "sustainability_tags": l.sustainability_tags}
             for l in recommendations
         ]
     except Exception as e:
