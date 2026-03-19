@@ -47,6 +47,7 @@ class Listing {
   final String? ownerAvatar;
   final double averageRating;
   final List<Review> reviews;
+  final List<String> sustainabilityTags;
 
   Listing({
     required this.id,
@@ -65,6 +66,7 @@ class Listing {
     this.ownerAvatar,
     this.averageRating = 0.0,
     this.reviews = const [],
+    this.sustainabilityTags = const [],
   });
 
   factory Listing.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,9 @@ class Listing {
       averageRating: (json['average_rating'] ?? 0.0).toDouble(),
       reviews: json['reviews'] != null 
           ? (json['reviews'] as List).map((r) => Review.fromJson(r)).toList()
+          : [],
+      sustainabilityTags: json['sustainability_tags'] != null
+          ? List<String>.from(json['sustainability_tags'])
           : [],
     );
   }

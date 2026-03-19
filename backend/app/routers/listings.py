@@ -6,6 +6,7 @@ import shutil
 import uuid
 import os
 import random
+import json
 from jose import jwt
 
 from ..database import get_db
@@ -32,7 +33,7 @@ def create_listing(
     category: str = Form(...),
     tradeType: str = Form(...),
     image: UploadFile = File(...),
-    sustainability_tags: Optional[str] = Form(None) # Expecting JSON string or comma-separated
+    sustainability_tags: Optional[str] = Form(None)
 ):
     try:
         try:
@@ -42,7 +43,6 @@ def create_listing(
 
         tags = []
         if sustainability_tags:
-            import json
             try:
                 tags = json.loads(sustainability_tags)
                 if not isinstance(tags, list):
@@ -124,21 +124,13 @@ def get_smart_matches(
     limit: int = 10
 ):
     try:
-        # 1. Get user's own listings and categories
         user_listings = current_user.listings
         if not user_listings:
-             # If user has no listings, they can't match for a trade
              return []
              
         user_categories = list(set([l.category for l in user_listings]))
-        
-        # 2. Get user's favorites categories
         fav_listings = db.query(ListingModel).join(FavoriteModel).filter(FavoriteModel.user_id == current_user.id).all()
         fav_categories = list(set([l.category for l in fav_listings]))
-        
-        # 3. Find potential partners
-        # Partners: People who have items in user's favorite categories
-        # AND who might want user's items (simplified: they want items in user's categories)
         
         query = db.query(ListingModel).filter(ListingModel.user_id != current_user.id)
         if fav_categories:
@@ -148,21 +140,10 @@ def get_smart_matches(
         
         matches = []
         for target_listing in potential_listings:
-            # Simple scoring:
-            # Base 70 if in favorite category
             score = 70
-            
-            # +10 if user has an item in a category the partner might want 
-            # (partner might want user_categories if they are common)
-            # For simplicity, let's assume they might want it if it's a popular category
             score += 15
-            
-            # Random jitter for "variety"
             score += random.randint(0, 10)
             score = min(score, 99)
-            
-            # Select which of user's items to offer
-            # For simplicity, just pick the first one for now
             user_item = user_listings[0] 
             
             matches.append({
@@ -173,7 +154,6 @@ def get_smart_matches(
                 "reason": f"{target_listing.owner.username} is looking for {user_item.category} items like yours."
             })
             
-        # Sort by score and return limited
         matches.sort(key=lambda x: x['match_score'], reverse=True)
         return matches[:limit]
 
@@ -223,7 +203,6 @@ def get_recommendations(
 def get_deal_of_the_hour(
     db: Annotated[Session, Depends(get_db)]
 ):
-    import random
     from datetime import datetime, timedelta
     try:
         now = datetime.utcnow()
@@ -249,7 +228,9 @@ def get_deal_of_the_hour(
             "id": l.id, "title": l.title, "description": l.description, "cashPrice": l.price, 
             "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
             "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
-            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
+            "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url,
+            "sustainability_tags": l.sustainability_tags
         }
         
         return {
@@ -276,16 +257,14 @@ def get_listing(listing_id: int, request: Request, db: Annotated[Session, Depend
     db.commit()
     db.refresh(listing)
     
-    # Quest update logic omitted for brevity/circular dependency avoidance for now
-    # Can be re-added if Quests are moved to a service
-
     return {
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
         "tradeType": listing.trade_type, "category": listing.category, 
         "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
         "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, 
-        "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url
+        "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url,
+        "sustainability_tags": listing.sustainability_tags
     }
 
 @router.put("/{listing_id}", response_model=Listing)
@@ -320,7 +299,8 @@ def update_listing(
         "tradeType": listing.trade_type, "category": listing.category, 
         "imageUrl": listing.image_url, "user_id": listing.user_id, "view_count": listing.view_count,
         "owner_username": listing.owner.username, "owner_rating": listing.owner.overall_rating, 
-        "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url
+        "owner_reviews": listing.owner.total_reviews, "owner_avatar": listing.owner.avatar_url,
+        "sustainability_tags": listing.sustainability_tags
     }
 
 @router.delete("/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -370,7 +350,6 @@ def toggle_favorite(
     else:
         new_fav = FavoriteModel(user_id=current_user.id, listing_id=listing_id)
         db.add(new_fav)
-        # update_quest_progress(current_user.id, "favorite", db) # Re-enable later
         db.commit()
         return {"status": "favorited"}
 
@@ -396,7 +375,4 @@ def create_offer(
     db.add(new_offer)
     db.commit()
     db.refresh(new_offer)
-    
-    # Returning dict to match Offer schema rich listing expectations if needed
-    # but the response_model should handle it if Config.from_attributes is True
     return new_offer
