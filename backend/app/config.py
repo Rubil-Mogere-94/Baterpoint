@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     CHAT_IMAGES_DIR: str = "static/chat_images"
     LISTING_IMAGES_DIR: str = "static/images"
 
+    # External Services
+    FIREBASE_SERVICE_ACCOUNT_PATH: Optional[str] = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+    GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+
     class Config:
         case_sensitive = True
         env_file = ".env"
