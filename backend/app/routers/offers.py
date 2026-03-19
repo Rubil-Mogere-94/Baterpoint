@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Annotated, List
 
@@ -6,6 +6,7 @@ from ..database import get_db
 from ..models import UserModel, ListingModel, OfferModel
 from ..schemas import Offer, OfferCreate, OfferUpdate
 from ..dependencies import get_current_user
+from ..services.fcm import send_push_notification
 
 router = APIRouter(prefix="/offers", tags=["Offers"])
 
@@ -14,7 +15,8 @@ def create_offer(
     listing_id: int,
     offer_data: OfferCreate,
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks
 ):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
     if not listing:
@@ -31,6 +33,18 @@ def create_offer(
     db.add(new_offer)
     db.commit()
     db.refresh(new_offer)
+    
+    # Notify seller
+    seller = listing.owner
+    if seller.device_token:
+        background_tasks.add_task(
+            send_push_notification,
+            seller.device_token,
+            "New Offer Received!",
+            f"{current_user.username} made an offer on your '{listing.title}'",
+            {"screen": "offer_detail", "offer_id": str(new_offer.id)}
+        )
+        
     return new_offer
 
 @router.get("/me/sent", response_model=List[Offer])
@@ -52,7 +66,8 @@ def update_offer_status(
     offer_id: int,
     offer_update: OfferUpdate,
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks
 ):
     offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
     if not offer:
@@ -62,7 +77,20 @@ def update_offer_status(
     if listing.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to respond to this offer")
     
+    old_status = offer.status
     offer.status = offer_update.status
     db.commit()
     db.refresh(offer)
+    
+    # Notify buyer of status change
+    buyer = offer.buyer
+    if buyer.device_token and old_status != offer.status:
+        background_tasks.add_task(
+            send_push_notification,
+            buyer.device_token,
+            f"Offer {offer.status.capitalize()}",
+            f"Your offer on '{listing.title}' has been {offer.status}.",
+            {"screen": "offer_detail", "offer_id": str(offer.id)}
+        )
+        
     return offer
