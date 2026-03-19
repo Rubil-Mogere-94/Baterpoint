@@ -61,7 +61,8 @@ async def read_own_listings(current_user: Annotated[UserModel, Depends(get_curre
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
          "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
          "owner_username": current_user.username, "owner_rating": current_user.overall_rating, 
-         "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url}
+         "owner_reviews": current_user.total_reviews, "owner_avatar": current_user.avatar_url,
+         "sustainability_tags": l.sustainability_tags}
         for l in current_user.listings
     ]
 
@@ -82,7 +83,8 @@ def get_user_favorites(
          "exchangeItem": l.exchange_item, "tradeType": l.trade_type, "category": l.category, 
          "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
          "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
-         "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url}
+         "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url,
+         "sustainability_tags": l.sustainability_tags}
         for l in listings
     ]
 

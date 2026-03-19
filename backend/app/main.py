@@ -13,7 +13,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from .config import settings
-from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai
+from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai, analytics
+
 # Context variable for request ID tracking
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="")
 
@@ -22,7 +23,6 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
         log_record['request_id'] = request_id_ctx_var.get()
         if not log_record.get('timestamp'):
-            # this doesn't use record.created, so it's slightly off
             from datetime import datetime
             log_record['timestamp'] = datetime.utcnow().isoformat()
         if log_record.get('level'):
@@ -107,6 +107,7 @@ app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(coupons.router, prefix=settings.API_V1_STR)
 app.include_router(forum.router, prefix=settings.API_V1_STR)
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
+app.include_router(analytics.router, prefix=settings.API_V1_STR)
 logger.info("API routers successfully initialized.")
 
 # Ensure static directories exist
