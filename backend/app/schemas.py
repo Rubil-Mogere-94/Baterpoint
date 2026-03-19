@@ -63,6 +63,7 @@ class Listing(BaseModel):
     owner_avatar: Optional[str] = None
     average_rating: Optional[float] = 0.0
     reviews: List[Review] = []
+    sustainability_tags: List[str] = []
 
 class OfferCreate(BaseModel):
     offered_price: Optional[float] = None
