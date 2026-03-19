@@ -44,6 +44,7 @@ class ListingModel(Base):
     view_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     sustainability_tags = Column(JSON, default=[]) # e.g., ["upcycled", "eco-friendly"]
+    embedding = Column(JSON, nullable=True) # vector embedding for similarity
     
     owner = relationship("UserModel", back_populates="listings")
     favorites = relationship("FavoriteModel", back_populates="listing")
