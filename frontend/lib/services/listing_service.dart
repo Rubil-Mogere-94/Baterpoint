@@ -18,6 +18,7 @@ class ListingService {
     String? tradeType,
     String? sortBy,
     String? order,
+    String? tag,
     int skip = 0,
     int limit = 20,
   }) async {
@@ -30,6 +31,7 @@ class ListingService {
     if (tradeType != null) queryParams['tradeType'] = tradeType;
     if (sortBy != null) queryParams['sortBy'] = sortBy;
     if (order != null) queryParams['order'] = order;
+    if (tag != null) queryParams['tag'] = tag;
 
     final uri = Uri.parse('${EnvironmentConfig.apiUrl}/listings/').replace(queryParameters: queryParams);
     final response = await http.get(uri);
@@ -121,6 +123,7 @@ class ListingService {
     required String tradeType,
     required String category,
     required File image,
+    List<String> sustainabilityTags = const [],
   }) async {
     final token = await _authService.getToken();
     var request = http.MultipartRequest('POST', Uri.parse('${EnvironmentConfig.apiUrl}/listings/'));
@@ -132,6 +135,7 @@ class ListingService {
     request.fields['exchangeItem'] = exchangeItem;
     request.fields['tradeType'] = tradeType;
     request.fields['category'] = category;
+    request.fields['sustainability_tags'] = jsonEncode(sustainabilityTags);
     
     request.files.add(await http.MultipartFile.fromPath(
       'image',
@@ -153,6 +157,7 @@ class ListingService {
     String? exchangeItem,
     String? tradeType,
     String? category,
+    List<String>? sustainabilityTags,
   }) async {
     final token = await _authService.getToken();
     final response = await http.put(
@@ -162,12 +167,13 @@ class ListingService {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'title': ?title,
-        'description': ?description,
-        'cashPrice': ?cashPrice,
-        'exchangeItem': ?exchangeItem,
-        'tradeType': ?tradeType,
-        'category': ?category,
+        if (title != null) 'title': title,
+        if (description != null) 'description': description,
+        if (cashPrice != null) 'cashPrice': cashPrice,
+        if (exchangeItem != null) 'exchangeItem': exchangeItem,
+        if (tradeType != null) 'tradeType': tradeType,
+        if (category != null) 'category': category,
+        if (sustainabilityTags != null) 'sustainability_tags': sustainabilityTags,
       }),
     );
 

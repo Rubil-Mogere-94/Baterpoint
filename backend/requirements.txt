@@ -17,3 +17,5 @@ email-validator
 python-multipart
 alembic
 python-json-logger
+sentence-transformers
+pgvector
