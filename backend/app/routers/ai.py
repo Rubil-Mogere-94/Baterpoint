@@ -1,8 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 import random
 import asyncio
+from typing import List
 
-router = APIRouter()
+from ..database import get_db
+from ..models import ListingModel, UserModel
+from ..schemas import Listing
+from ..dependencies import get_current_user
+from ..services.recommendations import recommend_for_user, find_similar_listings
+
+router = APIRouter(prefix="/ai", tags=["AI"])
 
 # Mock AI Valuations
 EVALUATIONS = [
@@ -22,12 +30,7 @@ async def evaluate_item(item_name: str, description: str = ""):
     # Simulate some "thinking" time for the UI to show off its scanning animation
     await asyncio.sleep(1.5) 
     
-    # In a real app, we'd send `item_name` and `description` to an LLM like Gemini
-    # For now, we pick a random mock evaluation
-    
     evaluation = random.choice(EVALUATIONS)
-    
-    # Add a little fuzziness to the value so it feels less static
     fuzzy_value = evaluation["value"] + random.randint(-5, 15)
     
     return {
@@ -36,3 +39,49 @@ async def evaluate_item(item_name: str, description: str = ""):
         "ai_comment": evaluation["comment"],
         "confidence_score": round(random.uniform(0.7, 0.98), 2)
     }
+
+@router.get("/recommendations", response_model=List[Listing])
+async def get_ai_recommendations(
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    limit: int = 10
+):
+    """
+    Returns AI-powered listing recommendations based on user interests.
+    """
+    recommendations = recommend_for_user(db, current_user.id, limit)
+    return [
+        {
+            "id": l.id, "title": l.title, "description": l.description, 
+            "cashPrice": l.price, "exchangeItem": l.exchange_item, 
+            "tradeType": l.trade_type, "category": l.category, 
+            "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
+            "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url,
+            "sustainability_tags": l.sustainability_tags
+        }
+        for l in recommendations
+    ]
+
+@router.get("/listings/{listing_id}/similar", response_model=List[Listing])
+async def get_similar_listings(
+    listing_id: int,
+    db: Session = Depends(get_db),
+    limit: int = 10
+):
+    """
+    Finds listings similar to the given one using vector embeddings.
+    """
+    similar = find_similar_listings(db, listing_id, limit)
+    return [
+        {
+            "id": l.id, "title": l.title, "description": l.description, 
+            "cashPrice": l.price, "exchangeItem": l.exchange_item, 
+            "tradeType": l.trade_type, "category": l.category, 
+            "imageUrl": l.image_url, "user_id": l.user_id, "view_count": l.view_count,
+            "owner_username": l.owner.username, "owner_rating": l.owner.overall_rating, 
+            "owner_reviews": l.owner.total_reviews, "owner_avatar": l.owner.avatar_url,
+            "sustainability_tags": l.sustainability_tags
+        }
+        for l in similar
+    ]
