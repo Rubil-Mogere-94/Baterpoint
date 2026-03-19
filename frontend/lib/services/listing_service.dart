@@ -234,6 +234,34 @@ class ListingService {
     }
   }
 
+  Future<List<Listing>> fetchAIRecommendations({int limit = 10}) async {
+    final token = await _authService.getToken();
+    final response = await http.get(
+      Uri.parse('${EnvironmentConfig.apiUrl}/ai/recommendations?limit=$limit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load AI recommendations');
+    }
+  }
+
+  Future<List<Listing>> fetchSimilarListings(int listingId, {int limit = 5}) async {
+    final response = await http.get(
+      Uri.parse('${EnvironmentConfig.apiUrl}/ai/listings/$listingId/similar?limit=$limit'),
+    );
+    if (response.statusCode == 200) {
+      Iterable l = json.decode(response.body);
+      return List<Listing>.from(l.map((model) => Listing.fromJson(model)));
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Failed to load similar listings');
+    }
+  }
+
   Future<void> addReview({required int listingId, required int rating, String? comment}) async {
     final token = await _authService.getToken();
     final response = await http.post(
