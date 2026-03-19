@@ -19,3 +19,4 @@ alembic
 python-json-logger
 sentence-transformers
 pgvector
+firebase-admin
