@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Request, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, func
 from typing import Annotated, Optional, List
@@ -13,6 +13,7 @@ from ..database import get_db
 from ..models import UserModel, ListingModel, FavoriteModel, DealModel, OfferModel
 from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate, Match
 from ..dependencies import get_current_user, SECRET_KEY, ALGORITHM
+from ..services.recommendations import update_listing_embedding
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
 
@@ -26,6 +27,7 @@ def create_listing(
     request: Request,
     current_user: Annotated[UserModel, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     description: Optional[str] = Form(None),
     cashPrice: Optional[float] = Form(None),
@@ -69,6 +71,9 @@ def create_listing(
         db.add(new_listing)
         db.commit()
         db.refresh(new_listing)
+        
+        # Update embedding in background
+        background_tasks.add_task(update_listing_embedding, db, new_listing.id)
         
         return {
             "id": new_listing.id, "title": new_listing.title, "description": new_listing.description, 
@@ -272,7 +277,8 @@ def update_listing(
     listing_id: int,
     listing_update: ListingUpdate,
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks
 ):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
     if not listing:
@@ -288,11 +294,17 @@ def update_listing(
             listing.exchange_item = value
         elif key == "tradeType":
             listing.trade_type = value
+        elif key == "sustainability_tags":
+            listing.sustainability_tags = value
         else:
             setattr(listing, key, value)
     
     db.commit()
     db.refresh(listing)
+    
+    # Update embedding in background
+    background_tasks.add_task(update_listing_embedding, db, listing.id)
+    
     return {
         "id": listing.id, "title": listing.title, "description": listing.description, 
         "cashPrice": listing.price, "exchangeItem": listing.exchange_item, 
