@@ -54,9 +54,12 @@ def create_order(
         user_id=current_user.id,
         status="pending",
         total_amount=total_amount,
-        shipping_address=order_in.shipping_address,
-        items=order_items
+        shipping_address_id=order_in.shipping_address_id,
+        shipping_method_id=order_in.shipping_method_id,
+        order_discount=discount,
+        order_tax=0.0
     )
+    new_order.items = order_items
     db.add(new_order)
     
     # 4. Clear cart

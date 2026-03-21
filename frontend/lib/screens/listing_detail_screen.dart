@@ -178,6 +178,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                           ],
                         ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
 
+                        const SizedBox(height: 16),
+                        _buildTierPrices(colorScheme),
+
+                        const SizedBox(height: 24),
+                        _buildProductAttributes(colorScheme, textTheme),
+
                         const SizedBox(height: 24),
                         _buildEcoCard(),
                         
@@ -436,6 +442,95 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     );
   }
 
+  Widget _buildTierPrices(ColorScheme colorScheme) {
+    if (_currentListing.cashPrice == null || _currentListing.cashPrice! <= 0) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildTierText('Buy 2+', '\$${(_currentListing.cashPrice! * 0.95).toStringAsFixed(2)}/ea', colorScheme),
+          Container(width: 1, height: 30, color: colorScheme.outlineVariant),
+          _buildTierText('Buy 5+', '\$${(_currentListing.cashPrice! * 0.90).toStringAsFixed(2)}/ea', colorScheme),
+          Container(width: 1, height: 30, color: colorScheme.outlineVariant),
+          _buildTierText('Buy 10+', '\$${(_currentListing.cashPrice! * 0.85).toStringAsFixed(2)}/ea', colorScheme),
+        ],
+      ),
+    ).animate().fadeIn(delay: 100.ms);
+  }
+
+  Widget _buildTierText(String qty, String price, ColorScheme colorScheme) {
+    return Column(
+      children: [
+        Text(qty, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        Text(price, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900)),
+      ],
+    );
+  }
+
+  Widget _buildProductAttributes(ColorScheme colorScheme, TextTheme textTheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Specifications & Variants', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+        const SizedBox(height: 16),
+        // Size Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.5)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: 'Large [+ \$5.00]',
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              items: ['Small', 'Medium', 'Large [+ \$5.00]', 'X-Large [+ \$10.00]']
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(fontWeight: FontWeight.w600))))
+                  .toList(),
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Color Radio choices
+        Text('Color', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildColorOption(Colors.black, true, colorScheme),
+            const SizedBox(width: 12),
+            _buildColorOption(Colors.red.shade700, false, colorScheme),
+            const SizedBox(width: 12),
+            _buildColorOption(Colors.blue.shade800, false, colorScheme),
+          ],
+        ),
+      ],
+    ).animate().fadeIn(delay: 150.ms);
+  }
+
+  Widget _buildColorOption(Color color, bool isSelected, ColorScheme colorScheme) {
+    return Container(
+      width: 40, height: 40,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: isSelected ? colorScheme.primary : Colors.transparent, width: 3),
+        boxShadow: [
+          if (isSelected) BoxShadow(color: colorScheme.primary.withOpacity(0.4), blurRadius: 8, spreadRadius: 2),
+        ]
+      ),
+      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+    );
+  }
+
   Widget _buildReviewItem(Review review, ColorScheme colorScheme, TextTheme textTheme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -495,21 +590,29 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           child: Row(
             children: [
               Expanded(
-                child: ModernButton(
-                  text: 'Add to Cart',
-                  type: ModernButtonType.outlined,
-                  onPressed: () => _addToCart(context),
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(icon: const Icon(Icons.remove), onPressed: () {}),
+                      const Text('1', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                      IconButton(icon: const Icon(Icons.add, color: Colors.green), onPressed: () {}),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 flex: 2,
                 child: ModernButton(
-                  text: 'Buy Now',
-                  onPressed: () {
-                    Vibrate.feedback(FeedbackType.heavy);
-                    Navigator.push(context, PageTransition(type: PageTransitionType.bottomToTop, child: CheckoutScreen(listing: _currentListing)));
-                  },
+                  text: 'Add to Cart',
+                  onPressed: () => _addToCart(context),
                 ),
               ),
             ],

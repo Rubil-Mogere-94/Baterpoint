@@ -219,8 +219,37 @@ class OrderItem(BaseModel):
     price_at_purchase: float
     listing: Listing
 
+class AddressBase(BaseModel):
+    first_name: str
+    last_name: str
+    email: Optional[EmailStr] = None
+    company: Optional[str] = None
+    country: Optional[str] = None
+    city: str
+    address1: str
+    address2: Optional[str] = None
+    zip_postal_code: str
+    phone_number: Optional[str] = None
+
+class AddressCreate(AddressBase):
+    pass
+
+class Address(AddressBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    user_id: int
+    created_on_utc: datetime
+
+class ShippingMethod(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    description: Optional[str] = None
+    display_order: int
+
 class OrderCreate(BaseModel):
-    shipping_address: str
+    shipping_address_id: Optional[int] = None
+    shipping_method_id: Optional[int] = None
     coupon_code: Optional[str] = None
 
 class Order(BaseModel):
@@ -229,7 +258,10 @@ class Order(BaseModel):
     user_id: int
     status: str
     total_amount: float
-    shipping_address: Optional[str] = None
+    shipping_address_id: Optional[int] = None
+    shipping_method_id: Optional[int] = None
+    order_tax: float
+    order_discount: float
     created_at: datetime
     items: List[OrderItem] = []
 

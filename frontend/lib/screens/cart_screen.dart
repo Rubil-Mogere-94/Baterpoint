@@ -387,78 +387,160 @@ class _QtyButton extends StatelessWidget {
   }
 }
 
-class _CheckoutBar extends StatelessWidget {
+class _CheckoutBar extends StatefulWidget {
   final Cart cart;
   final bool isDark;
 
   const _CheckoutBar({required this.cart, required this.isDark});
 
   @override
+  State<_CheckoutBar> createState() => _CheckoutBarState();
+}
+
+class _CheckoutBarState extends State<_CheckoutBar> {
+  bool _showEstimator = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            MediaQuery.of(context).padding.bottom + AppSpacing.md,
-          ),
           decoration: BoxDecoration(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-            border: Border(
-              top: BorderSide(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-              ),
-            ),
+            color: (widget.isDark ? Colors.white : Colors.black).withOpacity(0.06),
+            border: Border(top: BorderSide(color: (widget.isDark ? Colors.white : Colors.black).withOpacity(0.1))),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Subtotal (${cart.items.length} item${cart.items.length == 1 ? '' : 's'})',
-                    style: theme.textTheme.titleSmall?.copyWith(color: Colors.grey),
-                  ),
-                  Text(
-                    '\$${cart.totalAmount.toStringAsFixed(2)}',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF10B981),
+              // Totals Breakdown
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, AppSpacing.sm),
+                child: Column(
+                  children: [
+                    _buildRow('Subtotal:', '\$${widget.cart.totalAmount.toStringAsFixed(2)}', theme),
+                    const SizedBox(height: 4),
+                    _buildRow('Shipping:', 'Calculated during checkout', theme, isFaded: true),
+                    const SizedBox(height: 4),
+                    _buildRow('Tax:', '\$0.00', theme),
+                    const Divider(height: 24),
+                    // Discount / Gift Card
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 40,
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Discount code',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                enabledBorder: OutlineInputBorder(borderRadius: AppRadius.roundedSM, borderSide: BorderSide(color: colorScheme.outline)),
+                                focusedBorder: OutlineInputBorder(borderRadius: AppRadius.roundedSM, borderSide: BorderSide(color: colorScheme.primary)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.surfaceVariant,
+                            foregroundColor: colorScheme.onSurfaceVariant,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedSM),
+                          ),
+                          child: const Text('Apply'),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    // Estimate Shipping Toggle
+                    GestureDetector(
+                      onTap: () => setState(() => _showEstimator = !_showEstimator),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.local_shipping_outlined, color: colorScheme.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Text('Estimate shipping', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+                          Icon(_showEstimator ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: colorScheme.primary, size: 18),
+                        ],
+                      ),
+                    ),
+                    // Estimator panel
+                    if (_showEstimator) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: _buildEstInput('Country', colorScheme),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildEstInput('Zip', colorScheme),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                        Text('\$${widget.cart.totalAmount.toStringAsFixed(2)}', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: const Color(0xFF10B981))),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CheckoutScreen()),
-                    );
-                  },
-                  icon: const Icon(Icons.shopping_bag_rounded, size: 20),
-                  label: const Text(
-                    'Proceed to Checkout',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedPill),
+              // Action Button
+              Padding(
+                padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, MediaQuery.of(context).padding.bottom + AppSpacing.md),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CheckoutScreen())),
+                    icon: const Icon(Icons.shopping_bag_rounded, size: 20, color: Colors.white),
+                    label: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: AppRadius.roundedSM),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(String label, String value, ThemeData theme, {bool isFaded = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: isFaded ? Colors.grey : theme.colorScheme.onSurface)),
+        Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: isFaded ? FontWeight.normal : FontWeight.bold, color: isFaded ? Colors.grey : theme.colorScheme.onSurface)),
+      ],
+    );
+  }
+
+  Widget _buildEstInput(String hint, ColorScheme colorScheme) {
+    return SizedBox(
+      height: 36,
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: hint,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          enabledBorder: OutlineInputBorder(borderRadius: AppRadius.roundedSM, borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.5))),
+          focusedBorder: OutlineInputBorder(borderRadius: AppRadius.roundedSM, borderSide: BorderSide(color: colorScheme.primary)),
         ),
       ),
     );

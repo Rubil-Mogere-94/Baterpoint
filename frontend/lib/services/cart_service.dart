@@ -75,11 +75,11 @@ class CartService {
 class OrderService {
   final AuthService _authService = AuthService();
 
-  Future<void> createOrder(String shippingAddress, {String? couponCode}) async {
+  Future<void> createOrder(int? shippingAddressId, int? shippingMethodId, {String? couponCode}) async {
     final token = await _authService.getToken();
-    final body = {
-      'shipping_address': shippingAddress,
-    };
+    final Map<String, dynamic> body = {};
+    if (shippingAddressId != null) body['shipping_address_id'] = shippingAddressId;
+    if (shippingMethodId != null) body['shipping_method_id'] = shippingMethodId;
     if (couponCode != null && couponCode.isNotEmpty) {
       body['coupon_code'] = couponCode;
     }

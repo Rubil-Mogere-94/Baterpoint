@@ -112,9 +112,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     HapticFeedback.heavyImpact();
     
     try {
-      // In a real Amazon-like app, we'd send the actual shipping address from a form
+      // In a real Amazon-like app, we'd select an address and shipping method from a list
+      // For now, we simulate sending the IDs to the new nopCommerce-inspired backend API
       await _orderService.createOrder(
-        "123 Baterpoint Ave, Metropolis, NY 10001",
+        1, 
+        1,
         couponCode: _appliedCouponCode,
       );
       

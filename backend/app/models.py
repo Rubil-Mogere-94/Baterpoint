@@ -39,6 +39,8 @@ class ListingModel(Base):
     exchange_item = Column(String, nullable=True) # exchangeItem
     trade_type = Column(String) # "Barter", "Sale", or "Both"
     category = Column(String)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    brand_id = Column(Integer, ForeignKey("brands.id"), nullable=True)
     image_url = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
     view_count = Column(Integer, default=0)
@@ -200,6 +202,10 @@ class OrderModel(Base):
     status = Column(String, default="pending") # pending, paid, shipped, delivered, cancelled
     total_amount = Column(Float, nullable=False)
     shipping_address = Column(String, nullable=True)
+    shipping_address_id = Column(Integer, ForeignKey("addresses.id"), nullable=True)
+    shipping_method_id = Column(Integer, ForeignKey("shipping_methods.id"), nullable=True)
+    order_tax = Column(Float, default=0.0)
+    order_discount = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("UserModel", back_populates="orders")
@@ -215,3 +221,67 @@ class OrderItemModel(Base):
     
     order = relationship("OrderModel", back_populates="items")
     listing = relationship("ListingModel")
+
+class AddressModel(Base):
+    __tablename__ = "addresses"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, nullable=True)
+    company = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+    city = Column(String, nullable=False)
+    address1 = Column(String, nullable=False)
+    address2 = Column(String, nullable=True)
+    zip_postal_code = Column(String, nullable=False)
+    phone_number = Column(String, nullable=True)
+    created_on_utc = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("UserModel", backref="addresses")
+
+class CategoryModel(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    published = Column(Boolean, default=True)
+    display_order = Column(Integer, default=0)
+    created_on_utc = Column(DateTime, default=datetime.utcnow)
+
+class BrandModel(Base):
+    __tablename__ = "brands"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    description = Column(String, nullable=True)
+    published = Column(Boolean, default=True)
+    display_order = Column(Integer, default=0)
+    created_on_utc = Column(DateTime, default=datetime.utcnow)
+
+class ListingAttributeModel(Base):
+    __tablename__ = "listing_attributes"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    
+class ListingAttributeValueModel(Base):
+    __tablename__ = "listing_attribute_values"
+    id = Column(Integer, primary_key=True, index=True)
+    attribute_id = Column(Integer, ForeignKey("listing_attributes.id"))
+    listing_id = Column(Integer, ForeignKey("listings.id"))
+    name = Column(String, nullable=False)
+    price_adjustment = Column(Float, default=0.0)
+    quantity = Column(Integer, default=0)
+    is_pre_selected = Column(Boolean, default=False)
+    display_order = Column(Integer, default=0)
+
+    attribute = relationship("ListingAttributeModel")
+    listing = relationship("ListingModel", backref="attributes")
+
+class ShippingMethodModel(Base):
+    __tablename__ = "shipping_methods"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    display_order = Column(Integer, default=0)
