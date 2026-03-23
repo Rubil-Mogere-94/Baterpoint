@@ -1,17 +1,15 @@
-# baterpoint
+# Flutter E-commerce Mobile App Templates
 
-A new Flutter project.
+## [Watch it on YouTube](https://youtu.be/XBKzpTz65Io)
 
-## Getting Started
+**Packages we are using:**
 
-This project is a starting point for a Flutter application.
+- flutter_svg: [link](https://pub.dev/packages/flutter_svg)
 
-A few resources to get you started if this is your first Flutter project:
+Catch a glimpse of our modern Flutter E-commerce app template, up for grabs for free on Github! Designed for an intuitive shopping experience, this Flutter shop app template neatly organizes products under a horizontal scroll of categories. As you dive deeper into a product, the details page unveils its price, a brief description, and an eye-catching 'Buy Now' button set against the product's unique color theme. It's not just about selling; it's about presenting each product in its best light.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Flutter Shop App template final preview
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![intro](intro.gif)
+
+![App UI](/ui.png)
