@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'constants.dart';
 import 'screens/home/home_screen.dart';
 
@@ -9,15 +10,31 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'The Flutter Way',
+      title: 'Baterpoint Trading',
       theme: ThemeData(
-        textTheme: Theme.of(context).textTheme.apply(bodyColor: kTextColor),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: kBackgroundColor,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme).apply(
+          bodyColor: kTextColor,
+          displayColor: kTextColor,
+        ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        colorScheme: ColorScheme.fromSwatch(
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: kPrimaryColor,
+          secondary: kSecondaryColor,
+          surface: kSecondaryColor,
+          error: kErrorColor,
+        ),
       ),
       home: const HomeScreen(),
     );
