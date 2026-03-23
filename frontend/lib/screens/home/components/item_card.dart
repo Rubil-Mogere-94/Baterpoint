@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../constants.dart';
 import '../../../models/product.dart';
@@ -25,7 +26,14 @@ class ItemCard extends StatelessWidget {
               ),
               child: Hero(
                 tag: "${product.id}",
-                child: Image.asset(product.image),
+                child: product.image.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: product.image,
+                        placeholder: (context, url) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        errorWidget: (context, url, error) => const Icon(Icons.error),
+                        fit: BoxFit.contain,
+                      )
+                    : Image.asset(product.image),
               ),
             ),
           ),
