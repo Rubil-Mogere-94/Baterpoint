@@ -10,3 +10,6 @@ const kCurrencyColor = Color(0xFF29B6F6); // Vibrant Blue for currency
 const kErrorColor = Color(0xFFFF5252);
 
 const kDefaultPaddin = 20.0;
+const kBaseUrl = "http://localhost:8000"; // Local backend base URL
+const kApiV1 = "/api/v1";
+
