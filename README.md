@@ -46,26 +46,26 @@ cd Baterpoint
 ### 2. Backend Setup (FastAPI)
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Create .env with the following:
-# DATABASE_URL=sqlite:///./test.db
-# SECRET_KEY=your_secret_key
-# GOOGLE_CLIENT_ID=your_google_client_id
-# FIREBASE_SERVICE_ACCOUNT_PATH=path/to/firebase_service_account.json
+# Seed the database with modern trade entries
+python3 seed_data.py
 
-uvicorn app.main:app --reload
+# Launch the backend
+/home/solregem/Baterpoint/backend/venv/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 3. Frontend Setup (Flutter)
 ```bash
 cd frontend
-# Create .env with API_URL=http://localhost:8000
 flutter pub get
-flutter run
+
+# Launch on Linux Desktop
+flutter run -d linux
 ```
+
 
 ## 📐 Project Structure
 
