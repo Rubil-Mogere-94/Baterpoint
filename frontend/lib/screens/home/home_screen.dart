@@ -69,7 +69,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   .copyWith(fontWeight: FontWeight.bold),
             ),
           ),
-          const Categories(),
+          Categories(
+            onCategorySelected: (category) {
+              setState(() {
+                _productsFuture = _apiService.getListings(
+                  category: category == "All Trades" ? null : category,
+                );
+              });
+            },
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: kDefaultPaddin),
