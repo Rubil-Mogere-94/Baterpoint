@@ -28,9 +28,9 @@ class Description extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: kBarterColor.withOpacity(0.1),
+                  color: kBarterColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kBarterColor.withOpacity(0.3)),
+                  border: Border.all(color: kBarterColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
                   product.barterPreference!,

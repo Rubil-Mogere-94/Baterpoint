@@ -50,7 +50,7 @@ class ItemCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: kBarterColor.withOpacity(0.2),
+                    color: kBarterColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text("Barter", style: TextStyle(color: kBarterColor, fontSize: 10, fontWeight: FontWeight.bold)),
