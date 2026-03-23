@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../utils/app_haptics.dart';
+
 
 import '../../../constants.dart';
 
@@ -35,6 +38,7 @@ class _CategoriesState extends State<Categories> {
   Widget buildCategory(int index) {
     return GestureDetector(
       onTap: () {
+        AppHaptics.light();
         setState(() {
           selectedIndex = index;
         });
@@ -52,14 +56,18 @@ class _CategoriesState extends State<Categories> {
                 color: selectedIndex == index ? kTextColor : kTextLightColor,
               ),
             ),
-            Container(
-              margin: const EdgeInsets.only(
-                top: kDefaultPaddin / 8,
-              ), //top padding 5
-              height: 2,
-              width: 30,
-              color: selectedIndex == index ? kPrimaryColor : Colors.transparent,
-            )
+            if (selectedIndex == index) 
+              Container(
+                margin: const EdgeInsets.only(
+                  top: kDefaultPaddin / 8,
+                ), //top padding 5
+                height: 2,
+                width: 30,
+                color: kPrimaryColor,
+              ).animate().fadeIn().moveX(begin: -10, end: 0, curve: Curves.easeOutBack)
+            else 
+              const SizedBox(height: 2 + kDefaultPaddin / 8),
+
           ],
         ),
       ),

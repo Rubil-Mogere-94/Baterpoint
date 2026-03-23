@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../utils/app_haptics.dart';
 
 import '../../../constants.dart';
 import '../../../models/product.dart';
@@ -13,8 +15,12 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: press,
+      onTap: () {
+        AppHaptics.light();
+        press();
+      },
       child: Column(
+
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
@@ -66,7 +72,8 @@ class ItemCard extends StatelessWidget {
             ],
           )
         ],
-      ),
+      ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
     );
+
   }
 }
