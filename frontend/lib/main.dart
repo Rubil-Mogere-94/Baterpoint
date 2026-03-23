@@ -26,14 +26,20 @@ class MyApp extends StatelessWidget {
           bodyColor: kTextColor,
           displayColor: kTextColor,
         ),
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        colorScheme: ColorScheme.fromSwatch(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kPrimaryColor,
           brightness: Brightness.dark,
-        ).copyWith(
           primary: kPrimaryColor,
           secondary: kSecondaryColor,
           surface: kSecondaryColor,
           error: kErrorColor,
+        ),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          ),
         ),
       ),
       home: const HomeScreen(),

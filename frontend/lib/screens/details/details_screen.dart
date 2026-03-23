@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
 
 import '../../constants.dart';
 import '../../models/product.dart';
@@ -66,14 +68,15 @@ class DetailsScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: <Widget>[
-                        ColorAndSize(product: product),
+                        ColorAndSize(product: product).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1, end: 0),
                         const SizedBox(height: kDefaultPaddin / 2),
-                        Description(product: product),
+                        Description(product: product).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
                         const SizedBox(height: kDefaultPaddin / 2),
-                        const CounterWithFavBtn(),
+                        const CounterWithFavBtn().animate().fadeIn(delay: 300.ms).slideY(begin: 0.1, end: 0),
                         const SizedBox(height: kDefaultPaddin / 2),
-                        AddToCart(product: product)
+                        AddToCart(product: product).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0)
                       ],
+
                     ),
                   ),
                   ProductTitleWithImage(product: product)
