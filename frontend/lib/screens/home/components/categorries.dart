@@ -12,7 +12,7 @@ class Categories extends StatefulWidget {
 }
 
 class _CategoriesState extends State<Categories> {
-  List<String> categories = ["Hand bag", "Jewellery", "Footwear", "Dresses"];
+  List<String> categories = ["All Trades", "Electronics", "Furniture", "Vehicles", "Services"];
   // By default our first item will be selected
   int selectedIndex = 0;
   @override
@@ -55,7 +55,7 @@ class _CategoriesState extends State<Categories> {
               ), //top padding 5
               height: 2,
               width: 30,
-              color: selectedIndex == index ? Colors.black : Colors.transparent,
+              color: selectedIndex == index ? kPrimaryColor : Colors.transparent,
             )
           ],
         ),
