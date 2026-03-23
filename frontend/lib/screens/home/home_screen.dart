@@ -5,7 +5,6 @@ import '../../constants.dart';
 import '../../models/product.dart';
 import '../details/details_screen.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../utils/app_haptics.dart';
 import 'components/categorries.dart';
