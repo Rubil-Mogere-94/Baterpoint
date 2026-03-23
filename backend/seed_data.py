@@ -7,7 +7,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine, Base
-from app.models import UserModel, ListingModel, CategoryModel
+from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel
 from app.auth_utils import get_password_hash
 
 def seed_db():
