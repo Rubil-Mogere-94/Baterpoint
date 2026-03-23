@@ -15,8 +15,14 @@ def seed_db():
     db = SessionLocal()
     
     try:
-        # 1. Create a default user if not exists
+        # 1. Clear related tables to avoid ForeignKeyViolation
+        db.query(ReviewModel).delete()
+        db.query(OfferModel).delete()
+        db.query(FavoriteModel).delete()
+        
+        # 2. Create a default user if not exists
         user = db.query(UserModel).filter(UserModel.username == "demo_trader").first()
+
         if not user:
             user = UserModel(
                 username="demo_trader",
@@ -90,7 +96,8 @@ def seed_db():
                 trade_type=item["trade_type"],
                 category=item["category"],
                 image_url=item["image_url"],
-                user_id=user.id
+                user_id=user.id,
+                sustainability_tags=[]
             )
             db.add(listing)
         

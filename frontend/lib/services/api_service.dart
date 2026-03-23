@@ -19,7 +19,6 @@ class ApiService {
         throw Exception('Failed to load listings');
       }
     } catch (e) {
-      print('Error fetching listings: $e');
       return [];
     }
   }

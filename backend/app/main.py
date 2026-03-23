@@ -39,7 +39,7 @@ root_logger.addHandler(handler)
 root_logger.setLevel(logging.INFO)
 
 # Suppress some noise
-logging.getLogger("uvicorn.access").disabled = True
+# logging.getLogger("uvicorn.access").disabled = True
 
 logger = logging.getLogger(__name__)
 
