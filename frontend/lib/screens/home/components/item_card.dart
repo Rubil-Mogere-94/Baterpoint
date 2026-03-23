@@ -37,9 +37,25 @@ class ItemCard extends StatelessWidget {
               style: const TextStyle(color: kTextLightColor),
             ),
           ),
-          Text(
-            "\$${product.price}",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              if (product.acceptsCurrency)
+                Text(
+                  "\$${product.price}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              if (product.acceptsCurrency && product.acceptsBarter) 
+                const SizedBox(width: 8),
+              if (product.acceptsBarter)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: kBarterColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text("Barter", style: TextStyle(color: kBarterColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+            ],
           )
         ],
       ),

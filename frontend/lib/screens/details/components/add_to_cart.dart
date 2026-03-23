@@ -32,24 +32,46 @@ class AddToCart extends StatelessWidget {
               onPressed: () {},
             ),
           ),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18)),
-                backgroundColor: product.color,
-              ),
-              child: Text(
-                "Buy  Now".toUpperCase(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          if (product.acceptsBarter)
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                  backgroundColor: kBarterColor,
+                ),
+                child: Text(
+                  "Barter".toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
-          ),
+          if (product.acceptsBarter && product.acceptsCurrency)
+            const SizedBox(width: kDefaultPaddin / 2),
+          if (product.acceptsCurrency)
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                  backgroundColor: product.color,
+                ),
+                child: Text(
+                  "Buy \$${product.price}".toUpperCase(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
