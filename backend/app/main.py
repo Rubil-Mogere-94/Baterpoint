@@ -13,7 +13,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from .config import settings
-from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai, analytics
+from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai, analytics, config
 
 # Context variable for request ID tracking
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -108,6 +108,7 @@ app.include_router(coupons.router, prefix=settings.API_V1_STR)
 app.include_router(forum.router, prefix=settings.API_V1_STR)
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 app.include_router(analytics.router, prefix=settings.API_V1_STR)
+app.include_router(config.router, prefix=f"{settings.API_V1_STR}/config")
 logger.info("API routers successfully initialized.")
 
 # Ensure static directories exist

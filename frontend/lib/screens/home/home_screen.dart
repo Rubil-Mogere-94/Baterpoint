@@ -11,6 +11,7 @@ import '../../utils/app_haptics.dart';
 import 'components/categorries.dart';
 import 'components/item_card.dart';
 import '../../services/api_service.dart';
+import '../../services/update_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,6 +43,10 @@ class _HomeScreenState extends State<HomeScreen>
       parent: _auroraController,
       curve: Curves.easeInOut,
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService.checkForUpdates(context);
+    });
   }
 
   @override
