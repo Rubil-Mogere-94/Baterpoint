@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'constants.dart';
 import 'screens/home/home_screen.dart';
+import 'services/app_config_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +14,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    final materialApp = MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Baterpoint Trading',
       theme: ThemeData(
@@ -43,6 +45,13 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const HomeScreen(),
+    );
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppConfigProvider()),
+      ],
+      child: materialApp,
     );
   }
 }

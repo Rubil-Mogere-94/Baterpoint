@@ -26,6 +26,8 @@ async def get_app_config():
             "enable_ai_valuator": True,
             "enable_premium_ui": True,
             "show_holographic_cards": True,
+            "show_featured_carousel": True,
+            "show_aurora_bg": True,
         },
         maintenance_mode=False
     )

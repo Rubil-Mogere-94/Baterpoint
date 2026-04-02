@@ -10,8 +10,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import '../../utils/app_haptics.dart';
 import 'components/categorries.dart';
 import 'components/item_card.dart';
+import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
-import '../../services/update_service.dart';
+import '../../services/app_config_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      UpdateService.checkForUpdates(context);
+      context.read<AppConfigProvider>().fetchConfig(context);
     });
   }
 
@@ -57,6 +58,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final config = context.watch<AppConfigProvider>();
+
     return Scaffold(
       backgroundColor: kBackgroundColor,
       extendBodyBehindAppBar: true,
@@ -117,33 +120,35 @@ class _HomeScreenState extends State<HomeScreen>
           return Stack(
             children: [
               // Aurora background blobs
-              Positioned(
-                top: -80,
-                left: -60 + (_auroraAnim.value * 40),
-                child: _AuroraBlob(
-                  color: kPrimaryColor,
-                  size: 280,
-                  opacity: 0.18 + (_auroraAnim.value * 0.06),
+              if (config.showAuroraBg) ...[
+                Positioned(
+                  top: -80,
+                  left: -60 + (_auroraAnim.value * 40),
+                  child: _AuroraBlob(
+                    color: kPrimaryColor,
+                    size: 280,
+                    opacity: 0.18 + (_auroraAnim.value * 0.06),
+                  ),
                 ),
-              ),
-              Positioned(
-                top: 140,
-                right: -80 + (_auroraAnim.value * -30),
-                child: _AuroraBlob(
-                  color: kGradientAccent,
-                  size: 220,
-                  opacity: 0.12 + (_auroraAnim.value * 0.05),
+                Positioned(
+                  top: 140,
+                  right: -80 + (_auroraAnim.value * -30),
+                  child: _AuroraBlob(
+                    color: kGradientAccent,
+                    size: 220,
+                    opacity: 0.12 + (_auroraAnim.value * 0.05),
+                  ),
                 ),
-              ),
-              Positioned(
-                bottom: 200,
-                left: 20 + (_auroraAnim.value * 20),
-                child: _AuroraBlob(
-                  color: kBarterColor,
-                  size: 160,
-                  opacity: 0.08 + (_auroraAnim.value * 0.04),
+                Positioned(
+                  bottom: 200,
+                  left: 20 + (_auroraAnim.value * 20),
+                  child: _AuroraBlob(
+                    color: kBarterColor,
+                    size: 160,
+                    opacity: 0.08 + (_auroraAnim.value * 0.04),
+                  ),
                 ),
-              ),
+              ],
               // Actual content
               child!,
             ],
@@ -178,43 +183,45 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              // Featured Carousel
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: 180.0,
-                  autoPlay: true,
-                  enlargeCenterPage: true,
-                  autoPlayCurve: Curves.fastOutSlowIn,
-                  enableInfiniteScroll: true,
-                  autoPlayAnimationDuration:
-                      const Duration(milliseconds: 800),
-                  viewportFraction: 0.88,
+              // Featured Carousel (Server-Driven)
+              if (config.showFeaturedCarousel) ...[
+                CarouselSlider(
+                  options: CarouselOptions(
+                    height: 180.0,
+                    autoPlay: true,
+                    enlargeCenterPage: true,
+                    autoPlayCurve: Curves.fastOutSlowIn,
+                    enableInfiniteScroll: true,
+                    autoPlayAnimationDuration:
+                        const Duration(milliseconds: 800),
+                    viewportFraction: 0.88,
+                  ),
+                  items: [
+                    _buildFeaturedCard(
+                      "🔥 Hot Electronics",
+                      "Trade your old phone for a MacBook Pro",
+                      kPrimaryColor,
+                      kGradientAccent,
+                      Icons.devices_rounded,
+                    ),
+                    _buildFeaturedCard(
+                      "✨ Trending Furniture",
+                      "Minimalist pieces available now",
+                      kBarterColor,
+                      kAuroraGreen,
+                      Icons.chair_rounded,
+                    ),
+                    _buildFeaturedCard(
+                      "🚗 Vehicle Swap",
+                      "Find your next ride through barter",
+                      kCurrencyColor,
+                      kGradientAccent,
+                      Icons.directions_car_rounded,
+                    ),
+                  ],
                 ),
-                items: [
-                  _buildFeaturedCard(
-                    "🔥 Hot Electronics",
-                    "Trade your old phone for a MacBook Pro",
-                    kPrimaryColor,
-                    kGradientAccent,
-                    Icons.devices_rounded,
-                  ),
-                  _buildFeaturedCard(
-                    "✨ Trending Furniture",
-                    "Minimalist pieces available now",
-                    kBarterColor,
-                    kAuroraGreen,
-                    Icons.chair_rounded,
-                  ),
-                  _buildFeaturedCard(
-                    "🚗 Vehicle Swap",
-                    "Find your next ride through barter",
-                    kCurrencyColor,
-                    kGradientAccent,
-                    Icons.directions_car_rounded,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
               // Category chips
               Categories(
                 onCategorySelected: (category) {
