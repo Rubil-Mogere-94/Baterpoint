@@ -5,6 +5,8 @@ import 'dart:ui';
 import '../../../utils/app_haptics.dart';
 import '../../../constants.dart';
 import '../../../models/product.dart';
+import 'package:provider/provider.dart';
+import '../../../services/app_config_provider.dart';
 
 class ItemCard extends StatefulWidget {
   const ItemCard({super.key, required this.product, required this.press});
@@ -21,6 +23,8 @@ class _ItemCardState extends State<ItemCard> {
 
   @override
   Widget build(BuildContext context) {
+    final config = context.watch<AppConfigProvider>();
+    
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.95),
       onTapUp: (_) {
@@ -64,13 +68,22 @@ class _ItemCardState extends State<ItemCard> {
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.55),
-                          ],
-                          stops: const [0.4, 1.0],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: config.showHolographicCards
+                              ? [
+                                  Colors.white.withValues(alpha: 0.3),
+                                  Colors.pinkAccent.withValues(alpha: 0.15),
+                                  Colors.cyanAccent.withValues(alpha: 0.15),
+                                  Colors.black.withValues(alpha: 0.6),
+                                ]
+                              : [
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.55),
+                                ],
+                          stops: config.showHolographicCards
+                              ? const [0.0, 0.3, 0.6, 1.0]
+                              : const [0.4, 1.0],
                         ),
                       ),
                     ),

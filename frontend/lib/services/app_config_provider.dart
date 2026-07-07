@@ -18,6 +18,8 @@ class AppConfigProvider extends ChangeNotifier {
 
   bool get showFeaturedCarousel => _featureFlags["show_featured_carousel"] ?? true;
   bool get showAuroraBg => _featureFlags["show_aurora_bg"] ?? true;
+  bool get showHolographicCards => _featureFlags["show_holographic_cards"] ?? false;
+  bool get enableAiValuator => _featureFlags["enable_ai_valuator"] ?? false;
   bool get isMaintenanceMode => _featureFlags["maintenance_mode"] ?? false;
 
   Future<void> fetchConfig(BuildContext context) async {
