@@ -67,7 +67,7 @@ flutter run -d linux
 ```
 
 
-## 📐 Project Structure
+# ## 📐 Project Structure
 
 ```text
 backend/app/
@@ -83,6 +83,16 @@ frontend/lib/
 ├── services/      # API Clients (ListingService, AuthService)
 └── screens/       # Feature Screens (AI Valuator, Analytics Dashboard)
 ```
+
+## ▶️ Run the Application
+
+```bash
+make run
+```
+
+This will spin up the backend services via Docker Compose and launch the Flutter frontend.
+
+Ensure Docker and Flutter are installed and your environment meets the prerequisites described earlier.
 
 ## 📜 License
 Internal Project - All Rights Reserved.
