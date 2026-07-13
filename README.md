@@ -86,11 +86,21 @@ frontend/lib/
 
 ## ▶️ Run the Application
 
+You can launch the entire Baterpoint stack with a single command.
+
+### Using Make
 ```bash
 make run
 ```
+This target starts the backend services via Docker Compose and then runs the Flutter frontend.
 
-This will spin up the backend services via Docker Compose and launch the Flutter frontend.
+### Using the helper script
+```bash
+./run.sh
+```
+The `run.sh` script performs the same steps (Docker Compose up and Flutter run) and can be used directly if you prefer a shell script.
+
+Both methods achieve the same result – the full stack is up and running with one command. 🚀
 
 Ensure Docker and Flutter are installed and your environment meets the prerequisites described earlier.
 
