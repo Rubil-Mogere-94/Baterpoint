@@ -1,5 +1,15 @@
-from sentence_transformers import SentenceTransformer
-import numpy as np
+try:
+    from sentence_transformers import SentenceTransformer
+    _HAS_SENTENCE_TRANSFORMERS = True
+except ImportError:
+    _HAS_SENTENCE_TRANSFORMERS = False
+
+try:
+    import numpy as np
+    _HAS_NUMPY = True
+except ImportError:
+    _HAS_NUMPY = False
+
 from sqlalchemy.orm import Session
 from ..models import ListingModel, UserModel
 
@@ -7,6 +17,8 @@ _model = None
 
 def get_model():
     global _model
+    if not _HAS_SENTENCE_TRANSFORMERS:
+        return None
     if _model is None:
         # Using a small, fast model
         _model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -14,7 +26,10 @@ def get_model():
 
 def generate_embedding(text: str) -> list:
     m = get_model()
+    if m is None:
+        return []
     return m.encode(text).tolist()
+
 
 def update_listing_embedding(db: Session, listing_id: int):
     listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
