@@ -5,6 +5,7 @@ from datetime import timedelta
 import httpx
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
 
 from ..database import get_db
@@ -90,7 +91,7 @@ def random_days():
     import random
     return random.randint(1000, 9999)
 
-from fastapi.security import OAuth2PasswordRequestForm
+
 from typing import Annotated
 from datetime import timedelta
 import httpx
@@ -112,7 +113,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def login_for_access_token(
     request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
-    db: Annotated[Session, Depends(get_db)]
+    db: Annotated[AsyncSession, Depends(get_db)]
 ):
     result = await db.execute(select(UserModel).where(UserModel.username == form_data.username))
     user = result.scalars().first()
@@ -127,7 +128,7 @@ async def login_for_access_token(
 
 @router.post("/register/", response_model=User)
 @limiter.limit("3/minute")
-async def register_user(request: Request, user: UserCreate, db: Annotated[Session, Depends(get_db)]):
+async def register_user(request: Request, user: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(select(UserModel).where((UserModel.username == user.username) | (UserModel.email == user.email)))
     db_user = result.scalars().first()
     if db_user:

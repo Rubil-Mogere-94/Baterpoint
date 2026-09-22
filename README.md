@@ -53,8 +53,9 @@ pip install -r requirements.txt
 # Seed the database with modern trade entries
 python3 seed_data.py
 
-# Launch the backend
-/home/solregem/Baterpoint/backend/venv/bin/python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Launch the full stack with a single command
+cd ..
+./run_all.sh
 ```
 
 ### 3. Frontend Setup (Flutter)
@@ -90,9 +91,9 @@ You can launch the entire Baterpoint stack with a single command.
 
 ### Using Make
 ```bash
-make run
+./run_all.sh
 ```
-This target starts the backend services via Docker Compose and then runs the Flutter frontend.
+Launch the full stack (backend + frontend) with a single command (no Docker required).
 
 ### Using the helper script
 ```bash
@@ -100,9 +101,7 @@ This target starts the backend services via Docker Compose and then runs the Flu
 ```
 The `run.sh` script performs the same steps (Docker Compose up and Flutter run) and can be used directly if you prefer a shell script.
 
-Both methods achieve the same result – the full stack is up and running with one command. 🚀
-
-Ensure Docker and Flutter are installed and your environment meets the prerequisites described earlier.
+**Note:** The script requires Flutter to be installed and available in your `PATH`. Install Flutter from https://flutter.dev and ensure `flutter` is callable.
 
 ## 📜 License
 Internal Project - All Rights Reserved.
