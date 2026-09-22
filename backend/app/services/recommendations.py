@@ -41,7 +41,7 @@ def update_listing_embedding(db: Session, listing_id: int):
     db.commit()
 
 def cosine_similarity(v1, v2):
-    if not v1 or not v2:
+    if not _HAS_NUMPY or not v1 or not v2:
         return 0.0
     v1 = np.array(v1)
     v2 = np.array(v2)
@@ -87,6 +87,8 @@ def recommend_for_user(db: Session, user_id: int, limit: int = 10):
     if not embeddings:
         return db.query(ListingModel).order_by(ListingModel.view_count.desc()).limit(limit).all()
     
+    if not _HAS_NUMPY:
+        return db.query(ListingModel).order_by(ListingModel.view_count.desc()).limit(limit).all()
     user_vector = np.mean(embeddings, axis=0).tolist()
     
     # Find listings similar to the user vector

@@ -1,5 +1,12 @@
-import firebase_admin
-from firebase_admin import credentials, messaging
+try:
+    import firebase_admin
+    from firebase_admin import credentials, messaging
+    _HAS_FIREBASE = True
+except ImportError:
+    _HAS_FIREBASE = False
+    firebase_admin = None
+    credentials = None
+    messaging = None
 from ..config import settings
 import logging
 
@@ -10,6 +17,8 @@ _firebase_app = None
 
 def get_firebase_app():
     global _firebase_app
+    if not _HAS_FIREBASE:
+        return None
     if _firebase_app is None:
         path = settings.FIREBASE_SERVICE_ACCOUNT_PATH
         if path and import_os_exists(path):
