@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Hero Section
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
                             color: kPrimaryColor.withValues(alpha: 0.3),
@@ -127,35 +127,35 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(Icons.auto_awesome,
-                                    color: Colors.white, size: 24),
+                                    color: Colors.white, size: 20),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               const Text(
                                 "Trade Smarter",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 24,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           Text(
-                            "Barter items, find deals, and trade with confidence on Baterpoint.",
+                            "Barter items, find deals, and trade with confidence.",
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.95),
-                              fontSize: 14,
-                              height: 1.5,
+                              fontSize: 12,
+                              height: 1.4,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
@@ -165,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   onTap: () {},
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: _ActionButton(
                                   icon: Icons.auto_awesome,
@@ -178,13 +178,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    // Stats Row
+                    const SizedBox(height: 16),
+                    // Stats Row - compact
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: kSurfaceColor,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: kBorderColor),
                       ),
                       child: Row(
@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           _StatItem(
                             icon: Icons.swap_horiz_rounded,
                             value: "2.4k",
-                            label: "Active Trades",
+                            label: "Trades",
                           ),
                           _StatItem(
                             icon: Icons.people_rounded,
@@ -203,12 +203,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           _StatItem(
                             icon: Icons.check_circle_rounded,
                             value: "98%",
-                            label: "Success Rate",
+                            label: "Success",
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     // Featured Carousel (Server-Driven)
                     if (config.showFeaturedCarousel) ...[
                       _buildFeaturedCarousel(),
@@ -334,10 +334,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         itemCount: productsList.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: kDefaultPadding,
-                          crossAxisSpacing: kDefaultPadding,
-                          childAspectRatio: 0.72,
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 0.6,
                         ),
                         itemBuilder: (context, index) => ItemCard(
                           product: productsList[index],
@@ -365,13 +365,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeaturedCarousel() {
     return CarouselSlider(
       options: CarouselOptions(
-        height: 200,
+        height: 140,
         autoPlay: true,
         enlargeCenterPage: true,
         autoPlayCurve: Curves.easeInOut,
         enableInfiniteScroll: true,
         autoPlayAnimationDuration: const Duration(milliseconds: 600),
-        viewportFraction: 0.88,
+        viewportFraction: 0.85,
         onPageChanged: (index, reason) {},
       ),
       items: [
