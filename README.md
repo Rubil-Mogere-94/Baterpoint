@@ -35,6 +35,12 @@ sudo apt update && sudo apt install -y lld-18 clang-18
 sudo ln -sf /usr/bin/ld.lld-18 /usr/lib/llvm-18/bin/ld.lld
 ```
 
+### Python bcrypt Compatibility
+If you see warnings about "error reading bcrypt version", ensure bcrypt < 4.0.0 is installed:
+```bash
+pip install "bcrypt<4.0.0"
+```
+
 ## ⚙️ Getting Started
 
 ### 1. Clone the repository
@@ -50,13 +56,19 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Seed the database with modern trade entries
+# Seed the database with modern trade entries (optional - tables auto-create on startup)
 python3 seed_data.py
 
 # Launch the full stack with a single command
 cd ..
 ./run_all.sh
 ```
+
+### API Documentation
+Once the backend is running, access:
+- **Swagger UI**: http://localhost:8000/api/v1/docs
+- **ReDoc**: http://localhost:8000/api/v1/redoc
+- **Health Check**: http://localhost:8000/health
 
 ### 3. Frontend Setup (Flutter)
 ```bash
@@ -68,7 +80,7 @@ flutter run -d linux
 ```
 
 
-# ## 📐 Project Structure
+## 📐 Project Structure
 
 ```text
 backend/app/
