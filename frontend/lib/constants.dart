@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
-const kTextColor = Color(0xFFF3F3F3);
-const kTextLightColor = Color(0xFFACACAC);
-const kBackgroundColor = Color(0xFF0A0A18);
-const kPrimaryColor = Color(0xFF7B61FF);
-const kSecondaryColor = Color(0xFF12122A);
-const kBarterColor = Color(0xFF00E676);
-const kCurrencyColor = Color(0xFF29B6F6);
-const kErrorColor = Color(0xFFFF3D00);
+// Modern color palette
+const kTextColor = Color(0xFF1A1A2E);
+const kTextLightColor = Color(0xFF6B7280);
+const kBackgroundColor = Color(0xFFF8F9FA);
+const kPrimaryColor = Color(0xFF6366F1);
+const kSecondaryColor = Color(0xFF10B981);
+const kBarterColor = Color(0xFF8B5CF6);
+const kCurrencyColor = Color(0xFF3B82F6);
+const kErrorColor = Color(0xFFEF4444);
 
-// Glassmorphism & glow tokens
-const kSurfaceColor = Color(0xFF1C1C3A);
-const kCardColor = Color(0xFF16162E);
-const kGlowColor = Color(0xFF7B61FF);
-const kGradientAccent = Color(0xFF00B4D8);
-const kAuroraGreen = Color(0xFF00E5FF);
+// Modern surface colors
+const kSurfaceColor = Color(0xFFFFFFFF);
+const kCardColor = Color(0xFFFAFAFA);
+const kBorderColor = Color(0xFFE5E7EB);
+const kDividerColor = Color(0xFFF3F4F6);
 
-const kDefaultPaddin = 20.0;
+const kDefaultPadding = 16.0;
 const kBaseUrl = "http://localhost:8000";
 const kApiV1 = "/api/v1";
 

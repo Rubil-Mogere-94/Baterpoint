@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../utils/app_haptics.dart';
 import '../../../constants.dart';
 
@@ -12,23 +11,21 @@ class Categories extends StatefulWidget {
 }
 
 const _categoryData = [
-  {"label": "All Trades", "icon": Icons.grid_view_rounded},
+  {"label": "All", "icon": Icons.grid_view_rounded},
   {"label": "Electronics", "icon": Icons.devices_rounded},
   {"label": "Furniture", "icon": Icons.chair_rounded},
   {"label": "Vehicles", "icon": Icons.directions_car_rounded},
   {"label": "Services", "icon": Icons.handshake_rounded},
-];
-
-class _CategoriesState extends State<Categories> {
+];class _CategoriesState extends State<Categories> {
   int selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: 40,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: kDefaultPaddin),
+        padding: const EdgeInsets.symmetric(horizontal: 0),
         itemCount: _categoryData.length,
         itemBuilder: (context, index) => _buildChip(index),
       ),
@@ -47,33 +44,23 @@ class _CategoriesState extends State<Categories> {
         widget.onCategorySelected(label);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.only(right: 10),
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8),
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 14,
-          vertical: 8,
+          horizontal: isSelected ? 20 : 14,
+          vertical: isSelected ? 8 : 6,
         ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           color: isSelected
-              ? kPrimaryColor.withValues(alpha: 0.25)
-              : kSurfaceColor.withValues(alpha: 0.5),
+              ? kPrimaryColor.withValues(alpha: 0.12)
+              : kCardColor,
           border: Border.all(
             color: isSelected
-                ? kPrimaryColor.withValues(alpha: 0.8)
-                : Colors.white.withValues(alpha: 0.07),
-            width: 1.5,
+                ? kPrimaryColor.withValues(alpha: 0.5)
+                : kBorderColor,
+            width: 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: kGlowColor.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    spreadRadius: 0,
-                  )
-                ]
-              : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -88,17 +75,13 @@ class _CategoriesState extends State<Categories> {
               label,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? kTextColor : kTextLightColor,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? kPrimaryColor : kTextLightColor,
               ),
             ),
           ],
         ),
-      )
-          .animate(key: ValueKey(index))
-          .fadeIn(delay: (index * 60).ms, duration: 300.ms)
-          .slideX(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
+      ),
     );
   }
 }

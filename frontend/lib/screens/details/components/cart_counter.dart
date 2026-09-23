@@ -38,7 +38,7 @@ class _CartCounterState extends State<CartCounter> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: kDefaultPaddin / 2),
+          padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding / 2),
           child: Text(
             // if our item is less  then 10 then  it shows 01 02 like that
             numOfItems.toString().padLeft(2, "0"),

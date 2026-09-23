@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../constants.dart';
 import '../../../models/product.dart';
 
@@ -13,37 +12,73 @@ class Description extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            Text(
+              "Description",
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall!
+                  .copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+          ],
+        ),
+        const SizedBox(height: 12),
         Text(
           product.description,
-          style: const TextStyle(
-              height: 1.6, color: kTextLightColor, fontSize: 14),
+          style: TextStyle(
+            height: 1.6,
+            color: kTextLightColor,
+            fontSize: 14,
+          ),
         ),
         if (product.acceptsBarter && product.barterPreference != null) ...[
-          const SizedBox(height: kDefaultPaddin),
-          const Text(
-            "Trade Preferences",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kBarterColor,
-                fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          // Animated pulsing border card
-          _PulsingCard(
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: kBarterColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: kBarterColor.withValues(alpha: 0.2),
+                  width: 1),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.swap_horiz_rounded,
-                    color: kBarterColor, size: 18),
-                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: kBarterColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.swap_horiz_rounded,
+                      color: kBarterColor, size: 16),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    product.barterPreference!,
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: kTextColor,
-                      height: 1.5,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Trade Preference",
+                        style: TextStyle(
+                          color: kBarterColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        product.barterPreference!,
+                        style: const TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: kTextColor,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -52,44 +87,5 @@ class Description extends StatelessWidget {
         ],
       ],
     );
-  }
-}
-
-class _PulsingCard extends StatelessWidget {
-  final Widget child;
-  const _PulsingCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: kBarterColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: kBarterColor.withValues(alpha: 0.35), width: 1.5),
-      ),
-      child: child,
-    )
-        .animate(onPlay: (ctrl) => ctrl.repeat(reverse: true))
-        .custom(
-          duration: const Duration(milliseconds: 1800),
-          builder: (context, value, child) {
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                        kBarterColor.withValues(alpha: 0.15 + value * 0.25),
-                    blurRadius: 8 + value * 14,
-                    spreadRadius: value * 2,
-                  ),
-                ],
-              ),
-              child: child,
-            );
-          },
-        );
   }
 }
