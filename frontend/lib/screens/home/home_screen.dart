@@ -20,7 +20,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
   late Future<List<Product>> _productsFuture;
-  // int _carouselIndex = 0;
 
   @override
   void initState() {
@@ -233,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeaturedCarousel() {
     return CarouselSlider(
       options: CarouselOptions(
-        height: 160,
+        height: 200,
         autoPlay: true,
         enlargeCenterPage: true,
         autoPlayCurve: Curves.easeInOut,
