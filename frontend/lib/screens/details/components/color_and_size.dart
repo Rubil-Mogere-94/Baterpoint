@@ -119,11 +119,11 @@ class _ColorAndSizeState extends State<ColorAndSize> {
 
   List<Widget> _buildProductTags() {
     final List<String> tags = [];
-    if (product.acceptsBarter) tags.add("Barter OK");
-    if (product.acceptsCurrency) tags.add("Buy Now");
-    if (product.condition != null && product.condition!.isNotEmpty)
-      tags.add(product.condition!);
-    if (product.reviewCount > 0) tags.add("${product.reviewCount} reviews");
+    if (widget.product.acceptsBarter) tags.add("Barter OK");
+    if (widget.product.acceptsCurrency) tags.add("Buy Now");
+    if (widget.product.condition != null && widget.product.condition!.isNotEmpty)
+      tags.add(widget.product.condition!);
+    if (widget.product.reviewCount > 0) tags.add("${widget.product.reviewCount} reviews");
     tags.add("Verified");
 
     return tags
