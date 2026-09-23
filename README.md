@@ -1,6 +1,6 @@
 # Baterpoint
 
-Baterpoint is a premium, peer-to-peer trading and listing platform. It features a robust FastAPI backend and a cross-platform Flutter frontend, supporting real-time chat, listing management, and a gamified loyalty system.
+Baterpoint is a **barter-first peer-to-peer trading platform** that also supports cash sales. Built as a modern marketplace where users can trade items directly (barter) or buy/sell with cash. Features a robust FastAPI backend and a cross-platform Flutter frontend, supporting real-time chat, listing management, and a gamified loyalty system.
 
 ## 🎨 V2 Design System
 Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing visual excellence and smooth user experience:
@@ -11,17 +11,28 @@ Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing vis
 
 ## 🚀 Key Features
 
-- **AI-Powered Recommendations**: Personalized listing suggestions using semantic embeddings (`all-MiniLM-L6-v2`) and cosine similarity.
-- **Seller Analytics**: Comprehensive dashboard for sellers to track views, offers, conversion rates, and revenue.
-- **Authentication**: Secure JWT-based login, registration, and **Google Social Login** (OAuth2).
-- **Push Notifications**: Real-time alerts for new offers, messages, and order updates via Firebase Cloud Messaging (FCM).
-- **Sustainability Badges**: Eco-conscious trading with badges for "upcycled", "locally made", and "eco-friendly" items.
-- **Barter Focus**: Multi-item bundle trading and a "Handshake" confirmation system.
-- **Loyalty Shop**: Redeem points for exclusive profile badges and status upgrades.
-- **Gamified Quests**: Real-time progress tracking for listing views, favorites, and chat engagement.
-- **AI Valuations**: Real-time item valuation using AI (Valuator Screen).
-- **Modern AR Showcase**: Immersive AR-style item viewing.
-- **Production Ready**: Rate limiting (SlowAPI), Request ID tracing, structured logging, and robust environment management.
+- **Barter-First Trading**: Core focus on direct item-for-item trades with "Handshake" confirmation system and multi-item bundle trading
+- **Flexible Trade Types**: List items as Barter-only, Sale-only, or Both (trade or cash)
+- **AI-Powered Recommendations**: Personalized listing suggestions using semantic embeddings (`all-MiniLM-L6-v2`) and cosine similarity
+- **Seller Analytics**: Comprehensive dashboard for sellers to track views, offers, conversion rates, and revenue
+- **Authentication**: Secure JWT-based login, registration, and **Google Social Login** (OAuth2)
+- **Push Notifications**: Real-time alerts for new offers, messages, and order updates via Firebase Cloud Messaging (FCM)
+- **Sustainability Badges**: Eco-conscious trading with badges for "upcycled", "locally made", and "eco-friendly" items
+- **Loyalty Shop**: Redeem points for exclusive profile badges and status upgrades
+- **Gamified Quests**: Real-time progress tracking for listing views, favorites, and chat engagement
+- **AI Valuations**: Real-time item valuation using AI (Valuator Screen)
+- **Modern AR Showcase**: Immersive AR-style item viewing
+- **Production Ready**: Rate limiting (SlowAPI), Request ID tracing, structured logging, and robust environment management
+
+## 🔄 Barter System
+
+Baterpoint's core is built around barter trading:
+
+- **Trade Types**: Each listing can be `Barter` (item-for-item), `Sale` (cash only), or `Both`
+- **Direct Offers**: Make offers with items you own + optional cash adjustment
+- **Handshake Confirmation**: Both parties confirm before trade completes
+- **Multi-Item Bundles**: Trade multiple items in a single transaction
+- **Smart Matching**: AI recommends compatible trades based on your listings and favorites
 
 ## 🛠️ Prerequisites & Troubleshooting
 
