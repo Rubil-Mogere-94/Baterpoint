@@ -24,7 +24,7 @@ class _ColorAndSizeState extends State<ColorAndSize> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Condition chips header
+        // Condition selector header
         Row(
           children: [
             Text(
@@ -35,13 +35,6 @@ class _ColorAndSizeState extends State<ColorAndSize> {
                   .copyWith(fontWeight: FontWeight.w600),
             ),
             const Spacer(),
-            Text(
-              "${_selectedCondition + 1}/${_conditions.length}",
-              style: TextStyle(
-                color: kTextLightColor,
-                fontSize: 12,
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -83,11 +76,11 @@ class _ColorAndSizeState extends State<ColorAndSize> {
           }),
         ),
         const SizedBox(height: 24),
-        // Tags
+        // Tags/Badges
         Row(
           children: [
             Text(
-              "Tags",
+              "Details",
               style: Theme.of(context)
                   .textTheme
                   .titleSmall!
@@ -99,37 +92,121 @@ class _ColorAndSizeState extends State<ColorAndSize> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _tagsForProduct(widget.product)
-              .map(
-                (tag) => Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: kSurfaceColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: kBorderColor),
-                  ),
-                  child: Text(
-                    tag,
-                    style: const TextStyle(
-                        color: kTextLightColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-              )
-              .toList(),
+          children: _buildProductTags(),
+        ),
+        const SizedBox(height: 16),
+        // Trust signals
+        Row(
+          children: [
+            Text(
+              "Trust & Safety",
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall!
+                  .copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _buildTrustSignals(),
         ),
       ],
     );
   }
 
-  List<String> _tagsForProduct(Product product) {
-    final tags = <String>[];
-    if (product.acceptsBarter) tags.add("Barter");
-    if (product.acceptsCurrency) tags.add("Sale");
-    if (product.barterPreference != null) tags.add("Trade Wanted");
+  List<Widget> _buildProductTags() {
+    final List<String> tags = [];
+    if (product.acceptsBarter) tags.add("Barter OK");
+    if (product.acceptsCurrency) tags.add("Buy Now");
+    if (product.condition != null && product.condition!.isNotEmpty)
+      tags.add(product.condition!);
+    if (product.reviewCount > 0) tags.add("${product.reviewCount} reviews");
     tags.add("Verified");
-    return tags;
+
+    return tags
+        .map((tag) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: kSurfaceColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: kBorderColor),
+          ),
+          child: Text(
+            tag,
+            style: const TextStyle(
+                color: kTextLightColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500),
+          ),
+        ))
+        .toList();
+  }
+
+  List<Widget> _buildTrustSignals() {
+    final List<Widget> signals = [];
+    signals.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: kSurfaceColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: kBorderColor),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded,
+                color: Color(0xFF10B981), size: 16),
+            SizedBox(width: 8),
+            Text("Identity Verified",
+                style: TextStyle(color: kTextColor, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+
+    signals.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: kSurfaceColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: kBorderColor),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.shield_rounded,
+                color: kPrimaryColor, size: 16),
+            SizedBox(width: 8),
+            Text("Secure Trade",
+                style: TextStyle(color: kTextColor, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+
+    signals.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: kSurfaceColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: kBorderColor),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.history_rounded,
+                color: kTextLightColor, size: 16),
+            SizedBox(width: 8),
+            Text("Member since 2024",
+                style: TextStyle(color: kTextColor, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+
+    return signals;
   }
 }

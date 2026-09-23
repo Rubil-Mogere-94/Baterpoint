@@ -15,79 +15,71 @@ class ProductTitleWithImage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hero image with gradient glow
-          SizedBox(
-            width: double.infinity,
-            height: 240,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          product.color.withValues(alpha: 0.15),
-                          kSurfaceColor,
-                        ],
+          // Product image with gradient overlay
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: SizedBox(
+              height: 180,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  // Background color
+                  Container(
+                    color: product.color.withValues(alpha: 0.15),
+                  ),
+                  // Decorations
+                  Positioned(
+                    right: -30,
+                    top: -30,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: product.color.withValues(alpha: 0.2),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  right: -30,
-                  top: -30,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: product.color.withValues(alpha: 0.2),
+                  Positioned(
+                    left: -20,
+                    bottom: -20,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: kPrimaryColor.withValues(alpha: 0.15),
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: -20,
-                  bottom: -20,
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: kPrimaryColor.withValues(alpha: 0.15),
+                  // Product image - smaller, more concise
+                  Positioned.fill(
+                    child: Center(
+                      child: product.image.startsWith('http')
+                          ? CachedNetworkImage(
+                              imageUrl: product.image,
+                              height: 150,
+                              placeholder: (context, url) =>
+                                  const Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2)),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.broken_image,
+                                      color: kTextLightColor, size: 48),
+                              fit: BoxFit.contain,
+                            )
+                          : Image.asset(
+                              product.image,
+                              height: 150,
+                              fit: BoxFit.contain,
+                            ),
                     ),
                   ),
-                ),
-                Hero(
-                  tag: "${product.id}",
-                  child: product.image.startsWith('http')
-                      ? CachedNetworkImage(
-                          imageUrl: product.image,
-                          height: 200,
-                          placeholder: (context, url) =>
-                              const Center(
-                                  child:
-                                      CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: kPrimaryColor)),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.broken_image,
-                                  color: kTextLightColor,
-                                  size: 48),
-                          fit: BoxFit.contain,
-                        )
-                      : Image.asset(
-                          product.image,
-                          height: 200,
-                          fit: BoxFit.contain,
-                        ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             product.title,
             maxLines: 2,
@@ -100,15 +92,6 @@ class ProductTitleWithImage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   height: 1.3,
                 ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Baterpoint Listing",
-            style: const TextStyle(
-              color: kTextLightColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
           ),
         ],
       ),

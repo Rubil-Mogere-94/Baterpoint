@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisCount: 2,
                           mainAxisSpacing: kDefaultPadding,
                           crossAxisSpacing: kDefaultPadding,
-                          childAspectRatio: 0.7,
+                          childAspectRatio: 0.72,
                         ),
                         itemBuilder: (context, index) => ItemCard(
                           product: productsList[index],

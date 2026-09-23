@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class Product {
   final String image, title, description;
   final int price, id;
-  final int size; // Keeping size metadata
+  final int size;
   final Color color;
   final bool acceptsBarter;
   final bool acceptsCurrency;
   final String? barterPreference;
+  final double rating;
+  final int reviewCount;
+  final bool inStock;
+  final String? condition;
 
   Product({
     required this.image,
@@ -20,6 +24,10 @@ class Product {
     this.acceptsBarter = false,
     this.acceptsCurrency = true,
     this.barterPreference,
+    this.rating = 0.0,
+    this.reviewCount = 0,
+    this.inStock = true,
+    this.condition,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -29,12 +37,16 @@ class Product {
       title: json['title'],
       description: json['description'] ?? '',
       price: (json['cashPrice'] ?? 0.0).round(),
-      size: 10, // Default metadata
-      image: json['imageUrl'] ?? 'assets/images/bag_1.png',
+      size: 10,
+      image: json['imageUrl'] ?? 'assets/images/placeholder.png',
       color: _getColorForId(json['id']),
       acceptsBarter: tradeType == 'Barter' || tradeType == 'Both',
       acceptsCurrency: tradeType == 'Sale' || tradeType == 'Both',
       barterPreference: json['exchangeItem'],
+      rating: (json['rating'] ?? 0.0).toDouble(),
+      reviewCount: json['reviewCount'] ?? 0,
+      inStock: json['inStock'] ?? true,
+      condition: json['condition'],
     );
   }
 
@@ -50,9 +62,3 @@ class Product {
     return colors[id % colors.length];
   }
 }
-
-// Keeping this for accidental falls back but ideally we use the API
-List<Product> products = [];
-
-String dummyText =
-    "This item is available for trade on Baterpoint. Check the seller's preferences to see if they accept direct barter or currency equivalent.";

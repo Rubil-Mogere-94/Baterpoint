@@ -14,15 +14,13 @@ class DetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: kBackgroundColor,
       body: CustomScrollView(
         physics: const ClampingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: size.height * 0.5,
+            expandedHeight: 280,
             pinned: true,
             backgroundColor: kSurfaceColor,
             surfaceTintColor: Colors.transparent,
@@ -36,7 +34,7 @@ class DetailsScreen extends StatelessWidget {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.favorite_border_rounded),
+                icon: const Icon(Icons.favorite_rounded),
                 onPressed: () {},
               ),
               IconButton(
@@ -51,48 +49,156 @@ class DetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Price and barter info
+                  // Rating & price section
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: kPrimaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: kSurfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: kBorderColor),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        if (product.acceptsBarter && product.barterPreference != null)
-                          Row(
-                            children: [
-                              Icon(Icons.swap_horiz_rounded,
-                                  color: kBarterColor, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                product.barterPreference!,
-                                style: const TextStyle(
-                                  color: kBarterColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
+                        Row(
+                          children: [
+                            if (product.rating > 0)
+                              Row(
+                                children: [
+                                  const Icon(Icons.star_rounded,
+                                      color: Colors.amber, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    product.rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: kTextColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(${product.reviewCount})',
+                                    style: const TextStyle(
+                                      color: kTextLightColor,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: kPrimaryColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'New listing',
+                                  style: TextStyle(
+                                    color: kPrimaryColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            '\$${product.price}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge!
-                                .copyWith(
-                                  color: kTextColor,
-                                  fontWeight: FontWeight.bold,
+                            const Spacer(),
+                            if (product.inStock)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
+                                child: const Text(
+                                  'In Stock',
+                                  style: TextStyle(
+                                    color: Color(0xFF1B5E20),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '\$${product.price}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium!
+                              .copyWith(
+                                color: kTextColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.acceptsBarter
+                              ? 'Accepts barter trades'
+                              : 'Currency purchase only',
+                          style: const TextStyle(
+                            color: kTextLightColor,
+                            fontSize: 13,
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Trade preference card
+                  if (product.acceptsBarter && product.barterPreference != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: kBarterColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: kBarterColor.withValues(alpha: 0.2),
+                            width: 1),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: kBarterColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(Icons.swap_horiz_rounded,
+                                color: kBarterColor, size: 16),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Trade Preference',
+                                  style: TextStyle(
+                                    color: kBarterColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  product.barterPreference!,
+                                  style: const TextStyle(
+                                    color: kTextColor,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   // Product details
                   ColorAndSize(product: product),
                   const SizedBox(height: 24),
@@ -104,7 +210,7 @@ class DetailsScreen extends StatelessWidget {
               ),
             ),
           ),
-          // CTA Button
+          // Sticky CTA Button
           SliverFillRemaining(
             hasScrollBody: false,
             child: Container(
