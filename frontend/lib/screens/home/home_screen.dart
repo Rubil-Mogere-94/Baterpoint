@@ -212,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Featured Carousel (Server-Driven)
                     if (config.showFeaturedCarousel) ...[
                       _buildFeaturedCarousel(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                     ],
                     // Categories header
                     Text(
@@ -222,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           .titleLarge!
                           .copyWith(fontWeight: FontWeight.w600),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Categories(
                       onCategorySelected: (category) {
                         setState(() {
@@ -233,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     // Listings header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
