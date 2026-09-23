@@ -37,17 +37,48 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
-        title: const Text('Baterpoint'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [kPrimaryColor, kBarterColor],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.compare_arrows_rounded,
+                  color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text('Baterpoint'),
+          ],
+        ),
         centerTitle: true,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: kSurfaceColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.search_rounded),
+            ),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.shopping_cart_rounded),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: kSurfaceColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.shopping_cart_rounded),
+            ),
             onPressed: () {},
           ),
         ],
@@ -70,39 +101,61 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Hero Section
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
                             kPrimaryColor,
-                            kPrimaryColor.withValues(alpha: 0.8),
+                            kPrimaryColor.withValues(alpha: 0.85),
+                            kBarterColor.withValues(alpha: 0.7),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimaryColor.withValues(alpha: 0.3),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Trade Smarter",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.auto_awesome,
+                                    color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Trade Smarter",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           Text(
                             "Barter items, find deals, and trade with confidence on Baterpoint.",
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Colors.white.withValues(alpha: 0.95),
                               fontSize: 14,
                               height: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
                           Row(
                             children: [
                               Expanded(
@@ -355,6 +408,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -395,8 +455,15 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.compare_arrows_rounded,
-                    color: Colors.white, size: 28),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.compare_arrows_rounded,
+                      color: Colors.white, size: 28),
+                ),
                 const SizedBox(height: 12),
                 Text(title,
                     style: const TextStyle(
@@ -465,7 +532,14 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: kPrimaryColor, size: 24),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: kPrimaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: kPrimaryColor, size: 24),
+        ),
         const SizedBox(height: 8),
         Text(
           value,
