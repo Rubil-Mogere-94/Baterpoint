@@ -67,23 +67,95 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Greeting
-                    Text(
-                      "Welcome Back",
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall!
-                          .copyWith(fontWeight: FontWeight.w700),
+                    // Hero Section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            kPrimaryColor,
+                            kPrimaryColor.withValues(alpha: 0.8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Trade Smarter",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Barter items, find deals, and trade with confidence on Baterpoint.",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _ActionButton(
+                                  icon: Icons.add_circle_outline,
+                                  label: "List Item",
+                                  onTap: () {},
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _ActionButton(
+                                  icon: Icons.auto_awesome,
+                                  label: "AI Valuator",
+                                  onTap: () {},
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Discover trades you'll love",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge!
-                          .copyWith(color: kTextLightColor),
+                    const SizedBox(height: 24),
+                    // Stats Row
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: kSurfaceColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: kBorderColor),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _StatItem(
+                            icon: Icons.swap_horiz_rounded,
+                            value: "2.4k",
+                            label: "Active Trades",
+                          ),
+                          _StatItem(
+                            icon: Icons.people_rounded,
+                            value: "1.8k",
+                            label: "Traders",
+                          ),
+                          _StatItem(
+                            icon: Icons.check_circle_rounded,
+                            value: "98%",
+                            label: "Success Rate",
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     // Featured Carousel (Server-Driven)
                     if (config.showFeaturedCarousel) ...[
                       _buildFeaturedCarousel(),
@@ -188,6 +260,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyLarge),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Be the first to list an item!',
+                              style: TextStyle(
+                                color: kTextLightColor,
+                                fontSize: 14,
+                              ),
+                            ),
                           ],
                         ),
                       );
@@ -333,6 +413,77 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: kPrimaryColor,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _StatItem({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(icon, color: kPrimaryColor, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: kTextColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: kTextLightColor,
+          ),
+        ),
+      ],
     );
   }
 }
