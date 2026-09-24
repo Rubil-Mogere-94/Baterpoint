@@ -18,7 +18,7 @@ const kBorderColor = Color(0xFFE5E7EB);
 const kDividerColor = Color(0xFFF3F4F6);
 
 const kDefaultPadding = 16.0;
-const kBaseUrl = "http://10.0.2.2:8000";
+const kBaseUrl = "http://localhost:8000";
 const kApiV1 = "/api/v1";
 
 
