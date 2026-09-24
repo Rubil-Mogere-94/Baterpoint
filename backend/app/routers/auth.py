@@ -37,7 +37,10 @@ def login_for_access_token(
     login_data: LoginRequest,
     db: Annotated[Session, Depends(get_db)]
 ):
-    user = db.query(UserModel).filter(UserModel.username == login_data.username).first()
+    username = login_data.username
+    user = db.query(UserModel).filter(UserModel.username == username).first()
+    if not user:
+        user = db.query(UserModel).filter(UserModel.email == username).first()
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
