@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
+import '../home/home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -50,16 +51,12 @@ class _AuthScreenState extends State<AuthScreen> {
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
-    } catch (e) {
+} catch (e) {
         String msg = 'An error occurred';
         if (e is AuthException) {
-          if (e.statusCode == 400) {
-            msg = 'Username or email already exists';
-          } else if (e.statusCode == 422) {
-            msg = e.message;
-          } else {
-            msg = e.message;
-          }
+          msg = e.message;
+        } else if (e is NetworkException) {
+          msg = e.message;
         } else if (e.toString().contains('SocketException')) {
           msg = 'No internet connection';
         } else if (e.toString().contains('401')) {
@@ -74,7 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           );
         }
-    } finally {
+      } finally {
       if (mounted) setState(() => _loading = false);
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
@@ -5,17 +6,27 @@ import '../constants.dart';
 class AuthException implements Exception {
   final String message;
   final int statusCode;
-  AuthException(this.message, this.statusCode);
+  final String error;
+  AuthException(this.message, this.statusCode, {this.error = ''});
   @override
   String toString() => 'AuthException($statusCode): $message';
+}
+
+class NetworkException implements Exception {
+  final String message;
+  NetworkException(this.message);
+  @override
+  String toString() => 'NetworkException: $message';
 }
 
 class AuthService {
   static const String _baseUrl = kBaseUrl;
   static const String _v1 = kApiV1;
+  static const int _timeoutMs = 15000;
 
   static String _extractError(dynamic data) {
     if (data is Map) {
+      if (data['message'] is String) return data['message'];
       if (data['detail'] is String) return data['detail'];
       if (data['detail'] is List) {
         final details = data['detail'] as List;
@@ -28,27 +39,44 @@ class AuthService {
           }
           return msg.toString();
         }
+        return details.first.toString();
       }
     }
     return 'Authentication failed';
+  }
+
+  static Future<http.Response> _post(Uri uri, Map<String, dynamic> body) async {
+    try {
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      ).timeout(const Duration(milliseconds: _timeoutMs));
+      return response;
+    } on http.ClientException catch (e) {
+      throw NetworkException('Network error: ${e.message}');
+    } on TimeoutException {
+      throw NetworkException('Request timed out. Check your connection.');
+    } catch (e) {
+      if (e is NetworkException) rethrow;
+      throw NetworkException('Unexpected error: $e');
+    }
   }
 
   static Future<String> login({
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
+    final response = await _post(
       Uri.parse('$_baseUrl$_v1/token'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': email,
-        'password': password,
-      }),
+      {'username': email, 'password': password},
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['access_token'] as String;
+      final token = data['access_token'];
+      if (token is String && token.isNotEmpty) return token;
+      throw AuthException('Invalid response from server', response.statusCode);
     }
     final body = jsonDecode(response.body);
     throw AuthException(_extractError(body), response.statusCode);
@@ -59,19 +87,16 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final response = await http.post(
+    final response = await _post(
       Uri.parse('$_baseUrl$_v1/register/'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username,
-        'email': email,
-        'password': password,
-      }),
+      {'username': username, 'email': email, 'password': password},
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['access_token'] as String;
+      final token = data['access_token'];
+      if (token is String && token.isNotEmpty) return token;
+      throw AuthException('Invalid response from server', response.statusCode);
     }
     final body = jsonDecode(response.body);
     throw AuthException(_extractError(body), response.statusCode);
