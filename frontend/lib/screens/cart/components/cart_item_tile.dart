@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants.dart';
+import '../../../constants.dart';
 
 class CartItemTile extends StatelessWidget {
   final dynamic product;

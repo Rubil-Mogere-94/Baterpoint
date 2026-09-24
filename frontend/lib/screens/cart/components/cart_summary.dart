@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants.dart';
+import '../../../constants.dart';
 
 class CartSummary extends StatelessWidget {
   final List<dynamic> items;
@@ -11,7 +11,7 @@ class CartSummary extends StatelessWidget {
         0, (sum, item) => sum + (item.price ?? 0).toDouble());
 
     return Container(
-      padding: const EdgeInsets.all(kDefaultPadding),
+      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: kSurfaceColor,
         boxShadow: [

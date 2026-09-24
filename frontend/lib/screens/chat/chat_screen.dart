@@ -23,7 +23,7 @@ class ChatScreen extends StatelessWidget {
           _buildChatTile(
             context,
             name: 'Bob',
-            message: 'I can offer $150 for the guitar',
+            message: "I can offer \$150 for the guitar",
             time: '1h ago',
             unread: 0,
           ),
