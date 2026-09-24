@@ -49,7 +49,7 @@ class DetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Rating & price section - Card.filled
+                  // Rating & price section - filled Card
                   Card.filled(
                     surfaceTintColor: kSurfaceColor,
                     color: kSurfaceColor,
@@ -229,5 +229,4 @@ class DetailsScreen extends StatelessWidget {
       ),
     );
   }
-}
 }

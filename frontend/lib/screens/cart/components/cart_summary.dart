@@ -11,7 +11,7 @@ class CartSummary extends StatelessWidget {
         0, (sum, item) => sum + (item.price ?? 0).toDouble());
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: kSurfaceColor,
         boxShadow: [

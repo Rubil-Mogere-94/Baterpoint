@@ -70,7 +70,7 @@ class _AuthScreenState extends State<AuthScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(kDefaultPadding),
-            child: Card.elevated(
+            child: Card(
               elevation: 0,
               surfaceTintColor: Colors.transparent,
               color: kSurfaceColor,

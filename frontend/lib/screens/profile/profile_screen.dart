@@ -13,68 +13,94 @@ class ProfileScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(kDefaultPadding),
         children: [
-          Center(
-            child: CircleAvatar(
-              radius: 50,
-              backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
-              child: Icon(
-                Icons.person_rounded,
-                size: 50,
-                color: kPrimaryColor,
+          // Profile header card
+          Card(
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            color: kSurfaceColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(color: kBorderColor, width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 50,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Trader',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'trader@baterpoint.com',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: kTextLightColor,
+                        ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              'Trader',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+          const SizedBox(height: 24),
+          // Stats row
+          Row(
+            children: [
+              Expanded(child: _StatCard(value: '24', label: 'Listings', icon: Icons.list_alt_rounded)),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(value: '12', label: 'Trades', icon: Icons.swap_horiz_rounded)),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(value: '98%', label: 'Success', icon: Icons.check_circle_rounded)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Menu items
+          Card.outlined(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-          ),
-          const SizedBox(height: 4),
-          Center(
-            child: Text(
-              'trader@baterpoint.com',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: kTextLightColor,
-                  ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(Icons.history_rounded, color: kPrimaryColor),
+                  title: const Text('My Orders'),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  onTap: () {},
+                ),
+                Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: Icon(Icons.favorite_rounded, color: kBarterColor),
+                  title: const Text('Favorites'),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  onTap: () {},
+                ),
+                Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: Icon(Icons.stars_rounded, color: Colors.amber),
+                  title: const Text('Loyalty Shop'),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  onTap: () {},
+                ),
+                Divider(height: 1, indent: 56),
+                ListTile(
+                  leading: Icon(Icons.settings_rounded, color: kTextLightColor),
+                  title: const Text('Settings'),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                  onTap: () {},
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 32),
-          _buildStatCard(context, '24', 'Listings', Icons.list_alt_rounded),
-          const SizedBox(height: 12),
-          _buildStatCard(context, '12', 'Trades', Icons.swap_horiz_rounded),
-          const SizedBox(height: 12),
-          _buildStatCard(context, '98%', 'Success', Icons.check_circle_rounded),
-          const SizedBox(height: 32),
-          ListTile(
-            leading: Icon(Icons.history_rounded, color: kPrimaryColor),
-            title: const Text('My Orders'),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {},
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(Icons.favorite_rounded, color: kBarterColor),
-            title: const Text('Favorites'),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {},
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(Icons.stars_rounded, color: Colors.amber),
-            title: const Text('Loyalty Shop'),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {},
-          ),
-          const Divider(),
-          ListTile(
-            leading: Icon(Icons.settings_rounded, color: kTextLightColor),
-            title: const Text('Settings'),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16),
-            onTap: () {},
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -93,13 +119,28 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildStatCard(
-      BuildContext context, String value, String label, IconData icon) {
+class _StatCard extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+
+  const _StatCard({required this.value, required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      color: kSurfaceColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: kBorderColor, width: 1),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -109,24 +150,20 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Icon(icon, color: kPrimaryColor, size: 24),
             ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: kTextColor,
-                      ),
-                ),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: kTextLightColor,
-                      ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: kTextColor,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: kTextLightColor,
+                  ),
             ),
           ],
         ),

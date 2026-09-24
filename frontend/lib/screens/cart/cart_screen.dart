@@ -37,8 +37,11 @@ class CartScreen extends StatelessWidget {
                   child: ListView.builder(
                     padding: const EdgeInsets.all(kDefaultPadding),
                     itemCount: items.length,
-                    itemBuilder: (context, index) => CartItemTile(
-                      product: items[index],
+                    itemBuilder: (context, index) => Card.outlined(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: CartItemTile(product: items[index]),
                     ),
                   ),
                 ),

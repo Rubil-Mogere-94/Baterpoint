@@ -12,28 +12,43 @@ class ChatScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(kDefaultPadding),
         children: [
-          _buildChatTile(
-            context,
-            name: 'Alice',
-            message: 'Hey, is the MacBook still available?',
-            time: '2m ago',
-            unread: 2,
+          Card.outlined(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _buildChatTile(
+              context,
+              name: 'Alice',
+              message: 'Hey, is the MacBook still available?',
+              time: '2m ago',
+              unread: 2,
+            ),
           ),
-          const Divider(),
-          _buildChatTile(
-            context,
-            name: 'Bob',
-            message: "I can offer \$150 for the guitar",
-            time: '1h ago',
-            unread: 0,
+          const SizedBox(height: 8),
+          Card.outlined(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _buildChatTile(
+              context,
+              name: 'Bob',
+              message: 'I can offer \$150 for the guitar',
+              time: '1h ago',
+              unread: 0,
+            ),
           ),
-          const Divider(),
-          _buildChatTile(
-            context,
-            name: 'Carol',
-            message: 'Thanks for the trade!',
-            time: '3h ago',
-            unread: 0,
+          const SizedBox(height: 8),
+          Card.outlined(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _buildChatTile(
+              context,
+              name: 'Carol',
+              message: 'Thanks for the trade!',
+              time: '3h ago',
+              unread: 0,
+            ),
           ),
         ],
       ),
