@@ -103,7 +103,7 @@ def forgot_password(request: Request, body: PasswordResetRequest, db: Annotated[
 @router.post("/reset")
 def reset_password(request: Request, body: PasswordResetConfirm, db: Annotated[Session, Depends(get_db)]):
     reset = db.query(PasswordResetToken).filter(PasswordResetToken.token == body.token).first()
-    if not reset or reset.used or reset.expires_at < datetime.now(timezone.utc):
+    if not reset or reset.used or reset.expires_at < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
     user = db.query(UserModel).filter(UserModel.id == reset.user_id).first()
     if not user:
