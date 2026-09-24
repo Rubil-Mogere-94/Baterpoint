@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
-import '../home/home_screen.dart';
+import 'forgot_password_screen.dart';
+import 'reset_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -211,6 +212,16 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Forgot Password?'),
+                        ),
                         TextButton(
                           onPressed: () {
                             setState(() => _isLogin = !_isLogin);

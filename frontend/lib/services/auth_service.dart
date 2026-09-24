@@ -71,7 +71,6 @@ class AuthService {
       Uri.parse('$_baseUrl$_v1/token'),
       {'username': email, 'password': password},
     );
-
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['access_token'];
@@ -91,7 +90,6 @@ class AuthService {
       Uri.parse('$_baseUrl$_v1/register/'),
       {'username': username, 'email': email, 'password': password},
     );
-
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['access_token'];
@@ -100,6 +98,44 @@ class AuthService {
     }
     final body = jsonDecode(response.body);
     throw AuthException(_extractError(body), response.statusCode);
+  }
+
+  static Future<String> refreshToken(String refreshToken) async {
+    final response = await _post(
+      Uri.parse('$_baseUrl$_v1/refresh'),
+      {},
+    );
+    response.headers['Authorization'] = 'Bearer $refreshToken';
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final token = data['access_token'];
+      if (token is String && token.isNotEmpty) return token;
+      throw AuthException('Invalid response from server', response.statusCode);
+    }
+    final body = jsonDecode(response.body);
+    throw AuthException(_extractError(body), response.statusCode);
+  }
+
+  static Future<void> forgotPassword(String email) async {
+    final response = await _post(
+      Uri.parse('$_baseUrl$_v1/forgot'),
+      {'email': email},
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw AuthException(_extractError(body), response.statusCode);
+    }
+  }
+
+  static Future<void> resetPassword(String token, String password) async {
+    final response = await _post(
+      Uri.parse('$_baseUrl$_v1/reset'),
+      {'token': token, 'password': password},
+    );
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw AuthException(_extractError(body), response.statusCode);
+    }
   }
 
   static void logout() {}

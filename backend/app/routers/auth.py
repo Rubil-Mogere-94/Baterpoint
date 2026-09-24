@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from typing import Annotated
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 import httpx
-import random
 
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import UserModel
-from ..schemas import Token, UserCreate, User
-from ..auth_utils import verify_password, create_access_token, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..models import UserModel, PasswordResetToken
+from ..schemas import Token, UserCreate, User, PasswordResetRequest, PasswordResetConfirm
+from ..auth_utils import (
+    verify_password, create_access_token, create_refresh_token,
+    get_password_hash, decode_token, generate_reset_token, ACCESS_TOKEN_EXPIRE_MINUTES
+)
 from ..config import settings
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -18,12 +20,7 @@ router = APIRouter(tags=["Authentication"])
 limiter = Limiter(key_func=get_remote_address)
 
 
-def random_days():
-    return random.randint(1000, 9999)
-
-
 from pydantic import BaseModel
-
 
 class LoginRequest(BaseModel):
     username: str
@@ -38,17 +35,19 @@ def login_for_access_token(
     db: Annotated[Session, Depends(get_db)]
 ):
     username = login_data.username
+    password = login_data.password
     user = db.query(UserModel).filter(UserModel.username == username).first()
     if not user:
         user = db.query(UserModel).filter(UserModel.email == username).first()
-    if not user or not verify_password(login_data.password, user.hashed_password):
+    if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer", "refresh_token": refresh_token}
 
 
 @router.post("/register/", response_model=User)
@@ -71,31 +70,45 @@ def register_user(request: Request, user: UserCreate, db: Annotated[Session, Dep
     return new_user
 
 
-@router.post("/google", response_model=Token)
-async def google_login(token: str, db: Session = Depends(get_db)):
-    """Verify Google ID token and return access token."""
-    GOOGLE_CLIENT_ID = settings.GOOGLE_CLIENT_ID
-    if not GOOGLE_CLIENT_ID:
-        raise HTTPException(status_code=500, detail="Google Login not configured on server")
-    async with httpx.AsyncClient() as client:
-        response = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}")
-    if response.status_code != 200:
-        raise HTTPException(status_code=400, detail="Invalid Google token")
-    user_info = response.json()
-    if user_info["aud"] != GOOGLE_CLIENT_ID:
-        raise HTTPException(status_code=400, detail="Invalid audience")
-    email = user_info["email"]
-    name = user_info.get("name", email.split("@")[0])
-    user = db.query(UserModel).filter(UserModel.email == email).first()
+@router.post("/refresh", response_model=Token)
+def refresh_token(request: Request, db: Annotated[Session, Depends(get_db)]):
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing refresh token")
+    token = auth_header[7:]
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    username = payload.get("sub")
+    user = db.query(UserModel).filter(UserModel.username == username).first()
     if not user:
-        user = UserModel(
-            username=name,
-            email=email,
-            hashed_password=get_password_hash(str(random_days())),
-            role="user",
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        raise HTTPException(status_code=401, detail="User not found")
     access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+    new_refresh = create_refresh_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer", "refresh_token": new_refresh}
+
+
+@router.post("/forgot")
+@limiter.limit("3/minute")
+def forgot_password(request: Request, body: PasswordResetRequest, db: Annotated[Session, Depends(get_db)]):
+    user = db.query(UserModel).filter(UserModel.email == body.email).first()
+    if user:
+        token = generate_reset_token()
+        expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        db.add(PasswordResetToken(user_id=user.id, token=token, expires_at=expires))
+        db.commit()
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+
+@router.post("/reset")
+def reset_password(request: Request, body: PasswordResetConfirm, db: Annotated[Session, Depends(get_db)]):
+    reset = db.query(PasswordResetToken).filter(PasswordResetToken.token == body.token).first()
+    if not reset or reset.used or reset.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    user = db.query(UserModel).filter(UserModel.id == reset.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.hashed_password = get_password_hash(body.password)
+    reset.used = True
+    db.commit()
+    return {"message": "Password has been reset successfully."}

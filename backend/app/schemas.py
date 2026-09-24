@@ -30,6 +30,17 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
+class PasswordResetRequest(BaseModel):
+    email: str
+
+class PasswordReset(BaseModel):
+    token: str
+    password: str = Field(min_length=8, max_length=72)
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    password: str = Field(min_length=8, max_length=72)
+
 class ReviewCreate(BaseModel):
     listing_id: int
     rating: int = Field(ge=1, le=5)

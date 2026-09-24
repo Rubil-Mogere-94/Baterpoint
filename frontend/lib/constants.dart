@@ -9,6 +9,7 @@ const kSecondaryColor = Color(0xFF10B981);
 const kBarterColor = Color(0xFF8B5CF6);
 const kCurrencyColor = Color(0xFF3B82F6);
 const kErrorColor = Color(0xFFEF4444);
+const kMessageColor = Color(0xFF10B981);
 
 // Modern surface colors
 const kSurfaceColor = Color(0xFFFFFFFF);
