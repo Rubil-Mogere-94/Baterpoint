@@ -51,11 +51,29 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: kErrorColor),
-        );
-      }
+        String msg = 'An error occurred';
+        if (e is AuthException) {
+          if (e.statusCode == 400) {
+            msg = 'Username or email already exists';
+          } else if (e.statusCode == 422) {
+            msg = e.message;
+          } else {
+            msg = e.message;
+          }
+        } else if (e.toString().contains('SocketException')) {
+          msg = 'No internet connection';
+        } else if (e.toString().contains('401')) {
+          msg = 'Invalid email or password';
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: kErrorColor,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
