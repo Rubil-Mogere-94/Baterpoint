@@ -12,10 +12,11 @@ class AuthService {
   }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl$_v1/token'),
-      body: {
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'username': email,
         'password': password,
-      },
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -34,11 +35,12 @@ class AuthService {
   }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl$_v1/register/'),
-      body: {
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'username': username,
         'email': email,
         'password': password,
-      },
+      }),
     );
 
     if (response.statusCode == 200) {
