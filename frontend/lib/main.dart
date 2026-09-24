@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'constants.dart';
+import 'screens/auth/auth_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/cart/cart_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/chat/chat_screen.dart';
 import 'services/app_config_provider.dart';
 
 void main() {
@@ -188,7 +192,7 @@ class MyApp extends StatelessWidget {
           ),
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: const HomeScreen(),
+        home: const AuthScreen(),
       ),
     );
   }

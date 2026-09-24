@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from ..database import get_db
@@ -16,7 +16,7 @@ def get_analytics(
     db: Annotated[Session, Depends(get_db)]
 ):
     # DAU (Daily Active Users) - simplified to users created in last 24h
-    yesterday = datetime.utcnow() - timedelta(days=1)
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
     new_users_24h = db.query(UserModel).filter(UserModel.created_at >= yesterday).count()
     
     total_sales = db.query(func.sum(OrderModel.total_amount)).filter(OrderModel.status == "paid").scalar() or 0.0

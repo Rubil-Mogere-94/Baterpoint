@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, List
+import random
 
 from ..database import get_db
 from ..models import UserModel, ListingModel, OfferModel, OrderModel, OrderItemModel
@@ -16,7 +17,7 @@ def get_seller_analytics(
     db: Annotated[Session, Depends(get_db)],
     days: int = 30
 ):
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(timezone.utc) - timedelta(days=days)
     
     # Seller's listings
     listings = db.query(ListingModel).filter(ListingModel.user_id == current_user.id).all()
@@ -62,7 +63,7 @@ def get_seller_analytics(
     # Here we'll just return a placeholder daily breakdown for the chart.
     daily_stats = []
     for i in range(days):
-        day = (datetime.utcnow() - timedelta(days=i)).date()
+        day = (datetime.now(timezone.utc) - timedelta(days=i)).date()
         daily_stats.append({
             "date": day.isoformat(),
             "views": random_views(day, current_user.id) # Helper for demo

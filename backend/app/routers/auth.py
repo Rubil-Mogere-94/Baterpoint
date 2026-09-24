@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from datetime import timedelta
 import httpx
+import random
 
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,10 @@ from slowapi.util import get_remote_address
 
 router = APIRouter(tags=["Authentication"])
 limiter = Limiter(key_func=get_remote_address)
+
+
+def random_days():
+    return random.randint(1000, 9999)
 
 
 @router.post("/token", response_model=Token)
@@ -84,8 +89,3 @@ async def google_login(token: str, db: Session = Depends(get_db)):
         db.refresh(user)
     access_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return {"access_token": access_token, "token_type": "bearer"}
-
-
-def random_days():
-    import random
-    return random.randint(1000, 9999)

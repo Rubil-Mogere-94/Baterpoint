@@ -1,8 +1,11 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List, Optional
 import os
 
 class Settings(BaseSettings):
+    model_config = ConfigDict(env_file=".env", case_sensitive=True)
+
     PROJECT_NAME: str = "Baterpoint API"
     VERSION: str = "2.0.0"
     API_V1_STR: str = "/api/v1"
@@ -26,9 +29,5 @@ class Settings(BaseSettings):
     # External Services
     FIREBASE_SERVICE_ACCOUNT_PATH: Optional[str] = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
-
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
 
 settings = Settings()

@@ -208,9 +208,9 @@ def get_recommendations(
 def get_deal_of_the_hour(
     db: Annotated[Session, Depends(get_db)]
 ):
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone, timedelta
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         deal = db.query(DealModel).filter(DealModel.end_time > now).first()
         
         if not deal:
