@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from datetime import timedelta
 import httpx
@@ -23,15 +22,23 @@ def random_days():
     return random.randint(1000, 9999)
 
 
+from pydantic import BaseModel
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 @router.post("/token", response_model=Token)
 @limiter.limit("5/minute")
 def login_for_access_token(
     request: Request,
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    login_data: LoginRequest,
     db: Annotated[Session, Depends(get_db)]
 ):
-    user = db.query(UserModel).filter(UserModel.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    user = db.query(UserModel).filter(UserModel.username == login_data.username).first()
+    if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

@@ -42,7 +42,7 @@ def create_user_and_get_token(client, username, email, password="password123"):
     db.refresh(user)
     db.close()
     
-    response = client.post("/api/v1/token", data={"username": username, "password": password})
+    response = client.post("/api/v1/token", json={"username": username, "password": password})
     assert response.status_code == 200, f"Login failed: {response.status_code} {response.text}"
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

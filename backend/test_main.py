@@ -52,7 +52,7 @@ def test_login_for_access_token(client):
     })
     
     # Then login
-    response = client.post("/api/v1/token", data={
+    response = client.post("/api/v1/token", json={
         "username": "testuser",
         "password": "password123"
     })
