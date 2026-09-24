@@ -22,7 +22,7 @@ class NetworkException implements Exception {
 class AuthService {
   static const String _baseUrl = kBaseUrl;
   static const String _v1 = kApiV1;
-  static const int _timeoutMs = 15000;
+  static const int _timeoutMs = 60000;
 
   static String _extractError(dynamic data) {
     if (data is Map) {
