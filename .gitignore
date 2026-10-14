@@ -77,3 +77,6 @@ out.txt
 diagnose_api.py
 static/
 backend/static/
+
+# Kilo
+.kilo/
