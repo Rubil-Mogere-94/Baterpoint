@@ -161,7 +161,7 @@ class ItemCard extends StatelessWidget {
       color: kBackgroundColor,
       alignment: Alignment.center,
       child: const Icon(Icons.image_outlined, color: kTextLightColor, size: 34),
-    )
+    );
 
     if (product.image.startsWith('http')) {
       return CachedNetworkImage(
@@ -177,13 +177,13 @@ class ItemCard extends StatelessWidget {
           ),
         ),
         errorWidget: (_, __, ___) => fallback,
-      )
+      );
     }
 
     return Image.asset(
       product.image,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => fallback,
-    )
+    );
   }
 }
