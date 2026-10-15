@@ -372,14 +372,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: productsList.length,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: MediaQuery.sizeOf(context).width < 380
+                          crossAxisCount: MediaQuery.sizeOf(context).width < 600
                               ? 2
-                              : MediaQuery.sizeOf(context).width < 760
+                              : MediaQuery.sizeOf(context).width < 1000
                                   ? 3
                                   : 4,
                           mainAxisSpacing: 12,
                           crossAxisSpacing: 12,
-                          childAspectRatio: 0.68,
+                          childAspectRatio: 0.62,
                         ),
                         itemBuilder: (context, index) => ItemCard(
                           product: productsList[index],
@@ -721,7 +721,7 @@ class _ListingSearchDelegate extends SearchDelegate<Product> {
                       ? 'Barter welcome'
                       : 'Cash purchase'),
               trailing: product.acceptsCurrency
-                  ? Text('\$${product.price}', style: const TextStyle(fontWeight: FontWeight.w600))
+                  ? Text(formatKes(product.price), style: const TextStyle(fontWeight: FontWeight.w700, color: kTextColor))
                   : const Icon(Icons.swap_horiz_rounded),
               onTap: () => close(context, product),
             );

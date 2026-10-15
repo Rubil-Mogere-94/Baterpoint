@@ -51,7 +51,7 @@ class AddToCart extends StatelessWidget {
                   TextFormField(
                     controller: priceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Cash offer (optional)', prefixText: '\$ '),
+                    decoration: const InputDecoration(labelText: 'Cash offer (optional)', prefixText: 'KSh '),
                   ),
                 ],
                 const SizedBox(height: 8),
@@ -148,7 +148,7 @@ class AddToCart extends StatelessWidget {
           if (hasCurrency)
             Expanded(
               child: _ActionButton(
-                label: 'Add · \$${product.price}',
+                label: 'Add · ${formatKes(product.price)}',
                 color: kPrimaryColor,
                 onTap: () => _addToCart(context),
               ),

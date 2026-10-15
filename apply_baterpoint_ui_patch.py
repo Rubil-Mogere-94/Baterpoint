@@ -303,7 +303,7 @@ add_to_cart = replace_once(
 )
 add_to_cart = replace_once(
     add_to_cart,
-    "label: 'Add · \\\$${product.price}',",
+    r"label: 'Add · \$${product.price}',",
     "label: 'Add · ${formatKes(product.price)}',",
     "add_to_cart.dart add button price",
 )
@@ -312,13 +312,13 @@ updated["add_to_cart.dart"] = add_to_cart
 cart = updated["cart_screen.dart"]
 cart = replace_once(
     cart,
-    "subtitle: Text('$quantity \× \\$${price.toStringAsFixed(2)}'),",
-    "subtitle: Text('$quantity \× ${formatKes(price)}'),",
+    "subtitle: Text('$quantity × \\$${price.toStringAsFixed(2)}'),",
+    "subtitle: Text('$quantity × ${formatKes(price)}'),",
     "cart_screen.dart item price",
 )
 cart = replace_once(
     cart,
-    "Text('\\$${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),",
+    "Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),",
     "Text(formatKes(total), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kTextColor)),",
     "cart_screen.dart subtotal",
 )

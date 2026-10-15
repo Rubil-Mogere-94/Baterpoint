@@ -153,7 +153,7 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                           ),
                           title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          subtitle: Text('$quantity × \$${price.toStringAsFixed(2)}'),
+                          subtitle: Text('$quantity × ${formatKes(price)}'),
                           trailing: IconButton(
                             tooltip: 'Remove item',
                             onPressed: itemId == null ? null : () => _removeItem(itemId),
@@ -176,7 +176,7 @@ class _CartScreenState extends State<CartScreen> {
                         children: [
                           const Text('Subtotal', style: TextStyle(color: kTextLightColor)),
                           const Spacer(),
-                          Text('\$${total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          Text(formatKes(total), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: kTextColor)),
                         ],
                       ),
                       const SizedBox(height: 12),

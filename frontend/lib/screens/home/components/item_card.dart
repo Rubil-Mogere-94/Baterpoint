@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../utils/app_haptics.dart';
+import 'package:flutter/material.dart';
 import '../../../constants.dart';
 import '../../../models/product.dart';
+import '../../../utils/app_haptics.dart';
 
 class ItemCard extends StatelessWidget {
   const ItemCard({super.key, required this.product, required this.press});
@@ -12,14 +12,22 @@ class ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tradeLabel = product.acceptsBarter && product.acceptsCurrency
+        ? 'BARTER + CASH'
+        : product.acceptsBarter
+            ? 'BARTER'
+            : 'CASH'
+    final tradeColor = product.acceptsBarter ? kBarterColor : kCurrencyColor;
+
     return Card(
+      clipBehavior: Clip.antiAlias,
       elevation: 0,
+      color: kSurfaceColor,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: kBorderColor, width: 1),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: kBorderColor),
       ),
-      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           AppHaptics.light();
@@ -28,141 +36,154 @@ class ItemCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image - compact aspect ratio
             AspectRatio(
               aspectRatio: 1,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Positioned.fill(
-                    child: product.image.startsWith('http')
-                        ? CachedNetworkImage(
-                            imageUrl: product.image,
-                            placeholder: (context, url) =>
-                                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.broken_image, color: Colors.white38),
-                            fit: BoxFit.cover,
-                          )
-                        : Image.asset(product.image, fit: BoxFit.cover),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.4),
-                          ],
-                          stops: const [0.0, 0.6, 1.0],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Barter badge - small
-                  if (product.acceptsBarter)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: kBarterColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          "Barter",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
+                  _productImage(),
+                  Positioned(
+                    top: 9,
+                    left: 9,
+                    right: 9,
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.96),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: kBorderColor.withValues(alpha: 0.8)),
+                            ),
+                            child: Text(
+                              tradeLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: tradeColor,
+                                fontSize: 9,
+                                letterSpacing: 0.35,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  // Rating - small
-                  Positioned(
-                    bottom: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star_rounded,
-                              color: Colors.amber, size: 10),
-                          const SizedBox(width: 2),
-                          Text(
-                            product.rating > 0
-                                ? product.rating.toStringAsFixed(1)
-                                : 'New',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
+                        if (product.rating > 0) ...[
+                          const SizedBox(width: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.96),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, color: Color(0xFFE1A323), size: 13),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: kTextColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            // Product info - compact
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: kTextColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(11, 10, 11, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      product.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: kTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        height: 1.22,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (product.acceptsBarter)
-                        Text(
-                          "Trade",
-                          style: TextStyle(
-                            color: kBarterColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.acceptsCurrency
+                                ? formatKes(product.price)
+                                : 'Open to exchange',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: product.acceptsCurrency ? kTextColor : kBarterColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                      if (product.acceptsBarter && product.acceptsCurrency)
-                        const Text(" | ", style: TextStyle(color: kTextLightColor, fontSize: 11)),
-                      if (product.acceptsCurrency)
-                        Text(
-                          "\$${product.price}",
-                          style: const TextStyle(
-                            color: kCurrencyColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          product.acceptsBarter && product.acceptsCurrency
+                              ? Icons.swap_horiz_rounded
+                              : product.acceptsBarter
+                                  ? Icons.handshake_outlined
+                                  : Icons.arrow_outward_rounded,
+                          size: 16,
+                          color: tradeColor,
                         ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
+    )
+  }
+
+  Widget _productImage() {
+    final fallback = Container(
+      color: kBackgroundColor,
+      alignment: Alignment.center,
+      child: const Icon(Icons.image_outlined, color: kTextLightColor, size: 34),
+    )
+
+    if (product.image.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: product.image,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(
+          color: kBackgroundColor,
+          alignment: Alignment.center,
+          child: const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (_, __, ___) => fallback,
+      )
+    }
+
+    return Image.asset(
+      product.image,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
+    )
   }
 }

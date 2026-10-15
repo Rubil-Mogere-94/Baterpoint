@@ -126,7 +126,7 @@ class DetailsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '\$${product.price}',
+                            formatKes(product.price),
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium!

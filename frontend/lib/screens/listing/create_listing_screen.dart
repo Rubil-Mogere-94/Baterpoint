@@ -167,7 +167,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               TextFormField(
                 controller: _priceController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Cash price', prefixText: '\$ ', helperText: 'Use the currency configured for your marketplace.'),
+                decoration: const InputDecoration(labelText: 'Cash price (KES)', prefixText: 'KSh ', helperText: 'Enter the amount in Kenyan shillings.'),
                 validator: (value) {
                   if (!needsCash) return null;
                   final price = double.tryParse((value ?? '').trim());
