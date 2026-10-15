@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
 
 class AuthException implements Exception {
@@ -74,14 +75,18 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['access_token'];
-      if (token is String && token.isNotEmpty) return token;
+      if (token is String && token.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('baterpoint_access_token', token);
+        return token;
+      }
       throw AuthException('Invalid response from server', response.statusCode);
     }
     final body = jsonDecode(response.body);
     throw AuthException(_extractError(body), response.statusCode);
   }
 
-  static Future<String> register({
+  static Future<void> register({
     required String username,
     required String email,
     required String password,
@@ -90,11 +95,9 @@ class AuthService {
       Uri.parse('$_baseUrl$_v1/register/'),
       {'username': username, 'email': email, 'password': password},
     );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final token = data['access_token'];
-      if (token is String && token.isNotEmpty) return token;
-      throw AuthException('Invalid response from server', response.statusCode);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      // The current API returns a User object, not an access token.
+      return;
     }
     final body = jsonDecode(response.body);
     throw AuthException(_extractError(body), response.statusCode);
@@ -138,5 +141,8 @@ class AuthService {
     }
   }
 
-  static void logout() {}
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('baterpoint_access_token');
+  }
 }

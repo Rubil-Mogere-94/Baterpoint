@@ -20,7 +20,7 @@ Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing vis
 - **Sustainability Badges**: Eco-conscious trading with badges for "upcycled", "locally made", and "eco-friendly" items
 - **Loyalty Shop**: Redeem points for exclusive profile badges and status upgrades
 - **Gamified Quests**: Real-time progress tracking for listing views, favorites, and chat engagement
-- **AI Valuations**: Real-time item valuation using AI (Valuator Screen)
+- **AI Valuations**: Real-time item valuation using AI (Valuator Screen) — *currently a demo estimate*
 - **Modern AR Showcase**: Immersive AR-style item viewing
 - **Production Ready**: Rate limiting (SlowAPI), Request ID tracing, structured logging, and robust environment management
 
@@ -90,7 +90,6 @@ flutter pub get
 flutter run -d linux
 ```
 
-
 ## 📐 Project Structure
 
 ```text
@@ -104,8 +103,16 @@ frontend/lib/
 ├── constants/     # Core Design Tokens (Theme, UI Constants)
 ├── models/        # Type-safe Data Models
 ├── providers/     # State Management (Auth, Analytics, Recommendations)
-├── services/      # API Clients (ListingService, AuthService)
-└── screens/       # Feature Screens (AI Valuator, Analytics Dashboard)
+├── services/      # API Clients (ApiService, AuthService)
+└── screens/       
+    ├── home/           # Market, search, listings grid
+    ├── details/        # Product details with cart/offer actions
+    ├── listing/        # Create listing form (photo, category, trade type, price)
+    ├── valuation/      # AI Valuator screen (demo estimate)
+    ├── auth/           # Login/register with token persistence
+    ├── chat/           # API-backed inbox
+    ├── profile/        # Real user profile + own listings
+    └── cart/           # Live cart with subtotal & order creation
 ```
 
 ## ▶️ Run the Application

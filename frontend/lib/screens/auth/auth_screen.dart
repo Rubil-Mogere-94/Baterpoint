@@ -40,19 +40,28 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        }
       } else {
         await AuthService.register(
           username: _usernameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        if (mounted) {
+          setState(() {
+            _isLogin = true;
+            _passwordController.clear();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created. Sign in to continue.')),
+          );
+        }
       }
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
-} catch (e) {
+    } catch (e) {
         String msg = 'An error occurred';
         if (e is AuthException) {
           msg = e.message;
@@ -190,8 +199,8 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           obscureText: _obscurePassword,
-                          validator: (v) => v == null || v.length < 6
-                              ? 'Enter at least 6 characters'
+                          validator: (v) => v == null || v.length < 8
+                              ? 'Enter at least 8 characters'
                               : null,
                         ),
                         const SizedBox(height: 24),

@@ -9,6 +9,11 @@ import 'components/item_card.dart';
 import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
 import '../../services/app_config_provider.dart';
+import '../cart/cart_screen.dart';
+import '../chat/chat_screen.dart';
+import '../profile/profile_screen.dart';
+import '../listing/create_listing_screen.dart';
+import '../valuation/valuation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
+  int _selectedDestination = 0;
   late Future<List<Product>> _productsFuture;
 
   @override
@@ -30,13 +36,35 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _openSearch() async {
+    final selected = await showSearch<Product>(
+      context: context,
+      delegate: _ListingSearchDelegate(apiService: _apiService),
+    );
+    if (!mounted || selected == null) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DetailsScreen(product: selected)),
+    );
+  }
+
+  Future<void> _openCreateListing() async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateListingScreen()),
+    );
+    if (created == true && mounted) {
+      setState(() => _productsFuture = _apiService.getListings());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final config = context.watch<AppConfigProvider>();
 
     return Scaffold(
       backgroundColor: kBackgroundColor,
-      appBar: AppBar(
+      appBar: _selectedDestination == 0 ? AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -68,9 +96,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: const Icon(Icons.search_rounded),
             ),
-            onPressed: () {},
+            onPressed: _openSearch,
           ),
           IconButton(
+            tooltip: 'Cart',
             icon: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
@@ -79,11 +108,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: const Icon(Icons.shopping_cart_rounded),
             ),
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CartScreen()),
+            ),
           ),
         ],
-      ),
-      body: RefreshIndicator(
+      ) : null,
+      body: _selectedDestination == 0 ? RefreshIndicator(
         onRefresh: () async {
           setState(() {
             _productsFuture = _apiService.getListings();
@@ -162,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: _ActionButton(
                                   icon: Icons.add_circle_outline,
                                   label: "List Item",
-                                  onTap: () {},
+                                  onTap: _openCreateListing,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -170,7 +202,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: _ActionButton(
                                   icon: Icons.auto_awesome,
                                   label: "AI Valuator",
-                                  onTap: () {},
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ValuationScreen(),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -192,18 +229,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           _StatItem(
                             icon: Icons.swap_horiz_rounded,
-                            value: "2.4k",
-                            label: "Trades",
+                            value: "Barter",
+                            label: "Swap items",
                           ),
                           _StatItem(
                             icon: Icons.people_rounded,
-                            value: "1.8k",
-                            label: "Traders",
+                            value: "Cash",
+                            label: "Buy & sell",
                           ),
                           _StatItem(
                             icon: Icons.check_circle_rounded,
-                            value: "98%",
-                            label: "Success",
+                            value: "Both",
+                            label: "Choose a deal",
                           ),
                         ],
                       ),
@@ -228,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() {
                           _productsFuture = _apiService.getListings(
                             category:
-                                category == "All Trades" ? null : category,
+                                category == "All" ? null : category,
                           );
                         });
                       },
@@ -246,7 +283,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               .copyWith(fontWeight: FontWeight.w600),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () => setState(
+                            () => _productsFuture = _apiService.getListings(),
+                          ),
                           child: const Text("See All"),
                         ),
                       ],
@@ -332,12 +371,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: productsList.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.6,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: MediaQuery.sizeOf(context).width < 380
+                              ? 2
+                              : MediaQuery.sizeOf(context).width < 760
+                                  ? 3
+                                  : 4,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.68,
                         ),
                         itemBuilder: (context, index) => ItemCard(
                           product: productsList[index],
@@ -358,6 +400,31 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      )
+          : _selectedDestination == 1
+              ? const ChatScreen()
+              : const ProfileScreen(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedDestination,
+        onDestinationSelected: (index) =>
+            setState(() => _selectedDestination = index),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.storefront_outlined),
+            selectedIcon: Icon(Icons.storefront_rounded),
+            label: 'Market',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble_rounded),
+            label: 'Messages',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -377,17 +444,17 @@ class _HomeScreenState extends State<HomeScreen> {
       items: [
         _buildFeaturedCard(
           "🔥 Hot Electronics",
-          "Trade your old phone for a MacBook Pro",
+          "Explore electronics listed for cash or barter",
           kPrimaryColor,
         ),
         _buildFeaturedCard(
           "✨ Trending Furniture",
-          "Minimalist pieces available now",
+          "Browse furniture open to cash or barter",
           kSecondaryColor,
         ),
         _buildFeaturedCard(
           "🚗 Vehicle Swap",
-          "Find your next ride through barter",
+          "Compare vehicle listings and trade preferences",
           kBarterColor,
         ),
       ],
@@ -558,6 +625,109 @@ class _StatItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ListingSearchDelegate extends SearchDelegate<Product> {
+  _ListingSearchDelegate({required this.apiService});
+
+  final ApiService apiService;
+  String? _lastQuery;
+  Future<List<Product>>? _searchFuture;
+
+  Future<List<Product>> _search() {
+    final normalized = query.trim();
+    if (_lastQuery != normalized || _searchFuture == null) {
+      _lastQuery = normalized;
+      _searchFuture = normalized.isEmpty
+          ? Future<List<Product>>.value(<Product>[])
+          : apiService.getListings(search: normalized);
+    }
+    return _searchFuture!;
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        if (query.isNotEmpty)
+          IconButton(
+            tooltip: 'Clear search',
+            onPressed: () {
+              query = '';
+              _lastQuery = null;
+              _searchFuture = null;
+              showSuggestions(context);
+            },
+            icon: const Icon(Icons.clear_rounded),
+          ),
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        tooltip: 'Close search',
+        onPressed: () => close(context, null),
+        icon: const Icon(Icons.arrow_back_rounded),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _results(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _results(context);
+
+  Widget _results(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return const Center(child: Text('Search by item name or description.'));
+    }
+    return FutureBuilder<List<Product>>(
+      future: _search(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Search could not be completed.'),
+                TextButton(
+                  onPressed: () {
+                    _lastQuery = null;
+                    _searchFuture = null;
+                    showResults(context);
+                  },
+                  child: const Text('Try again'),
+                ),
+              ],
+            ),
+          );
+        }
+        final products = snapshot.data ?? <Product>[];
+        if (products.isEmpty) {
+          return const Center(child: Text('No listings match that search yet.'));
+        }
+        return ListView.separated(
+          itemCount: products.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.inventory_2_outlined)),
+              title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              subtitle: Text(product.acceptsBarter && product.acceptsCurrency
+                  ? 'Barter or cash'
+                  : product.acceptsBarter
+                      ? 'Barter welcome'
+                      : 'Cash purchase'),
+              trailing: product.acceptsCurrency
+                  ? Text('\$${product.price}', style: const TextStyle(fontWeight: FontWeight.w600))
+                  : const Icon(Icons.swap_horiz_rounded),
+              onTap: () => close(context, product),
+            );
+          },
+        );
+      },
     );
   }
 }
