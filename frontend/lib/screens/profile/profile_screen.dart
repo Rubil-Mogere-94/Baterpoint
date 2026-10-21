@@ -105,10 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         CircleAvatar(
                           radius: 42,
                           backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
-                          child: Text(
-                            username.isNotEmpty ? username[0].toUpperCase() : '?',
-                            style: const TextStyle(fontSize: 30, color: kPrimaryColor, fontWeight: FontWeight.w700),
-                          ),
+                          backgroundImage: NetworkImage(getDiceBearAvatar(username)),
+                          onBackgroundImageError: (_, __) {},
                         ),
                         const SizedBox(height: 14),
                         Text(username, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),

@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../constants.dart';
 import '../../../models/product.dart';
+import '../../../services/currency_provider.dart';
 import '../../../utils/app_haptics.dart';
 
 class ItemCard extends StatelessWidget {
@@ -123,7 +125,9 @@ class ItemCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             product.acceptsCurrency
-                                ? formatKes(product.price)
+                                ? context
+                                    .watch<CurrencyProvider>()
+                                    .formatPrice(product.price)
                                 : 'Open to exchange',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

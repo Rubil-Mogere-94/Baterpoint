@@ -23,7 +23,17 @@ const kBaseUrl = "http://localhost:8000";
 const kApiV1 = "/api/v1";
 const kMockStoreUrl = "https://fake-store-api.mock.beeceptor.com";
 const kDummyJsonUrl = "https://dummyjson.com";
+const kExchangeRateUrl = "https://open.er-api.com/v6/latest/KES";
+const kPlatziStoreUrl = "https://api.escuelajs.co/api/v1";
+const kDiceBearUrl = "https://api.dicebear.com/7.x";
+
+/// Deterministically generates an avatar image URL using the free DiceBear API.
+String getDiceBearAvatar(String seed, {String style = 'bottts'}) {
+  final cleanSeed = seed.trim().isEmpty ? 'trader' : seed.trim();
+  return '$kDiceBearUrl/$style/png?seed=${Uri.encodeComponent(cleanSeed)}';
+}
 
 /// Formats marketplace prices using Kenyan shillings consistently.
 String formatKes(num amount) =>
     'KSh ${NumberFormat('#,##0.##', 'en_KE').format(amount)}';
+

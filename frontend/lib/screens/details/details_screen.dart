@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../constants.dart';
 import '../../models/product.dart';
+import '../../services/currency_provider.dart';
 import 'components/product_title_with_image.dart';
 import 'components/color_and_size.dart';
 import 'components/description.dart';
@@ -134,13 +136,38 @@ class DetailsScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            formatKes(product.price),
-                            style: Theme.of(context).textTheme.headlineMedium!
-                                .copyWith(
-                                  color: kTextColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          Consumer<CurrencyProvider>(
+                            builder: (context, currencyProvider, _) {
+                              final formatted =
+                                  currencyProvider.formatPrice(product.price);
+                              final isNotKes =
+                                  currencyProvider.currentCurrency != 'KES';
+                              return Column(
+                                children: [
+                                  Text(
+                                    formatted,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium!
+                                        .copyWith(
+                                          color: kTextColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  if (isNotKes) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '(Base: ${formatKes(product.price)})',
+                                      style: const TextStyle(
+                                        color: kTextLightColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 4),
                           Text(

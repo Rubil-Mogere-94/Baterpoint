@@ -9,6 +9,7 @@ import 'components/item_card.dart';
 import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
 import '../../services/app_config_provider.dart';
+import '../../services/currency_provider.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_screen.dart';
 import '../profile/profile_screen.dart';
@@ -91,6 +92,50 @@ class _HomeScreenState extends State<HomeScreen> {
               surfaceTintColor: Colors.transparent,
               scrolledUnderElevation: 0,
               actions: [
+                Consumer<CurrencyProvider>(
+                  builder: (context, currencyProvider, _) {
+                    return PopupMenuButton<String>(
+                      tooltip: 'Switch Currency',
+                      initialValue: currencyProvider.currentCurrency,
+                      onSelected: (code) => currencyProvider.setCurrency(code),
+                      itemBuilder: (context) => CurrencyProvider.supportedCurrencies.map((c) {
+                        return PopupMenuItem<String>(
+                          value: c.code,
+                          child: Row(
+                            children: [
+                              Text(c.flag, style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              Text(c.code, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 6),
+                              Text('(${c.symbol})', style: const TextStyle(color: kTextLightColor, fontSize: 12)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: kSurfaceColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: kBorderColor),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(currencyProvider.currentInfo.flag, style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 4),
+                            Text(
+                              currencyProvider.currentCurrency,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kTextColor),
+                            ),
+                            const Icon(Icons.arrow_drop_down, size: 16, color: kTextLightColor),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 IconButton(
                   icon: Container(
                     padding: const EdgeInsets.all(6),

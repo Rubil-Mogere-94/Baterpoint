@@ -96,10 +96,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: CircleAvatar(
                       backgroundColor: kPrimaryColor.withValues(alpha: 0.12),
-                      backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
-                      child: avatar.startsWith('http')
-                          ? null
-                          : Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(color: kPrimaryColor)),
+                      backgroundImage: NetworkImage(
+                        avatar.startsWith('http')
+                            ? avatar
+                            : getDiceBearAvatar(name),
+                      ),
+                      onBackgroundImageError: (_, __) {},
                     ),
                     title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
