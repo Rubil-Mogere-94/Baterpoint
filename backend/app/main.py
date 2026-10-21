@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from .config import settings
-from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai, analytics, config
+from .routers import auth, listings, cart, orders, users, offers, chat, rewards, admin, coupons, forum, ai, analytics, config, auctions
 from .database import engine, Base
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -164,6 +164,7 @@ app.include_router(forum.router, prefix=settings.API_V1_STR)
 app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 app.include_router(analytics.router, prefix=settings.API_V1_STR)
 app.include_router(config.router, prefix=f"{settings.API_V1_STR}/config")
+app.include_router(auctions.router, prefix=settings.API_V1_STR)
 logger.info("API routers successfully initialized.")
 
 @app.get("/health")

@@ -8,7 +8,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine, Base
-from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel, ChatMessageModel
+from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel, ChatMessageModel, AuctionModel, BidModel
 from app.auth_utils import get_password_hash
 
 MOCK_STORE_URL = "https://fake-store-api.mock.beeceptor.com"
@@ -311,6 +311,96 @@ def seed_db():
             db.add_all([c1, c2])
             db.commit()
             print("Seeded public item inquiries and official shopkeeper replies.")
+
+        # Seed Salvage & Recyclable Auction Items
+        if not db.query(AuctionModel).first():
+            from datetime import timedelta, timezone
+            now = datetime.now(timezone.utc)
+            sample_auctions = [
+                {
+                    "title": "MacBook Pro 15'' (2018) - Broken Display, Logic Board Intact",
+                    "description": "Retina display glass is cracked, but the logic board boots and connects to external monitor via HDMI. High-grade aluminum chassis, 16GB RAM, original battery. Perfect for repair technicians or salvage components.",
+                    "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+                    "condition_type": "damaged_repair",
+                    "damage_details": "Display cracked; HDMI output functional; 16GB RAM; battery healthy.",
+                    "recyclable_materials": ["aluminum chassis", "copper heatsink", "logic board", "lithium cells"],
+                    "starting_bid": 3500.0,
+                    "current_bid": 4200.0,
+                    "min_increment": 100.0,
+                    "ends_at": now + timedelta(hours=36),
+                    "total_bids": 4
+                },
+                {
+                    "title": "Bulk Electronic Waste & PCB Circuit Lot (12kg Salvage)",
+                    "description": "Certified e-waste lot: 12kg of vintage circuit boards, server daughtercards, copper coils, and gold-plated memory modules. Ideal for metals reclamation, precious metal extraction, or electronics upcycling.",
+                    "image_url": "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+                    "condition_type": "recyclable",
+                    "damage_details": "Mixed non-functional boards; sorted for copper, gold, and aluminum recovery.",
+                    "recyclable_materials": ["e-waste", "gold-plated pins", "copper coils", "silicon chips"],
+                    "starting_bid": 1800.0,
+                    "current_bid": 2400.0,
+                    "min_increment": 50.0,
+                    "ends_at": now + timedelta(hours=48),
+                    "total_bids": 6
+                },
+                {
+                    "title": "Solid Teak Wood Coffee Table (Broken Joint, Needs Carpenter)",
+                    "description": "Heavy vintage solid teak wood table. One leg detached at the joint mortise; top has minor water rings. 100% solid timber, zero particle board. Excellent for woodworking restoration or timber reuse.",
+                    "image_url": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=800&q=80",
+                    "condition_type": "refurbishable",
+                    "damage_details": "Loose mortise joint on rear leg; superficial finish wear.",
+                    "recyclable_materials": ["solid teak timber", "brass joint bolts"],
+                    "starting_bid": 1200.0,
+                    "current_bid": 1600.0,
+                    "min_increment": 50.0,
+                    "ends_at": now + timedelta(hours=24),
+                    "total_bids": 3
+                },
+                {
+                    "title": "Sony Alpha A6000 Camera Body (Shutter Jam, Clean Sensor)",
+                    "description": "Mirrorless camera body reporting Error 50 shutter malfunction. Sensor, EVF, motherboard, and dials in mint condition. Ideal for camera repairers or spare parts salvage.",
+                    "image_url": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80",
+                    "condition_type": "spare_parts",
+                    "damage_details": "Shutter blade stuck; optical sensor and electronic displays undamaged.",
+                    "recyclable_materials": ["magnesium alloy", "optical sensor", "circuit boards"],
+                    "starting_bid": 2800.0,
+                    "current_bid": 3300.0,
+                    "min_increment": 100.0,
+                    "ends_at": now + timedelta(hours=60),
+                    "total_bids": 2
+                }
+            ]
+
+            for a_data in sample_auctions:
+                auc = AuctionModel(
+                    title=a_data["title"],
+                    description=a_data["description"],
+                    image_url=a_data["image_url"],
+                    condition_type=a_data["condition_type"],
+                    damage_details=a_data["damage_details"],
+                    recyclable_materials=a_data["recyclable_materials"],
+                    starting_bid=a_data["starting_bid"],
+                    current_bid=a_data["current_bid"],
+                    min_increment=a_data["min_increment"],
+                    seller_id=user.id,
+                    highest_bidder_id=shopkeeper.id,
+                    status="active",
+                    ends_at=a_data["ends_at"],
+                    total_bids=a_data["total_bids"]
+                )
+                db.add(auc)
+                db.commit()
+                db.refresh(auc)
+
+                # Add sample bid
+                bid = BidModel(
+                    auction_id=auc.id,
+                    bidder_id=shopkeeper.id,
+                    bid_amount=a_data["current_bid"]
+                )
+                db.add(bid)
+            db.commit()
+            print("Successfully seeded salvage & recyclable auction catalog.")
 
     except Exception as e:
         print(f"Error seeding database: {e}")

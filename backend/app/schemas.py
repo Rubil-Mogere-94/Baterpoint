@@ -330,3 +330,55 @@ class Match(BaseModel):
     target_item: Listing
     partner: User
     reason: str
+
+class BidCreate(BaseModel):
+    bid_amount: float
+
+class BidResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    auction_id: int
+    bidder_id: int
+    bidder_username: Optional[str] = None
+    bid_amount: float
+    timestamp: datetime
+
+class AuctionCreate(BaseModel):
+    title: str
+    description: str
+    image_url: str
+    condition_type: str = "damaged_repair"
+    damage_details: Optional[str] = None
+    recyclable_materials: List[str] = []
+    starting_bid: float = 100.0
+    min_increment: float = 50.0
+    duration_hours: int = 48
+
+class AuctionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    description: str
+    image_url: str
+    condition_type: str
+    damage_details: Optional[str] = None
+    recyclable_materials: List[str] = []
+    starting_bid: float
+    current_bid: float
+    min_increment: float
+    highest_bidder_id: Optional[int] = None
+    highest_bidder_username: Optional[str] = None
+    seller_id: int
+    seller_username: Optional[str] = None
+    status: str
+    created_at: datetime
+    ends_at: datetime
+    total_bids: int
+    is_ended: bool = False
+    bids: List[BidResponse] = []
+
+class AuctionStats(BaseModel):
+    total_active_auctions: int
+    total_bids_placed: int
+    salvage_items_diverted: int
+    recyclable_categories: List[str]

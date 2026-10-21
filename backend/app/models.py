@@ -301,3 +301,37 @@ class ShippingMethodModel(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     display_order = Column(Integer, default=0)
+
+class AuctionModel(Base):
+    __tablename__ = "auctions"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=False)
+    image_url = Column(String, nullable=False)
+    condition_type = Column(String, default="damaged_repair")  # "damaged_repair", "spare_parts", "recyclable", "refurbishable"
+    damage_details = Column(String, nullable=True)
+    recyclable_materials = Column(JSON, default=[])  # e.g. ["e-waste", "aluminum", "circuit boards"]
+    starting_bid = Column(Float, nullable=False, default=100.0)
+    current_bid = Column(Float, nullable=False, default=100.0)
+    min_increment = Column(Float, default=50.0)
+    highest_bidder_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    seller_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String, default="active")  # "active", "ended", "sold"
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    ends_at = Column(DateTime, nullable=False)
+    total_bids = Column(Integer, default=0)
+
+    highest_bidder = relationship("UserModel", foreign_keys=[highest_bidder_id])
+    seller = relationship("UserModel", foreign_keys=[seller_id])
+    bids = relationship("BidModel", back_populates="auction", cascade="all, delete-orphan", order_by="desc(BidModel.bid_amount)")
+
+class BidModel(Base):
+    __tablename__ = "bids"
+    id = Column(Integer, primary_key=True, index=True)
+    auction_id = Column(Integer, ForeignKey("auctions.id"), nullable=False)
+    bidder_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    bid_amount = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    auction = relationship("AuctionModel", back_populates="bids")
+    bidder = relationship("UserModel", foreign_keys=[bidder_id])

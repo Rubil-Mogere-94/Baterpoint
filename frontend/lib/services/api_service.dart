@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
+import '../models/auction.dart';
 import '../constants.dart';
 
 class ApiService {
@@ -621,6 +622,108 @@ class ApiService {
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
       return _asMap(jsonDecode(response.body));
+    }
+    throw Exception(_errorMessage(response.body));
+  }
+
+  Future<List<AuctionItem>> getAuctions({
+    String? conditionType,
+    String? recyclableMaterial,
+    String? status,
+    String? search,
+  }) async {
+    final query = <String, String>{};
+    if (conditionType != null &&
+        conditionType.isNotEmpty &&
+        conditionType.toLowerCase() != 'all') {
+      query['condition_type'] = conditionType;
+    }
+    if (recyclableMaterial != null &&
+        recyclableMaterial.isNotEmpty &&
+        recyclableMaterial.toLowerCase() != 'all') {
+      query['recyclable_material'] = recyclableMaterial;
+    }
+    if (status != null && status.isNotEmpty) {
+      query['status'] = status;
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+
+    try {
+      final uri = Uri.parse('$_baseUrl$_v1/auctions/').replace(
+        queryParameters: query.isEmpty ? null : query,
+      );
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          return decoded
+              .map((item) =>
+                  AuctionItem.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<AuctionItem> getAuctionDetail(int auctionId) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl$_v1/auctions/$auctionId'),
+      headers: await _authHeaders(),
+    );
+    if (response.statusCode == 200) {
+      return AuctionItem.fromJson(_asMap(jsonDecode(response.body)));
+    }
+    throw Exception(_errorMessage(response.body));
+  }
+
+  Future<AuctionBid> placeBid(int auctionId, double bidAmount) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl$_v1/auctions/$auctionId/bid'),
+      headers: {
+        ...await _authHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'bid_amount': bidAmount}),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return AuctionBid.fromJson(_asMap(jsonDecode(response.body)));
+    }
+    throw Exception(_errorMessage(response.body));
+  }
+
+  Future<Map<String, dynamic>> getAuctionStats() async {
+    try {
+      final response = await http
+          .get(Uri.parse('$_baseUrl$_v1/auctions/stats/summary'))
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        return _asMap(jsonDecode(response.body));
+      }
+    } catch (_) {}
+    return {
+      'total_active_auctions': 0,
+      'total_bids_placed': 0,
+      'salvage_items_diverted': 0,
+      'recyclable_categories': <String>[],
+    };
+  }
+
+  Future<AuctionItem> createAuction(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl$_v1/auctions/'),
+      headers: {
+        ...await _authHeaders(),
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return AuctionItem.fromJson(_asMap(jsonDecode(response.body)));
     }
     throw Exception(_errorMessage(response.body));
   }
