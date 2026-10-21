@@ -510,13 +510,84 @@ def sync_dummyjson(db: Annotated[Session, Depends(get_db)], limit: int = 20):
     db.commit()
     return {"status": "success", "synced_new_products": synced_count, "total_source_products": len(products)}
 
+@router.post("/sync-platzi")
+def sync_platzi(db: Annotated[Session, Depends(get_db)], limit: int = 20):
+    import httpx
+    try:
+        response = httpx.get(f"https://api.escuelajs.co/api/v1/products?offset=0&limit={limit}", timeout=10.0)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch from Platzi FakeStore")
+        products = response.json()
+        if not isinstance(products, list):
+            products = []
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Error connecting to Platzi FakeStore: {exc}")
+
+    user = db.query(UserModel).first()
+    if not user:
+        from ..auth_utils import get_password_hash
+        user = UserModel(
+            username="demo_trader",
+            email="trader@baterpoint.com",
+            hashed_password=get_password_hash("password123"),
+            role="user"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    synced_count = 0
+    for p in products:
+        title = p.get("title", "Item")
+        existing = db.query(ListingModel).filter(ListingModel.title == title).first()
+        if not existing:
+            images = p.get("images", [])
+            img = images[0] if (images and isinstance(images, list)) else "assets/images/placeholder.png"
+            cat_obj = p.get("category", {})
+            cat = cat_obj.get("name", "General") if isinstance(cat_obj, dict) else "General"
+            price = float(p.get("price", 0.0))
+
+            if price < 30:
+                trade_type = "Sale"
+                exchange = None
+            elif price < 120:
+                trade_type = "Barter"
+                exchange = f"Open to swap for comparable {cat}"
+            else:
+                trade_type = "Both"
+                exchange = f"Trade for {cat} + cash top-up"
+
+            listing = ListingModel(
+                title=title,
+                description=p.get("description", ""),
+                price=price,
+                category=cat,
+                trade_type=trade_type,
+                image_url=img,
+                user_id=user.id,
+                exchange_item=exchange,
+                sustainability_tags=["pre-loved", "eco-friendly"]
+            )
+            db.add(listing)
+            synced_count += 1
+
+    db.commit()
+    return {"status": "success", "synced_new_products": synced_count, "total_source_products": len(products)}
+
 @router.post("/sync-all-external")
 def sync_all_external(db: Annotated[Session, Depends(get_db)]):
     beeceptor_res = sync_mock_store(db=db)
     dummyjson_res = sync_dummyjson(db=db, limit=20)
+    platzi_res = sync_platzi(db=db, limit=20)
     return {
         "status": "success",
         "beeceptor": beeceptor_res,
         "dummyjson": dummyjson_res,
-        "total_new_listings": beeceptor_res["synced_new_products"] + dummyjson_res["synced_new_products"]
+        "platzi": platzi_res,
+        "total_new_listings": (
+            beeceptor_res["synced_new_products"]
+            + dummyjson_res["synced_new_products"]
+            + platzi_res["synced_new_products"]
+        )
     }
+

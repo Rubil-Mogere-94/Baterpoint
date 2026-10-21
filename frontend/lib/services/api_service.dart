@@ -191,7 +191,68 @@ class ApiService {
     return <Product>[];
   }
 
-  /// Combines products from both Beeceptor and DummyJSON into a unified catalog.
+  /// Fetches products from Platzi Fake Store API (https://api.escuelajs.co/api/v1/products).
+  Future<List<Product>> getPlatziProducts({
+    String? category,
+    String? search,
+    String? tradeType,
+  }) async {
+    try {
+      final uri = Uri.parse('$kPlatziStoreUrl/products?offset=0&limit=25');
+      final response = await http.get(uri).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          var products = decoded
+              .map(
+                (item) => Product.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList();
+
+          if (category != null &&
+              category.trim().isNotEmpty &&
+              category != 'All') {
+            final cat = category.toLowerCase();
+            products = products
+                .where(
+                  (p) =>
+                      p.description.toLowerCase().contains(cat) ||
+                      p.title.toLowerCase().contains(cat),
+                )
+                .toList();
+          }
+
+          if (search != null && search.trim().isNotEmpty) {
+            final q = search.trim().toLowerCase();
+            products = products
+                .where(
+                  (p) =>
+                      p.title.toLowerCase().contains(q) ||
+                      p.description.toLowerCase().contains(q),
+                )
+                .toList();
+          }
+
+          if (tradeType != null && tradeType.trim().isNotEmpty) {
+            if (tradeType == 'Barter') {
+              products = products.where((p) => p.acceptsBarter).toList();
+            } else if (tradeType == 'Sale') {
+              products = products.where((p) => p.acceptsCurrency).toList();
+            }
+          }
+
+          return products;
+        }
+      }
+    } catch (_) {
+      // Fall through on network failure
+    }
+    return <Product>[];
+  }
+
+  /// Combines products from Beeceptor, DummyJSON, and Platzi into a unified catalog.
   Future<List<Product>> getUnifiedExternalProducts({
     String? category,
     String? search,
@@ -208,10 +269,16 @@ class ApiService {
         search: search,
         tradeType: tradeType,
       ),
+      getPlatziProducts(
+        category: category,
+        search: search,
+        tradeType: tradeType,
+      ),
     ]);
 
     final beeceptorItems = results[0];
     final dummyJsonItems = results[1];
+    final platziItems = results[2];
 
     final combined = <Product>[];
     final seenTitles = <String>{};
@@ -222,6 +289,11 @@ class ApiService {
       }
     }
     for (final p in dummyJsonItems) {
+      if (seenTitles.add(p.title.toLowerCase())) {
+        combined.add(p);
+      }
+    }
+    for (final p in platziItems) {
       if (seenTitles.add(p.title.toLowerCase())) {
         combined.add(p);
       }
