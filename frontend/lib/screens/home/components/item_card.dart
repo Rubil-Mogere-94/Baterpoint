@@ -13,10 +13,10 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tradeLabel = product.acceptsBarter && product.acceptsCurrency
-        ? 'BARTER + CASH'
+        ? 'MIXED TRADE'
         : product.acceptsBarter
             ? 'BARTER'
-            : 'CASH'
+            : 'CURRENCY';
     final tradeColor = product.acceptsBarter ? kBarterColor : kCurrencyColor;
 
     return Card(

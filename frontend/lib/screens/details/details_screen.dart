@@ -66,8 +66,11 @@ class DetailsScreen extends StatelessWidget {
                               if (product.rating > 0)
                                 Row(
                                   children: [
-                                    const Icon(Icons.star_rounded,
-                                        color: Colors.amber, size: 16),
+                                    const Icon(
+                                      Icons.star_rounded,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    ),
                                     const SizedBox(width: 4),
                                     Text(
                                       product.rating.toStringAsFixed(1),
@@ -90,9 +93,13 @@ class DetailsScreen extends StatelessWidget {
                               else
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: kPrimaryColor.withValues(alpha: 0.12),
+                                    color: kPrimaryColor.withValues(
+                                      alpha: 0.12,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: const Text(
@@ -108,7 +115,9 @@ class DetailsScreen extends StatelessWidget {
                               if (product.inStock)
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFE8F5E9),
                                     borderRadius: BorderRadius.circular(8),
@@ -127,9 +136,7 @@ class DetailsScreen extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             formatKes(product.price),
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium!
+                            style: Theme.of(context).textTheme.headlineMedium!
                                 .copyWith(
                                   color: kTextColor,
                                   fontWeight: FontWeight.bold,
@@ -151,7 +158,8 @@ class DetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   // Trade preference card
-                  if (product.acceptsBarter && product.barterPreference != null) ...[
+                  if (product.acceptsBarter &&
+                      product.barterPreference != null) ...[
                     Card.outlined(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -167,8 +175,11 @@ class DetailsScreen extends StatelessWidget {
                                 color: kBarterColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(Icons.swap_horiz_rounded,
-                                  color: kBarterColor, size: 16),
+                              child: Icon(
+                                Icons.swap_horiz_rounded,
+                                color: kBarterColor,
+                                size: 16,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -218,11 +229,10 @@ class DetailsScreen extends StatelessWidget {
             child: Container(
               color: kBackgroundColor,
               padding: const EdgeInsets.symmetric(
-                  horizontal: kDefaultPadding, vertical: 12),
-              child: SafeArea(
-                bottom: true,
-                child: AddToCart(product: product),
+                horizontal: kDefaultPadding,
+                vertical: 12,
               ),
+              child: SafeArea(bottom: true, child: AddToCart(product: product)),
             ),
           ),
         ],

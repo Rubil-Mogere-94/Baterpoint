@@ -15,13 +15,15 @@ class AddToCart extends StatelessWidget {
       await ApiService().addToCart(product.id);
       if (!context.mounted) return;
       AppHaptics.success();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Added to your cart.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Added to your cart.')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     }
   }
@@ -44,39 +46,66 @@ class AddToCart extends StatelessWidget {
                   TextFormField(
                     controller: itemController,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(labelText: 'What would you offer?'),
+                    decoration: const InputDecoration(
+                      labelText: 'What would you offer?',
+                    ),
                   ),
                 if (product.acceptsCurrency) ...[
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: priceController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Cash offer (optional)', prefixText: 'KSh '),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Cash offer (optional)',
+                      prefixText: 'KSh ',
+                    ),
                   ),
                 ],
                 const SizedBox(height: 8),
-                const Text('The seller will review your offer before any trade is agreed.', style: TextStyle(color: kTextLightColor, fontSize: 12, height: 1.4)),
+                const Text(
+                  'The seller will review your offer before any trade is agreed.',
+                  style: TextStyle(
+                    color: kTextLightColor,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               final offeredItem = itemController.text.trim();
               final rawPrice = priceController.text.trim();
               final price = rawPrice.isEmpty ? null : double.tryParse(rawPrice);
               if (rawPrice.isNotEmpty && (price == null || price < 0)) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('Enter a valid cash amount.')));
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(content: Text('Enter a valid cash amount.')),
+                );
                 return;
               }
-              if (product.acceptsBarter && offeredItem.isEmpty && price == null) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('Add an item or cash amount to your offer.')));
+              if (product.acceptsBarter &&
+                  offeredItem.isEmpty &&
+                  price == null) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(
+                    content: Text('Add an item or cash amount to your offer.'),
+                  ),
+                );
                 return;
               }
               if (!product.acceptsBarter && price == null) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('Enter a cash offer.')));
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(content: Text('Enter a cash offer.')),
+                );
                 return;
               }
               Navigator.pop(dialogContext, {
@@ -102,10 +131,16 @@ class AddToCart extends StatelessWidget {
       );
       if (!context.mounted) return;
       AppHaptics.success();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent to the seller.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Offer sent to the seller.')),
+      );
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
     }
   }
 
@@ -131,7 +166,10 @@ class AddToCart extends StatelessWidget {
                 tooltip: 'Add to cart',
                 icon: SvgPicture.asset(
                   'assets/icons/add_to_cart.svg',
-                  colorFilter: const ColorFilter.mode(kPrimaryColor, BlendMode.srcIn),
+                  colorFilter: const ColorFilter.mode(
+                    kPrimaryColor,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 onPressed: () => _addToCart(context),
               ),
@@ -160,7 +198,11 @@ class AddToCart extends StatelessWidget {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.label, required this.color, required this.onTap});
+  const _ActionButton({
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
 
   final String label;
   final Color color;
@@ -168,15 +210,19 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          backgroundColor: color,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      );
+    onPressed: onTap,
+    style: ElevatedButton.styleFrom(
+      minimumSize: const Size(double.infinity, 52),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      backgroundColor: color,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      textStyle: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.white,
+      ),
+    ),
+    child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+  );
 }

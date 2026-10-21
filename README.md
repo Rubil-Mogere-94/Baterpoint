@@ -1,13 +1,21 @@
-# Baterpoint
+# Baterpoint: Mixed-Currency Trading Platform
 
-Baterpoint is a **barter-first peer-to-peer trading platform** that also supports cash sales. Built as a modern marketplace where users can trade items directly (barter) or buy/sell with cash. Features a robust FastAPI backend and a cross-platform Flutter frontend, supporting real-time chat, listing management, and a gamified loyalty system.
+Baterpoint is a **mixed-currency peer-to-peer trading platform** uniting **Barter Trade** (asset/commodity exchange) and **Currency Trade** (cash purchase/sale) into a unified, hybrid marketplace. It solves the classic "double coincidence of wants" limitation of traditional barter by enabling **hybrid settlements** (trading physical items plus cash adjustments) alongside pure barter and direct cash transactions.
 
-## 🎨 V2 Design System
-Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing visual excellence and smooth user experience:
-- **Glassmorphism & Holographics**: Featuring custom `HolographicBackground` mesh gradients and heavy blur effects for a premium feel.
-- **Centralized Tokens**: Unified spacing, radii, and shadow tokens for consistent UI across the entire app.
-- **Modern Typography**: Powered by Google Fonts (Outfit and Inter) for a sleek, contemporary look.
-- **Micro-animations**: Enhanced with `flutter_animate`, shimmer loaders, and celebratory confetti effects.
+## 💱 The Mixed-Currency Architecture
+
+Baterpoint treats physical assets and fiat currency as complementary media of exchange:
+
+1. **Barter Trade (Asset-to-Asset)**: Trade items or services directly with zero cash required, secured by a mutual Handshake confirmation protocol.
+2. **Currency Trade (Fiat Sales)**: Instant cash buy/sell transactions in local currency (e.g., KES) with cart, checkout, and order fulfillment.
+3. **Mixed Trade (Hybrid Settlement)**: Combine physical goods with a cash top-up/sweetener to resolve valuation differences (e.g., *Smart TV + KSh 8,000 for a Gaming Laptop*).
+4. **Gamified Reputation & Loyalty Units**: Earn trade reputation, tier badges, and loyalty points that reward honest, sustainable trading.
+
+## 🎨 Design System
+Baterpoint features a modern, responsive design system built for clear trade identification:
+- **Trade Badging**: Instant visual distinction between `BARTER`, `CURRENCY`, and `MIXED TRADE`.
+- **Dual Valuation Display**: Benchmark fiat prices alongside barter exchange preferences.
+- **Micro-animations & Haptics**: Smooth transitions with `flutter_animate` and tactile trade feedback.
 
 ## 🚀 Key Features
 
@@ -24,15 +32,15 @@ Baterpoint has been upgraded to a premium **V2 Design System**, prioritizing vis
 - **Modern AR Showcase**: Immersive AR-style item viewing
 - **Production Ready**: Rate limiting (SlowAPI), Request ID tracing, structured logging, and robust environment management
 
-## 🔄 Barter System
+## 🔄 Mixed-Currency Trading System
 
-Baterpoint's core is built around barter trading:
+Baterpoint's trading engine operates on three unified settlement modalities:
 
-- **Trade Types**: Each listing can be `Barter` (item-for-item), `Sale` (cash only), or `Both`
-- **Direct Offers**: Make offers with items you own + optional cash adjustment
-- **Handshake Confirmation**: Both parties confirm before trade completes
-- **Multi-Item Bundles**: Trade multiple items in a single transaction
-- **Smart Matching**: AI recommends compatible trades based on your listings and favorites
+- **Settlement Modes**: Each listing can be `Barter` (goods-only), `Sale` (fiat currency only), or `Mixed` (accepts pure barter, cash buyout, or hybrid trade).
+- **Hybrid Offers**: Make offers combining item assets + cash delta adjustments to balance perceived values.
+- **Handshake Confirmation**: Secure dual confirmation where both parties verify receipt of both goods and cash before completion.
+- **Multi-Item Bundles**: Bundle multiple items together or mix items and cash in a single transaction.
+- **Smart Matching & Valuation**: AI valuation and semantic matching recommend compatible trades and identify fair cash differentials.
 
 ## 🛠️ Prerequisites & Troubleshooting
 

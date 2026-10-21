@@ -23,4 +23,5 @@ const kBaseUrl = "http://localhost:8000";
 const kApiV1 = "/api/v1";
 
 /// Formats marketplace prices using Kenyan shillings consistently.
-String formatKes(num amount) => 'KSh ${NumberFormat('#,##0.##', 'en_KE').format(amount)}';
+String formatKes(num amount) =>
+    'KSh ${NumberFormat('#,##0.##', 'en_KE').format(amount)}';
