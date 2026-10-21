@@ -472,25 +472,33 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       items: [
         _buildFeaturedCard(
-          "🔥 Hot Electronics",
-          "Explore electronics listed for cash or barter",
+          "💱 Mixed Trade Deals",
+          "Items accepting goods, cash top-ups, or both",
           kPrimaryColor,
+          Icons.all_inclusive_rounded,
         ),
         _buildFeaturedCard(
-          "✨ Trending Furniture",
-          "Browse furniture open to cash or barter",
-          kSecondaryColor,
-        ),
-        _buildFeaturedCard(
-          "🚗 Vehicle Swap",
-          "Compare vehicle listings and trade preferences",
+          "🤝 Barter Exchange",
+          "Trade directly — no cash needed, just swap",
           kBarterColor,
+          Icons.handshake_outlined,
+        ),
+        _buildFeaturedCard(
+          "⚡ Currency Listings",
+          "Instant cash buy & sell deals priced in KES",
+          kSecondaryColor,
+          Icons.payments_outlined,
         ),
       ],
     );
   }
 
-  Widget _buildFeaturedCard(String title, String subtitle, Color color) {
+  Widget _buildFeaturedCard(
+    String title,
+    String subtitle,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -555,7 +563,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.compare_arrows_rounded,
+                    icon,
                     color: Colors.white,
                     size: 28,
                   ),
