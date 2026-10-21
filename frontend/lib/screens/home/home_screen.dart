@@ -15,6 +15,7 @@ import '../chat/chat_screen.dart';
 import '../profile/profile_screen.dart';
 import '../listing/create_listing_screen.dart';
 import '../valuation/valuation_screen.dart';
+import '../auctions/auction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -272,7 +273,76 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
+                          // Eco Salvage & Recyclable Auctions Banner
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedDestination = 1);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.recycling_rounded,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "♻️ Salvage & Recyclable Auctions",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Bid on damaged goods, spare parts & scrap lots",
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    color: Colors.white,
+                                    size: 14,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
                           // Stats Row - compact
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -471,6 +541,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             )
           : _selectedDestination == 1
+          ? const AuctionScreen()
+          : _selectedDestination == 2
           ? const ChatScreen()
           : const ProfileScreen(),
       bottomNavigationBar: NavigationBar(
@@ -484,9 +556,14 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Market',
           ),
           NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble_rounded),
-            label: 'Messages',
+            icon: Icon(Icons.recycling_outlined),
+            selectedIcon: Icon(Icons.recycling_rounded),
+            label: 'Auctions',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.support_agent_outlined),
+            selectedIcon: Icon(Icons.support_agent_rounded),
+            label: 'Shopkeeper',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
