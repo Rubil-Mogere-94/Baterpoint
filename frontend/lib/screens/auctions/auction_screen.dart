@@ -466,8 +466,8 @@ class _AuctionScreenState extends State<AuctionScreen> {
 
   Widget _buildAuctionCard(AuctionItem item, CurrencyProvider currency) {
     final highestBid = item.currentBid > 0 ? item.currentBid : item.startingBid;
-    final highestBidFormatted = currency.formatKesEquivalent(highestBid);
-    final minNextBidFormatted = currency.formatKesEquivalent(item.minNextBid);
+    final highestBidFormatted = currency.formatPrice(highestBid);
+    final minNextBidFormatted = currency.formatPrice(item.minNextBid);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -896,7 +896,7 @@ class _BidModalSheetState extends State<_BidModalSheet> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      'Minimum Required Bid: ${currency.formatKesEquivalent(widget.auction.minNextBid)}',
+                      'Minimum Required Bid: ${currency.formatPrice(widget.auction.minNextBid)}',
                       style: const TextStyle(color: kTextLightColor, fontSize: 12),
                     ),
                   ],

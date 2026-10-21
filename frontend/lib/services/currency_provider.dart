@@ -135,4 +135,7 @@ class CurrencyProvider extends ChangeNotifier {
     final formatted = NumberFormat(pattern, 'en_US').format(converted);
     return '${info.symbol} $formatted';
   }
+
+  /// Alias for formatPrice to format KES values with selected currency
+  String formatKesEquivalent(num amountInKes) => formatPrice(amountInKes);
 }
