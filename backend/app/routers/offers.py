@@ -101,15 +101,24 @@ def update_offer_status(
     db.commit()
     db.refresh(offer)
     
-    # Notify buyer of status change
+    # Notify buyer of status change via ntfy.sh and FCM
     buyer = offer.buyer
-    if buyer.device_token and old_status != offer.status:
+    if old_status != offer.status:
+        buyer_topic = f"baterpoint-user-{buyer.id}"
         background_tasks.add_task(
-            send_push_notification,
-            buyer.device_token,
-            f"Offer {offer.status.capitalize()}",
+            send_ntfy_alert,
+            buyer_topic,
+            f"Offer {offer.status.capitalize()}!",
             f"Your offer on '{listing.title}' has been {offer.status}.",
-            {"screen": "offer_detail", "offer_id": str(offer.id)}
+            ["bell", "tada" if offer.status.lower() == "accepted" else "information_source"]
         )
+        if buyer.device_token:
+            background_tasks.add_task(
+                send_push_notification,
+                buyer.device_token,
+                f"Offer {offer.status.capitalize()}",
+                f"Your offer on '{listing.title}' has been {offer.status}.",
+                {"screen": "offer_detail", "offer_id": str(offer.id)}
+            )
         
     return offer

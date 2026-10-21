@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../constants.dart';
 import '../../models/product.dart';
 import '../../services/currency_provider.dart';
+import '../../services/messaging_service.dart';
 import 'components/product_title_with_image.dart';
 import 'components/color_and_size.dart';
 import 'components/description.dart';
@@ -35,6 +36,11 @@ class DetailsScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
             actions: [
+              IconButton(
+                tooltip: 'Trade Handover QR',
+                icon: const Icon(Icons.qr_code_2_rounded),
+                onPressed: () => _showHandoverQrModal(context, product),
+              ),
               IconButton(
                 icon: const Icon(Icons.favorite_rounded),
                 onPressed: () {},
@@ -264,6 +270,106 @@ class DetailsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showHandoverQrModal(BuildContext context, Product product) {
+    final qrUrl = MessagingService.getHandoverQrUrl(product.id.toString(), size: 240);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kSurfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: kBorderColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.verified_user_rounded, color: kPrimaryColor, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Safe Handover Verification',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: kTextColor),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Present this QR code during in-person trade meetup to confirm item handover and release exchange.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: kTextLightColor, height: 1.4),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: kBorderColor, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Image.network(
+                  qrUrl,
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.qr_code_2_rounded, size: 80, color: kPrimaryColor),
+                      SizedBox(height: 8),
+                      Text('QR Code unavailable offline', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: kBackgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Trade ID: #BP-${product.id} • ${product.title}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: kTextColor),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(bottomSheetContext),
+                  child: const Text('Done'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
