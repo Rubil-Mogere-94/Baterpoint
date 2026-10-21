@@ -80,6 +80,10 @@ class OfferCreate(BaseModel):
     offered_price: Optional[float] = None
     offered_item: Optional[str] = None
 
+class OfferOfficialReview(BaseModel):
+    status: str # "approved" or "rejected"
+    official_notes: Optional[str] = None
+
 class Offer(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -90,6 +94,9 @@ class Offer(BaseModel):
     status: str
     buyer_confirmed: bool = False
     seller_confirmed: bool = False
+    official_verified: bool = False
+    official_id: Optional[int] = None
+    official_notes: Optional[str] = None
     listing: Optional[Listing] = None
 
 class Quest(BaseModel):
@@ -140,6 +147,22 @@ class InboxItem(BaseModel):
     last_message: str
     last_message_time: datetime
     unread_count: int
+    listing_id: Optional[int] = None
+
+class ChatMessageCreate(BaseModel):
+    recipient_id: int
+    message_content: str
+    listing_id: Optional[int] = None
+
+class ChatMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    sender_id: int
+    recipient_id: Optional[int] = None
+    message_content: Optional[str] = None
+    image_url: Optional[str] = None
+    is_read: bool = False
+    timestamp: datetime
     listing_id: Optional[int] = None
 
 class ForumMessage(BaseModel):

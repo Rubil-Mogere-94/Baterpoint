@@ -245,6 +245,69 @@ class DetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                   ],
+                  // Barterpoint Official Escrow & Anti-Scam Guarantee Card
+                  Card.filled(
+                    color: const Color(0xFFF0FDF4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFFBBF7D0)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: kPrimaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.verified_user_rounded,
+                              color: kPrimaryColor,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Official Barterpoint Approval Policy',
+                                  style: TextStyle(
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'To prevent scammers and ill wishers, all trades are reviewed and approved by verified Barterpoint officials before handover is permitted. Inquiries are public to avoid off-platform traps.',
+                                  style: TextStyle(
+                                    color: kTextColor,
+                                    fontSize: 12,
+                                    height: 1.35,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Text(
+                                  '🇰🇪 Biashara zote lazima zithibitishwe na maafisa wa Baterpoint ili kuzuia utapeli.',
+                                  style: TextStyle(
+                                    color: kTextLightColor,
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   // Product details
                   ColorAndSize(product: product),
                   const SizedBox(height: 24),

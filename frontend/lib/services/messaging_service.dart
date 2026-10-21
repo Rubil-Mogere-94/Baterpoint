@@ -1,11 +1,100 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+class BarterPhrase {
+  final String english;
+  final String swahili;
+  final String icon;
+
+  const BarterPhrase({
+    required this.english,
+    required this.swahili,
+    required this.icon,
+  });
+
+  String formatBilingual() => '$english\n[Kiswahili: $swahili]';
+}
+
+class TranslationResult {
+  final String original;
+  final String translated;
+  final String sourceLang; // 'en' or 'sw'
+  final String targetLang; // 'sw' or 'en'
+
+  const TranslationResult({
+    required this.original,
+    required this.translated,
+    required this.sourceLang,
+    required this.targetLang,
+  });
+
+  String get sourceLabel => sourceLang == 'sw' ? 'Kiswahili 🇰🇪' : 'English 🇬🇧';
+  String get targetLabel => targetLang == 'sw' ? 'Kiswahili 🇰🇪' : 'English 🇬🇧';
+}
+
 class MessagingService {
   static const String _ntfyBase = 'https://ntfy.sh';
   static const String _purgoMalumUrl = 'https://www.purgomalum.com/service/json';
   static const String _myMemoryUrl = 'https://api.mymemory.translated.net/get';
   static const String _qrBaseUrl = 'https://api.qrserver.com/v1/create-qr-code';
+
+  static final Map<String, String> _translationCache = {};
+
+  /// Common trade barter phrases curated in English and Kiswahili.
+  static const List<BarterPhrase> quickBarterPhrases = [
+    BarterPhrase(
+      english: "Are you open to a barter trade?",
+      swahili: "Je, unakubali kubadilishana bidhaa?",
+      icon: "🤝",
+    ),
+    BarterPhrase(
+      english: "What is your best cash price?",
+      swahili: "Bei yako ya mwisho ya pesa ni ngapi?",
+      icon: "💰",
+    ),
+    BarterPhrase(
+      english: "Where can we meet for safe handover?",
+      swahili: "Tukutane wapi kwa makabidhiano salama?",
+      icon: "📍",
+    ),
+    BarterPhrase(
+      english: "Are you available to swap today?",
+      swahili: "Unapatikana leo kwa ajili ya kubadilishana?",
+      icon: "⏱️",
+    ),
+    BarterPhrase(
+      english: "I can top up with extra cash.",
+      swahili: "Naweza kuongeza pesa taslimu kidogo.",
+      icon: "💵",
+    ),
+    BarterPhrase(
+      english: "Is the item still in good condition?",
+      swahili: "Je, bidhaa bado iko katika hali nzuri?",
+      icon: "✨",
+    ),
+  ];
+
+  static const Set<String> _swahiliKeywords = {
+    'habari', 'jambo', 'sawa', 'asante', 'shukrani', 'bei', 'shilingi', 'pesa',
+    'kubadilishana', 'badilishana', 'badili', 'kubadili', 'wapi', 'leo', 'kesho',
+    'hapana', 'ndio', 'gani', 'yangu', 'yako', 'kwa', 'katika', 'naomba',
+    'tafadhali', 'vipi', 'mambo', 'simu', 'ngapi', 'ongeza', 'karibu', 'makabidhiano',
+    'bidhaa', 'hali', 'nzuri', 'nipo', 'niko', 'hapa', 'tuonane', 'duka', 'soko'
+  };
+
+  /// Detects whether text is likely Kiswahili ('sw') or English ('en').
+  static String detectLanguage(String text) {
+    final words = text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s]'), '')
+        .split(RegExp(r'\s+'));
+    for (final word in words) {
+      if (_swahiliKeywords.contains(word)) {
+        return 'sw';
+      }
+    }
+    return 'en';
+  }
 
   /// Sends a push alert via ntfy.sh without requiring Firebase or API keys.
   static Future<bool> sendNtfyAlert({
@@ -48,22 +137,38 @@ class MessagingService {
         }
       }
     } catch (_) {
-      // Return original text if offline
+      // Fallback to original text if offline
     }
     return text;
   }
 
-  /// Translates text between Swahili ('sw') and English ('en') using MyMemory API.
-  static Future<String?> translate({
+  /// Smart translation between English and Kiswahili using MyMemory API.
+  /// If [forcedTargetLang] is provided, translates to that language.
+  /// Otherwise automatically detects language and toggles (en -> sw, sw -> en).
+  static Future<TranslationResult?> smartTranslate({
     required String text,
-    String from = 'sw',
-    String to = 'en',
+    String? forcedTargetLang,
   }) async {
-    if (text.trim().isEmpty) return null;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return null;
+
+    final detected = detectLanguage(trimmed);
+    final targetLang = forcedTargetLang ?? (detected == 'sw' ? 'en' : 'sw');
+    final sourceLang = targetLang == 'en' ? 'sw' : 'en';
+
+    final cacheKey = '$sourceLang|$targetLang|$trimmed';
+    if (_translationCache.containsKey(cacheKey)) {
+      return TranslationResult(
+        original: trimmed,
+        translated: _translationCache[cacheKey]!,
+        sourceLang: sourceLang,
+        targetLang: targetLang,
+      );
+    }
+
     try {
-      final langPair = '$from|$to';
       final uri = Uri.parse(
-        '$_myMemoryUrl?q=${Uri.encodeComponent(text)}&langpair=$langPair',
+        '$_myMemoryUrl?q=${Uri.encodeComponent(trimmed)}&langpair=$sourceLang|$targetLang',
       );
       final response = await http.get(uri).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
@@ -71,14 +176,30 @@ class MessagingService {
         if (decoded is Map && decoded['responseData'] is Map) {
           final translated = decoded['responseData']['translatedText'];
           if (translated != null && translated.toString().trim().isNotEmpty) {
-            return translated.toString();
+            final resultText = translated.toString();
+            _translationCache[cacheKey] = resultText;
+            return TranslationResult(
+              original: trimmed,
+              translated: resultText,
+              sourceLang: sourceLang,
+              targetLang: targetLang,
+            );
           }
         }
       }
-    } catch (_) {
-      // Fall through on error
-    }
+    } catch (_) {}
+
     return null;
+  }
+
+  /// Backward-compatible translate method.
+  static Future<String?> translate({
+    required String text,
+    String from = 'sw',
+    String to = 'en',
+  }) async {
+    final res = await smartTranslate(text: text, forcedTargetLang: to);
+    return res?.translated;
   }
 
   /// Generates a QR code image URL for in-person barter handover verification.

@@ -4,7 +4,7 @@ from typing import Annotated, List
 
 from ..database import get_db
 from ..models import UserModel, ListingModel, OfferModel
-from ..schemas import Offer, OfferCreate, OfferUpdate
+from ..schemas import Offer, OfferCreate, OfferUpdate, OfferOfficialReview
 from ..dependencies import get_current_user
 from ..services.fcm import send_push_notification
 
@@ -122,3 +122,67 @@ def update_offer_status(
             )
         
     return offer
+
+@router.get("/admin/pending-official-reviews", response_model=List[Offer])
+def get_pending_official_reviews(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    if current_user.role not in ["admin", "official"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Only verified Barterpoint officials can audit pending trades to prevent scammers."
+        )
+    return db.query(OfferModel).filter(OfferModel.official_verified == False).order_by(OfferModel.created_at.desc()).all()
+
+@router.put("/{offer_id}/official-review", response_model=Offer)
+def review_offer_as_official(
+    offer_id: int,
+    review_data: OfferOfficialReview,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks
+):
+    if current_user.role not in ["admin", "official"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied: Trading is only approved by verified Barterpoint officials to avoid scammers and ill wishers."
+        )
+
+    offer = db.query(OfferModel).filter(OfferModel.id == offer_id).first()
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    listing = db.query(ListingModel).filter(ListingModel.id == offer.listing_id).first()
+    listing_title = listing.title if listing else "Item"
+
+    if review_data.status.lower() == "approved":
+        offer.official_verified = True
+        offer.official_id = current_user.id
+        offer.official_notes = review_data.official_notes or "Trade officially verified by Barterpoint safety team. Handover approved."
+        status_label = "Approved & Verified"
+        tag = "white_check_mark"
+    else:
+        offer.official_verified = False
+        offer.official_id = current_user.id
+        offer.official_notes = review_data.official_notes or "Trade rejected by Barterpoint official due to security/authenticity policy."
+        offer.status = "rejected"
+        status_label = "Rejected by Official"
+        tag = "warning"
+
+    db.commit()
+    db.refresh(offer)
+
+    # Notify both buyer and seller via ntfy.sh
+    for uid in [offer.buyer_id, listing.user_id if listing else None]:
+        if uid:
+            background_tasks.add_task(
+                send_ntfy_alert,
+                f"baterpoint-user-{uid}",
+                f"Trade {status_label} by Barterpoint Official",
+                f"Listing: '{listing_title}'. Notes: {offer.official_notes}",
+                ["shield", tag]
+            )
+
+    return offer
+

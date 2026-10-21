@@ -119,6 +119,9 @@ class OfferModel(Base):
     status = Column(String, default="pending") 
     buyer_confirmed = Column(Boolean, default=False)
     seller_confirmed = Column(Boolean, default=False)
+    official_verified = Column(Boolean, default=False)
+    official_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    official_notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     buyer = relationship("UserModel", foreign_keys=[buyer_id])

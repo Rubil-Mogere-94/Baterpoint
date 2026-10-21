@@ -423,6 +423,73 @@ class ApiService {
     return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
   }
 
+  Future<List<Map<String, dynamic>>> getConversation(int otherUserId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl$_v1/chat/conversation/$otherUserId'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        }
+      }
+    } catch (_) {}
+    return <Map<String, dynamic>>[];
+  }
+
+  Future<Map<String, dynamic>?> sendChatMessage({
+    required int recipientId,
+    required String messageContent,
+    int? listingId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl$_v1/chat/send'),
+        headers: {
+          ...await _authHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'recipient_id': recipientId,
+          'message_content': messageContent,
+          if (listingId != null) 'listing_id': listingId,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return _asMap(jsonDecode(response.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Reviews and approves or rejects a trade as a verified Barterpoint Official.
+  Future<Map<String, dynamic>?> reviewTradeAsOfficial(
+    int offerId, {
+    required bool approved,
+    String? notes,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$_baseUrl$_v1/offers/$offerId/official-review'),
+        headers: {
+          ...await _authHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'status': approved ? 'approved' : 'rejected',
+          if (notes != null) 'official_notes': notes,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return _asMap(jsonDecode(response.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+
   Future<Map<String, dynamic>> getCart() async {
     final response = await http.get(
       Uri.parse('$_baseUrl$_v1/cart/'),
