@@ -3,7 +3,7 @@ import '../../constants.dart';
 import '../../models/product.dart';
 import '../details/details_screen.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+
 import 'components/categorries.dart';
 import 'components/item_card.dart';
 import 'package:provider/provider.dart';
@@ -258,11 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Featured Carousel (Server-Driven)
-                          if (config.showFeaturedCarousel) ...[
-                            _buildFeaturedCarousel(),
-                            const SizedBox(height: 16),
-                          ],
                           // Categories header
                           Text(
                             "Categories",
@@ -452,138 +447,6 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturedCarousel() {
-    return CarouselSlider(
-      options: CarouselOptions(
-        height: 140,
-        autoPlay: true,
-        enlargeCenterPage: true,
-        autoPlayCurve: Curves.easeInOut,
-        enableInfiniteScroll: true,
-        autoPlayAnimationDuration: const Duration(milliseconds: 600),
-        viewportFraction: 0.85,
-        onPageChanged: (index, reason) {},
-      ),
-      items: [
-        _buildFeaturedCard(
-          "💱 Mixed Trade Deals",
-          "Items accepting goods, cash top-ups, or both",
-          kPrimaryColor,
-          Icons.all_inclusive_rounded,
-        ),
-        _buildFeaturedCard(
-          "🤝 Barter Exchange",
-          "Trade directly — no cash needed, just swap",
-          kBarterColor,
-          Icons.handshake_outlined,
-        ),
-        _buildFeaturedCard(
-          "⚡ Currency Listings",
-          "Instant cash buy & sell deals priced in KES",
-          kSecondaryColor,
-          Icons.payments_outlined,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeaturedCard(
-    String title,
-    String subtitle,
-    Color color,
-    IconData icon,
-  ) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, color.withValues(alpha: 0.7)],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.15),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                "Explore",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
           ),
         ],
       ),
