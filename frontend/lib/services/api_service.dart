@@ -49,31 +49,121 @@ class ApiService {
       query['tradeType'] = tradeType;
     }
 
-    final uri = Uri.parse('$_baseUrl$_v1/listings/').replace(
-      queryParameters: query.isEmpty ? null : query,
+    try {
+      final uri = Uri.parse('$_baseUrl$_v1/listings/').replace(
+        queryParameters: query.isEmpty ? null : query,
+      );
+      final response = await http
+          .get(uri, headers: await _authHeaders())
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List && decoded.isNotEmpty) {
+          return decoded
+              .map(
+                (item) => Product.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList();
+        }
+      }
+    } catch (_) {
+      // Backend unavailable; automatically use the configured Beeceptor Mock Store.
+    }
+
+    // Direct integration with https://fake-store-api.mock.beeceptor.com
+    return getMockStoreProducts(
+      category: category,
+      search: search,
+      tradeType: tradeType,
     );
-    final response = await http.get(uri, headers: await _authHeaders());
-    if (response.statusCode != 200) {
-      throw Exception(_errorMessage(response.body));
+  }
+
+  /// Fetches products directly from the Beeceptor Fake Store API.
+  Future<List<Product>> getMockStoreProducts({
+    String? category,
+    String? search,
+    String? tradeType,
+  }) async {
+    try {
+      final response = await http
+          .get(Uri.parse('$kMockStoreUrl/api/products'))
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          var products = decoded
+              .map(
+                (item) => Product.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList();
+
+          if (category != null &&
+              category.trim().isNotEmpty &&
+              category != 'All') {
+            products = products
+                .where(
+                  (p) =>
+                      p.description.toLowerCase().contains(
+                            category.toLowerCase(),
+                          ) ||
+                      p.title.toLowerCase().contains(category.toLowerCase()),
+                )
+                .toList();
+          }
+
+          if (search != null && search.trim().isNotEmpty) {
+            final q = search.trim().toLowerCase();
+            products = products
+                .where(
+                  (p) =>
+                      p.title.toLowerCase().contains(q) ||
+                      p.description.toLowerCase().contains(q),
+                )
+                .toList();
+          }
+
+          if (tradeType != null && tradeType.trim().isNotEmpty) {
+            if (tradeType == 'Barter') {
+              products = products.where((p) => p.acceptsBarter).toList();
+            } else if (tradeType == 'Sale') {
+              products = products.where((p) => p.acceptsCurrency).toList();
+            }
+          }
+
+          return products;
+        }
+      }
+    } catch (_) {
+      // Return empty list if external mock store also unreachable
     }
-    final decoded = jsonDecode(response.body);
-    if (decoded is! List) {
-      throw const FormatException('Unexpected listings response from server.');
-    }
-    return decoded
-        .map((item) => Product.fromJson(Map<String, dynamic>.from(item as Map)))
-        .toList();
+    return <Product>[];
   }
 
   Future<Product> getListing(int id) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl$_v1/listings/$id'),
-      headers: await _authHeaders(),
-    );
-    if (response.statusCode == 200) {
-      return Product.fromJson(_asMap(jsonDecode(response.body)));
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl$_v1/listings/$id'),
+            headers: await _authHeaders(),
+          )
+          .timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        return Product.fromJson(_asMap(jsonDecode(response.body)));
+      }
+    } catch (_) {
+      // Fallback to mock store
     }
-    throw Exception(_errorMessage(response.body));
+
+    final mockProducts = await getMockStoreProducts();
+    final match = mockProducts.where((p) => p.id == id).firstOrNull;
+    if (match != null) return match;
+
+    throw Exception('Listing not found');
   }
 
   Future<Product> createListing({

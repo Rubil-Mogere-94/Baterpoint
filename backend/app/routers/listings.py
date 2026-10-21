@@ -388,3 +388,61 @@ def create_offer(
     db.commit()
     db.refresh(new_offer)
     return new_offer
+
+@router.post("/sync-mock-store")
+def sync_mock_store(db: Annotated[Session, Depends(get_db)]):
+    import httpx
+    try:
+        response = httpx.get("https://fake-store-api.mock.beeceptor.com/api/products", timeout=10.0)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch from Beeceptor mock store")
+        products = response.json()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Error connecting to mock store: {exc}")
+
+    user = db.query(UserModel).first()
+    if not user:
+        from ..auth_utils import get_password_hash
+        user = UserModel(
+            username="demo_trader",
+            email="trader@baterpoint.com",
+            hashed_password=get_password_hash("password123"),
+            role="user"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    synced_count = 0
+    IMAGE_MAP = {
+        "smartphone": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+        "laptop": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+        "wireless headphones": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+        "smartwatch": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+        "professional dslr camera": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80",
+        "smart tv": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=800&q=80",
+        "tablet": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+        "gaming console": "https://images.unsplash.com/photo-1486401899868-0e435ed85128?auto=format&fit=crop&w=800&q=80",
+        "energy-efficient refrigerator": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=800&q=80",
+    }
+    for p in products:
+        name = p.get("name", "Product")
+        existing = db.query(ListingModel).filter(ListingModel.title == name).first()
+        if not existing:
+            lower = name.lower()
+            img = IMAGE_MAP.get(lower, p.get("image", ""))
+            trade_type = "Barter" if "headphone" in lower else ("Sale" if "refrigerator" in lower or "tv" in lower else "Both")
+            listing = ListingModel(
+                title=name,
+                description=p.get("description", ""),
+                price=float(p.get("price", 0.0)),
+                category=p.get("category", "Electronics"),
+                trade_type=trade_type,
+                image_url=img,
+                user_id=user.id,
+                exchange_item="Open to trade or cash top-up" if trade_type != "Sale" else None,
+            )
+            db.add(listing)
+            synced_count += 1
+    db.commit()
+    return {"status": "success", "synced_new_products": synced_count, "total_source_products": len(products)}

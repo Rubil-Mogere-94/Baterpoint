@@ -21,6 +21,7 @@ const kDividerColor = Color(0xFFEBF0EC);
 const kDefaultPadding = 16.0;
 const kBaseUrl = "http://localhost:8000";
 const kApiV1 = "/api/v1";
+const kMockStoreUrl = "https://fake-store-api.mock.beeceptor.com";
 
 /// Formats marketplace prices using Kenyan shillings consistently.
 String formatKes(num amount) =>

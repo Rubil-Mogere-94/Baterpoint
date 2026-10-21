@@ -1,108 +1,220 @@
 import sys
 import os
+import httpx
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-# Add the current directory to sys.path to allow importing from 'app'
+# Add current directory to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine, Base
 from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel
 from app.auth_utils import get_password_hash
 
+MOCK_STORE_URL = "https://fake-store-api.mock.beeceptor.com"
+
+# High-resolution Unsplash images mapped to Beeceptor product names
+IMAGE_MAP = {
+    "smartphone": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+    "laptop": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+    "wireless headphones": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+    "smartwatch": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+    "professional dslr camera": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80",
+    "smart tv": "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=800&q=80",
+    "tablet": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+    "gaming console": "https://images.unsplash.com/photo-1486401899868-0e435ed85128?auto=format&fit=crop&w=800&q=80",
+    "energy-efficient refrigerator": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=800&q=80",
+}
+
+EXCHANGE_MAP = {
+    "smartphone": "Tablet or DSLR Camera + KSh 5,000",
+    "laptop": "High-end Gaming PC or Sony A7IV",
+    "wireless headphones": "Smartwatch or Mechanical Keyboard",
+    "smartwatch": "Fitness tracker or AirPods + cash",
+    "professional dslr camera": "Drone or iPhone 13 Pro",
+    "smart tv": None, # Cash only
+    "tablet": "Nintendo Switch or Kindle Oasis",
+    "gaming console": "Gaming Laptop or VR Headset",
+    "energy-efficient refrigerator": None, # Cash only
+}
+
+TRADE_TYPE_MAP = {
+    "wireless headphones": "Barter",
+    "smart tv": "Sale",
+    "energy-efficient refrigerator": "Sale",
+}
+
+def fetch_beeceptor_products():
+    try:
+        response = httpx.get(f"{MOCK_STORE_URL}/api/products", timeout=10.0)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as exc:
+        print(f"Warning: Could not fetch from {MOCK_STORE_URL}/api/products: {exc}")
+    return None
+
+def fetch_beeceptor_users():
+    try:
+        response = httpx.get(f"{MOCK_STORE_URL}/api/users", timeout=10.0)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as exc:
+        print(f"Warning: Could not fetch from {MOCK_STORE_URL}/api/users: {exc}")
+    return None
+
 def seed_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     
     try:
-        # 1. Clear related tables to avoid ForeignKeyViolation
+        # 1. Clear related tables
         db.query(ReviewModel).delete()
         db.query(OfferModel).delete()
         db.query(FavoriteModel).delete()
-        
-        # 2. Create a default user if not exists
-        user = db.query(UserModel).filter(UserModel.username == "demo_trader").first()
+        db.query(ListingModel).delete()
 
+        # 2. Seed Default User
+        user = db.query(UserModel).filter(UserModel.username == "demo_trader").first()
         if not user:
             user = UserModel(
                 username="demo_trader",
                 email="trader@baterpoint.com",
                 hashed_password=get_password_hash("password123"),
-                role="user"
+                role="user",
+                trade_reputation=4.9,
+                successful_trades=14
             )
             db.add(user)
             db.commit()
             db.refresh(user)
-            print(f"Created user: {user.username}")
+            print(f"Created primary user: {user.username}")
 
-        # 2. Clear old listings to avoid duplicates in demo
-        db.query(ListingModel).delete()
-        
-        # 3. Create Sample Listings
-        listings_data = [
-            {
-                "title": "MacBook Pro M2",
-                "description": "Like new MacBook Pro M2, 16GB RAM, 512GB SSD. Perfect for developers.",
-                "price": 1200.0,
-                "exchange_item": "High-end Gaming PC or Sony A7IV",
-                "trade_type": "Both",
-                "category": "Electronics",
-                "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80"
-            },
-            {
-                "title": "Electric Guitar - Fender Strat",
-                "description": "Beautiful sunburst Fender Stratocaster. Great tone, well-maintained.",
-                "price": 800.0,
-                "exchange_item": "Acoustic Guitar + Cash",
-                "trade_type": "Barter",
-                "category": "Music",
-                "image_url": "https://images.unsplash.com/photo-1550291652-6ea9114a47b1?auto=format&fit=crop&w=800&q=80"
-            },
-            {
-                "title": "Minimalist Oak Coffee Table",
-                "description": "Solid oak coffee table, Scandinavian design. Minor scratches on the side.",
-                "price": 250.0,
-                "exchange_item": "Comfortable Armchair",
-                "trade_type": "Both",
-                "category": "Furniture",
-                "image_url": "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80"
-            },
-            {
-                "title": "DJI Mini 3 Pro",
-                "description": "Compact drone with 4K camera. Includes extra batteries and carrying case.",
-                "price": 600.0,
-                "exchange_item": "GoPro Hero 11",
-                "trade_type": "Sale",
-                "category": "Electronics",
-                "image_url": "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80"
-            },
-            {
-                "title": "Vintage Film Camera",
-                "description": "Canon AE-1 Program. Fully functional with 50mm f/1.8 lens.",
-                "price": 150.0,
-                "exchange_item": "Film rolls (Portra 400)",
-                "trade_type": "Barter",
-                "category": "Photography",
-                "image_url": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"
-            }
-        ]
+        # Seed extra users from Beeceptor if available
+        mock_users = fetch_beeceptor_users()
+        created_users = [user]
+        if mock_users:
+            for mu in mock_users:
+                uname = mu.get("username", "mock_user")
+                if not db.query(UserModel).filter(UserModel.username == uname).first():
+                    nu = UserModel(
+                        username=uname,
+                        email=mu.get("email", f"{uname}@example.com"),
+                        hashed_password=get_password_hash("password123"),
+                        role="user",
+                        trade_reputation=4.8
+                    )
+                    db.add(nu)
+                    db.commit()
+                    db.refresh(nu)
+                    created_users.append(nu)
+            print(f"Synced {len(created_users)} users from Beeceptor / local.")
 
-        for item in listings_data:
-            listing = ListingModel(
-                title=item["title"],
-                description=item["description"],
-                price=item["price"],
-                exchange_item=item["exchange_item"],
-                trade_type=item["trade_type"],
-                category=item["category"],
-                image_url=item["image_url"],
-                user_id=user.id,
-                sustainability_tags=[]
-            )
-            db.add(listing)
-        
-        db.commit()
-        print(f"Successfully seeded {len(listings_data)} listings.")
+        # 3. Fetch products from Beeceptor mock store
+        beeceptor_products = fetch_beeceptor_products()
+
+        if beeceptor_products:
+            print(f"Syncing {len(beeceptor_products)} products from {MOCK_STORE_URL}...")
+            for idx, p in enumerate(beeceptor_products):
+                name = p.get("name", f"Product #{p.get('product_id', idx)}")
+                lower_name = name.lower()
+                image = IMAGE_MAP.get(lower_name, p.get("image", "assets/images/placeholder.png"))
+                trade_type = TRADE_TYPE_MAP.get(lower_name, "Both") # Default to Mixed Trade
+                exchange = EXCHANGE_MAP.get(lower_name, "Open to comparable trade or cash")
+
+                owner = created_users[idx % len(created_users)]
+                listing = ListingModel(
+                    title=name,
+                    description=p.get("description", ""),
+                    price=float(p.get("price", 0.0)),
+                    exchange_item=exchange if trade_type in ("Barter", "Both") else None,
+                    trade_type=trade_type,
+                    category=p.get("category", "Electronics"),
+                    image_url=image,
+                    user_id=owner.id,
+                    sustainability_tags=["verified", "top-rated"] if (p.get("rating", 0) >= 4.5) else []
+                )
+                db.add(listing)
+                db.commit()
+                db.refresh(listing)
+
+                # Add reviews if provided by Beeceptor
+                for rev in p.get("reviews", []):
+                    reviewer = created_users[(idx + 1) % len(created_users)]
+                    r = ReviewModel(
+                        user_id=reviewer.id,
+                        listing_id=listing.id,
+                        rating=rev.get("rating", 5),
+                        comment=rev.get("comment", "Great trade!")
+                    )
+                    db.add(r)
+                db.commit()
+
+            print(f"Successfully seeded {len(beeceptor_products)} listings from {MOCK_STORE_URL}.")
+
+        else:
+            print("Falling back to local high-quality mixed currency listings...")
+            fallback_listings = [
+                {
+                    "title": "Smartphone",
+                    "description": "High-end smartphone with advanced features, OLED screen, and 5G.",
+                    "price": 599.99,
+                    "exchange_item": "Tablet or DSLR Camera + KSh 5,000",
+                    "trade_type": "Both",
+                    "category": "Electronics",
+                    "image_url": IMAGE_MAP["smartphone"]
+                },
+                {
+                    "title": "Laptop",
+                    "description": "Powerful laptop for work and gaming with 16GB RAM and RTX GPU.",
+                    "price": 999.99,
+                    "exchange_item": "High-end Gaming PC or Sony A7IV",
+                    "trade_type": "Both",
+                    "category": "Electronics",
+                    "image_url": IMAGE_MAP["laptop"]
+                },
+                {
+                    "title": "Wireless Headphones",
+                    "description": "Premium wireless headphones with active noise-cancellation.",
+                    "price": 149.99,
+                    "exchange_item": "Smartwatch or Mechanical Keyboard",
+                    "trade_type": "Barter",
+                    "category": "Electronics",
+                    "image_url": IMAGE_MAP["wireless headphones"]
+                },
+                {
+                    "title": "Professional DSLR Camera",
+                    "description": "High-quality DSLR camera with 50mm f/1.8 lens for photo enthusiasts.",
+                    "price": 499.99,
+                    "exchange_item": "Drone or iPhone 13 Pro",
+                    "trade_type": "Both",
+                    "category": "Cameras",
+                    "image_url": IMAGE_MAP["professional dslr camera"]
+                },
+                {
+                    "title": "Smart TV",
+                    "description": "55-inch 4K HDR smart TV with built-in streaming apps.",
+                    "price": 799.99,
+                    "exchange_item": None,
+                    "trade_type": "Sale",
+                    "category": "Electronics",
+                    "image_url": IMAGE_MAP["smart tv"]
+                }
+            ]
+            for item in fallback_listings:
+                listing = ListingModel(
+                    title=item["title"],
+                    description=item["description"],
+                    price=item["price"],
+                    exchange_item=item["exchange_item"],
+                    trade_type=item["trade_type"],
+                    category=item["category"],
+                    image_url=item["image_url"],
+                    user_id=user.id,
+                    sustainability_tags=[]
+                )
+                db.add(listing)
+            db.commit()
+            print(f"Successfully seeded {len(fallback_listings)} fallback listings.")
 
     except Exception as e:
         print(f"Error seeding database: {e}")
