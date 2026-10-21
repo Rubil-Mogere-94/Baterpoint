@@ -24,7 +24,7 @@ class UserModel(Base):
     listings = relationship("ListingModel", back_populates="owner")
     sent_messages = relationship("ChatMessageModel", foreign_keys="[ChatMessageModel.sender_id]", back_populates="sender")
     received_messages = relationship("ChatMessageModel", foreign_keys="[ChatMessageModel.recipient_id]", back_populates="recipient")
-    received_offers = relationship("OfferModel", back_populates="buyer")
+    received_offers = relationship("OfferModel", foreign_keys="[OfferModel.buyer_id]", back_populates="buyer")
     quests = relationship("UserQuestModel", back_populates="user")
     cart = relationship("CartModel", uselist=False, back_populates="user")
     orders = relationship("OrderModel", back_populates="user")
@@ -124,7 +124,8 @@ class OfferModel(Base):
     official_notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
-    buyer = relationship("UserModel", foreign_keys=[buyer_id])
+    buyer = relationship("UserModel", foreign_keys=[buyer_id], back_populates="received_offers")
+    official = relationship("UserModel", foreign_keys=[official_id])
     listing = relationship("ListingModel")
 
 class QuestModel(Base):

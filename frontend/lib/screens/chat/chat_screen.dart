@@ -184,7 +184,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     ),
   ],
-);
+),
+    );
   }
 
   void _openChatModal({
