@@ -10,6 +10,17 @@ from ..services.fcm import send_push_notification
 
 router = APIRouter(prefix="/offers", tags=["Offers"])
 
+def send_ntfy_alert(topic: str, title: str, body: str, tags: list = None, priority: str = "default"):
+    import httpx
+    try:
+        headers = {"Title": title, "Priority": priority}
+        if tags:
+            headers["Tags"] = ",".join(tags)
+        clean_topic = "".join(c if c.isalnum() or c in "_-" else "_" for c in topic)
+        httpx.post(f"https://ntfy.sh/{clean_topic}", headers=headers, content=body.encode("utf-8"), timeout=5.0)
+    except Exception:
+        pass
+
 @router.post("/{listing_id}", response_model=Offer)
 def create_offer(
     listing_id: int,
@@ -34,8 +45,16 @@ def create_offer(
     db.commit()
     db.refresh(new_offer)
     
-    # Notify seller
+    # Notify seller via ntfy.sh and FCM
     seller = listing.owner
+    seller_topic = f"baterpoint-user-{seller.id}"
+    background_tasks.add_task(
+        send_ntfy_alert,
+        seller_topic,
+        "New Offer Received!",
+        f"{current_user.username} made an offer on your '{listing.title}'",
+        ["handshake", "package"]
+    )
     if seller.device_token:
         background_tasks.add_task(
             send_push_notification,
