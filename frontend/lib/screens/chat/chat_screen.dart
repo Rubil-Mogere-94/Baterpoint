@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/api_service.dart';
 import '../../services/messaging_service.dart';
+import '../details/components/product_comments_section.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -10,23 +11,112 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   late Future<List<Map<String, dynamic>>> _inboxFuture;
+  late Future<List<Map<String, dynamic>>> _publicThreadsFuture;
+  late Future<Map<String, dynamic>?> _shopkeeperFuture;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _loadData() {
     _inboxFuture = _apiService.getInbox();
+    _publicThreadsFuture = _apiService.getPublicThreads();
+    _shopkeeperFuture = _apiService.getShopkeeper();
   }
 
   Future<void> _refresh() async {
-    setState(() => _inboxFuture = _apiService.getInbox());
+    setState(() => _loadData());
     try {
-      await _inboxFuture;
-    } catch (_) {
-      // FutureBuilder presents the error state.
-    }
+      await Future.wait([_inboxFuture, _publicThreadsFuture, _shopkeeperFuture]);
+    } catch (_) {}
+  }
+
+  Future<void> _openShopkeeperDesk() async {
+    final shopkeeper = await _apiService.getShopkeeper();
+    final shopkeeperId = (shopkeeper?['id'] as num?)?.toInt() ?? 1;
+    final shopkeeperAvatar = (shopkeeper?['avatar_url'] ?? '').toString();
+
+    if (!mounted) return;
+    _openChatModal(
+      otherUserId: shopkeeperId,
+      name: '🏪 Barterpoint Shopkeeper (Mweka Duka)',
+      message: 'Karibu Barterpoint Shop! I am your verified Shopkeeper. How can I assist with your trades or items today?',
+      avatar: shopkeeperAvatar.isNotEmpty ? shopkeeperAvatar : getDiceBearAvatar('Shopkeeper'),
+      isShopkeeper: true,
+    );
+  }
+
+  void _openProductCommentsModal(int productId, String title) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kSurfaceColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (modalContext) {
+        return SizedBox(
+          height: MediaQuery.of(modalContext).size.height * 0.85,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(modalContext).viewInsets.bottom),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: kBorderColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: kPrimaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(modalContext),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+                  ProductPublicCommentsSection(
+                    productId: productId,
+                    productTitle: title,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -37,154 +127,348 @@ class _ChatScreenState extends State<ChatScreen> {
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Public Inquiries & Comments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text('Maoni ya Wazi • Ulinzi Dhidi ya Walaghai', style: TextStyle(fontSize: 11, color: kTextLightColor)),
+            Text('Barterpoint Shop Desk & Comments', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            Text('Dawati la Mweka Duka • Maoni ya Bidhaa', style: TextStyle(fontSize: 11, color: kTextLightColor)),
+          ],
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: kPrimaryColor,
+          unselectedLabelColor: kTextLightColor,
+          indicatorColor: kPrimaryColor,
+          tabs: const [
+            Tab(icon: Icon(Icons.storefront_rounded, size: 20), text: 'Shopkeeper Desk'),
+            Tab(icon: Icon(Icons.forum_rounded, size: 20), text: 'Public Inquiries'),
           ],
         ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          // Anti-Scam & Official Verification Banner
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // TAB 1: Shopkeeper Desk & Store Channel
+          RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
               children: [
+                // Consignment Shop Anti-Scam Shield Card
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: kPrimaryColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFBBF7D0)),
                   ),
-                  child: const Icon(Icons.verified_user_rounded, color: kPrimaryColor, size: 22),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Public Comments Only • Official Approval',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kPrimaryColor),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: kPrimaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.shield_rounded, color: kPrimaryColor, size: 22),
                       ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Messaging acts like a transparent comment section to prevent fraud. Trades MUST be approved by verified Barterpoint officials before handover.',
-                        style: TextStyle(fontSize: 12, color: kTextColor, height: 1.35),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '🇰🇪 Biashara zote lazima zithibitishwe na maafisa wa Baterpoint.',
-                        style: TextStyle(fontSize: 11, color: kTextLightColor, fontStyle: FontStyle.italic),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Consignment Store Rule • No Private Supplier DMs',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kPrimaryColor),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              'Barterpoint operates like a store: buyers do not transact directly with third-party suppliers in secret. The Shopkeeper inspects items, coordinates barters, and secures escrow.',
+                              style: TextStyle(fontSize: 12, color: kTextColor, height: 1.35),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              '🇰🇪 Wanunuzi huwasiliana na Mweka Duka pekee ili kuepuka walaghai na matapeli.',
+                              style: TextStyle(fontSize: 11, color: kTextLightColor, fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Primary Action: Open Official Shopkeeper Desk
+                Card.filled(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: kPrimaryColor, width: 1.5),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                              backgroundImage: NetworkImage(getDiceBearAvatar('Shopkeeper')),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'Barterpoint Shopkeeper',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.verified_rounded, color: kPrimaryColor, size: 16),
+                                    ],
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Mweka Duka • Official Escrow & Trade Manager',
+                                    style: TextStyle(fontSize: 12, color: kTextLightColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Have questions about an item swap, official trade approval, or order handover? Chat directly with the verified on-duty Shopkeeper.',
+                          style: TextStyle(fontSize: 12, color: kTextColor, height: 1.4),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _openShopkeeperDesk,
+                            icon: const Icon(Icons.chat_rounded, size: 18),
+                            label: const Text('Open Shopkeeper Desk (Wasiliana na Mweka Duka)'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Official Notices & Thread History
+                const Text(
+                  'Recent Store Conversations & Notices',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: kTextColor),
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: _inboxFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+                    final list = snapshot.data ?? [];
+                    if (list.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: kSurfaceColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: kBorderColor.withValues(alpha: 0.5)),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'No prior conversations. Tap the Shopkeeper Desk above to get verified assistance.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: kTextLightColor),
+                          ),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: list.map((item) {
+                        final name = (item['other_user_username'] ?? 'Shopkeeper').toString();
+                        final message = (item['last_message'] ?? '').toString();
+                        final unread = (item['unread_count'] as num?)?.toInt() ?? 0;
+                        final avatar = (item['other_user_avatar'] ?? '').toString();
+                        return Card.outlined(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: kPrimaryColor.withValues(alpha: 0.1),
+                              backgroundImage: NetworkImage(
+                                avatar.startsWith('http') ? avatar : getDiceBearAvatar(name),
+                              ),
+                            ),
+                            title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                            subtitle: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                            trailing: unread > 0
+                                ? CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: kPrimaryColor,
+                                    child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                                  )
+                                : const Icon(Icons.chevron_right_rounded, color: kTextLightColor),
+                            onTap: () => _openChatModal(
+                              otherUserId: (item['other_user_id'] as num?)?.toInt() ?? 0,
+                              name: name,
+                              message: message,
+                              avatar: avatar,
+                              isShopkeeper: name.contains('Shopkeeper'),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
               ],
             ),
           ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refresh,
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _inboxFuture,
-                builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return ListView(children: [
-                const SizedBox(height: 120),
-                const Icon(Icons.cloud_off_rounded, size: 48, color: kTextLightColor),
-                const SizedBox(height: 12),
-                const Center(child: Text('Messages could not be loaded.')),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: _refresh,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Try again'),
-                  ),
-                ),
-              ]);
-            }
-            final conversations = snapshot.data ?? <Map<String, dynamic>>[];
-            if (conversations.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(28),
-                children: const [
-                  SizedBox(height: 60),
-                  Icon(Icons.forum_outlined, size: 64, color: kTextLightColor),
-                  SizedBox(height: 16),
-                  Center(
-                    child: Text('No messages yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  ),
-                  SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      'When another trader messages you, the conversation will appear here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: kTextLightColor, height: 1.45),
-                    ),
-                  ),
-                ],
-              );
-            }
-            return ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(kDefaultPadding),
-              itemCount: conversations.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final item = conversations[index];
-                final name = (item['other_user_username'] ?? 'Trader').toString();
-                final message = (item['last_message'] ?? 'No message preview').toString();
-                final unread = (item['unread_count'] as num?)?.toInt() ?? 0;
-                final avatar = (item['other_user_avatar'] ?? '').toString();
-                return Card.outlined(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: kPrimaryColor.withValues(alpha: 0.12),
-                      backgroundImage: NetworkImage(
-                        avatar.startsWith('http')
-                            ? avatar
-                            : getDiceBearAvatar(name),
+
+          // TAB 2: Public Item Inquiries & Discussions
+          RefreshIndicator(
+            onRefresh: _refresh,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _publicThreadsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final threads = snapshot.data ?? [];
+                if (threads.isEmpty) {
+                  return ListView(
+                    padding: const EdgeInsets.all(28),
+                    children: const [
+                      SizedBox(height: 60),
+                      Icon(Icons.forum_outlined, size: 64, color: kTextLightColor),
+                      SizedBox(height: 16),
+                      Center(
+                        child: Text('No public item inquiries yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
-                      onBackgroundImageError: (_, __) {},
-                    ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(message, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    trailing: unread > 0
-                        ? CircleAvatar(
-                            radius: 13,
-                            backgroundColor: kPrimaryColor,
-                            child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                          )
-                        : const Icon(Icons.chevron_right_rounded, color: kTextLightColor),
-                    onTap: () => _openChatModal(
-                      otherUserId: (item['other_user_id'] as num?)?.toInt() ?? 0,
-                      name: name,
-                      message: message,
-                      avatar: avatar,
-                    ),
-                  ),
+                      SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          'Public comments and questions on items will appear here for all shoppers to see.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: kTextLightColor, height: 1.45, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: threads.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = threads[index];
+                    final title = (item['title'] ?? 'Product').toString();
+                    final count = (item['comment_count'] as num?)?.toInt() ?? 0;
+                    final lastMsg = (item['last_comment'] ?? '').toString();
+                    final img = (item['image_url'] ?? '').toString();
+                    final listingId = (item['listing_id'] as num?)?.toInt() ?? 0;
+
+                    return Card.outlined(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: img.isNotEmpty
+                                      ? Image.network(img, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image, size: 40))
+                                      : const Icon(Icons.image, size: 40),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: kPrimaryColor.withValues(alpha: 0.1),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text('$count public comments', style: const TextStyle(fontSize: 10, color: kPrimaryColor, fontWeight: FontWeight.bold)),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text('• Public Shelf', style: TextStyle(fontSize: 10, color: kTextLightColor)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (lastMsg.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Text(
+                                  'Latest inquiry: "$lastMsg"',
+                                  style: const TextStyle(fontSize: 12, color: Color(0xFF475569), fontStyle: FontStyle.italic),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.forum_rounded, size: 16),
+                                label: const Text('View & Join Public Comments'),
+                                onPressed: () => _openProductCommentsModal(listingId, title),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       ),
-    ),
-  ],
-),
     );
   }
 
@@ -193,6 +477,7 @@ class _ChatScreenState extends State<ChatScreen> {
     required String name,
     required String message,
     required String avatar,
+    bool isShopkeeper = false,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -207,6 +492,7 @@ class _ChatScreenState extends State<ChatScreen> {
           name: name,
           initialMessage: message,
           avatar: avatar,
+          isShopkeeper: isShopkeeper,
           onRefresh: _refresh,
         );
       },
@@ -219,6 +505,7 @@ class _ChatConversationSheet extends StatefulWidget {
   final String name;
   final String initialMessage;
   final String avatar;
+  final bool isShopkeeper;
   final VoidCallback onRefresh;
 
   const _ChatConversationSheet({
@@ -226,6 +513,7 @@ class _ChatConversationSheet extends StatefulWidget {
     required this.name,
     required this.initialMessage,
     required this.avatar,
+    this.isShopkeeper = false,
     required this.onRefresh,
   });
 
@@ -411,6 +699,11 @@ class _ChatConversationSheetState extends State<_ChatConversationSheet> {
         _isSending = false;
       });
       widget.onRefresh();
+      if (widget.isShopkeeper || widget.name.contains('Shopkeeper')) {
+        Future.delayed(const Duration(milliseconds: 700), () {
+          if (mounted) _loadThread();
+        });
+      }
     }
   }
 
@@ -487,14 +780,16 @@ class _ChatConversationSheetState extends State<_ChatConversationSheet> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFFBBF7D0)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.shield_rounded, size: 14, color: kPrimaryColor),
-                  SizedBox(width: 6),
+                  const Icon(Icons.shield_rounded, size: 14, color: kPrimaryColor),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Public Discussion • Trades strictly require Barterpoint Official Approval before handover',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kPrimaryColor),
+                      widget.isShopkeeper || widget.name.contains('Shopkeeper')
+                          ? '🏪 Barterpoint Official Shopkeeper Channel • Escrow & Inspection Protected'
+                          : 'Public Item Channel • Trades strictly require Shopkeeper Official Approval',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kPrimaryColor),
                     ),
                   ),
                 ],

@@ -8,7 +8,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.database import SessionLocal, engine, Base
-from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel
+from app.models import UserModel, ListingModel, CategoryModel, ReviewModel, OfferModel, FavoriteModel, ChatMessageModel
 from app.auth_utils import get_password_hash
 
 MOCK_STORE_URL = "https://fake-store-api.mock.beeceptor.com"
@@ -97,6 +97,23 @@ def seed_db():
             db.commit()
             db.refresh(user)
             print(f"Created primary user: {user.username}")
+
+        # Seed Official Barterpoint Shopkeeper (Mweka Duka)
+        shopkeeper = db.query(UserModel).filter(UserModel.username == "Shopkeeper").first()
+        if not shopkeeper:
+            shopkeeper = UserModel(
+                username="Shopkeeper",
+                email="shopkeeper@barterpoint.com",
+                hashed_password=get_password_hash("ShopkeeperPass123!"),
+                role="official",
+                trade_reputation=5.0,
+                successful_trades=500,
+                avatar_url="https://api.dicebear.com/7.x/bottts/png?seed=Shopkeeper"
+            )
+            db.add(shopkeeper)
+            db.commit()
+            db.refresh(shopkeeper)
+            print("Created verified Barterpoint Shopkeeper (Mweka Duka)")
 
         # Seed extra users from Beeceptor if available
         mock_users = fetch_beeceptor_users()
@@ -272,8 +289,28 @@ def seed_db():
                     sustainability_tags=[]
                 )
                 db.add(listing)
-            db.commit()
             print(f"Successfully seeded {len(fallback_listings)} fallback listings.")
+
+        # Seed sample public comments on first listing if none exist
+        first_listing = db.query(ListingModel).first()
+        if first_listing and not db.query(ChatMessageModel).filter(ChatMessageModel.listing_id == first_listing.id).first():
+            c1 = ChatMessageModel(
+                listing_id=first_listing.id,
+                sender_id=user.id,
+                recipient_id=first_listing.user_id,
+                message_content="Habari! Is this item available for inspection at the Barterpoint store in Nairobi?",
+                is_read=True
+            )
+            c2 = ChatMessageModel(
+                listing_id=first_listing.id,
+                sender_id=shopkeeper.id,
+                recipient_id=user.id,
+                message_content="Karibu! 🏪 Yes, the item has been verified by the Shopkeeper desk and is ready for safe escrow trade handover.",
+                is_read=True
+            )
+            db.add_all([c1, c2])
+            db.commit()
+            print("Seeded public item inquiries and official shopkeeper replies.")
 
     except Exception as e:
         print(f"Error seeding database: {e}")

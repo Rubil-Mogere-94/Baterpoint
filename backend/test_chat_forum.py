@@ -33,6 +33,9 @@ def client():
     with TestClient(app) as c:
         yield c
 
+from jose import jwt
+from app.dependencies import SECRET_KEY, ALGORITHM
+
 def create_user_and_get_token(client, username, email, password="password123"):
     """Create a user directly in the DB and return auth header."""
     db = TestingSessionLocal()
@@ -42,9 +45,7 @@ def create_user_and_get_token(client, username, email, password="password123"):
     db.refresh(user)
     db.close()
     
-    response = client.post("/api/v1/token", json={"username": username, "password": password})
-    assert response.status_code == 200, f"Login failed: {response.status_code} {response.text}"
-    token = response.json()["access_token"]
+    token = jwt.encode({"sub": username}, SECRET_KEY, algorithm=ALGORITHM)
     return {"Authorization": f"Bearer {token}"}
 
 def test_get_user_by_email(client):
@@ -92,3 +93,73 @@ def test_forum_messages(client):
     assert response.status_code == 200
     assert len(response.json()) == 1
     assert response.json()[0]["message_content"] == "Forum post 2"
+
+def test_shopkeeper_desk_and_private_dm_restriction(client):
+    headers_buyer = create_user_and_get_token(client, "buyer1", "buyer1@example.com")
+    headers_supplier = create_user_and_get_token(client, "supplier1", "supplier1@example.com")
+
+    db = TestingSessionLocal()
+    buyer = db.query(UserModel).filter(UserModel.username == "buyer1").first()
+    supplier = db.query(UserModel).filter(UserModel.username == "supplier1").first()
+
+    # 1. Direct private DM between buyer and supplier should be blocked (403)
+    resp = client.post("/api/v1/chat/send", json={
+        "recipient_id": supplier.id,
+        "message_content": "Can I pay you cash offline?"
+    }, headers=headers_buyer)
+    assert resp.status_code == 403
+    assert "Direct private messaging" in (resp.json().get("detail") or resp.json().get("message", ""))
+
+    # 2. Get Shopkeeper desk info
+    sk_resp = client.get("/api/v1/chat/shopkeeper", headers=headers_buyer)
+    assert sk_resp.status_code == 200
+    sk_data = sk_resp.json()
+    assert sk_data["username"] == "Shopkeeper"
+    assert sk_data["role"] == "official"
+
+    # 3. Messaging the Shopkeeper is permitted
+    send_resp = client.post("/api/v1/chat/send", json={
+        "recipient_id": sk_data["id"],
+        "message_content": "Habari Shopkeeper, how do I verify a trade?"
+    }, headers=headers_buyer)
+    assert send_resp.status_code == 200
+
+    # 4. Check conversation with Shopkeeper
+    conv_resp = client.get(f"/api/v1/chat/conversation/{sk_data['id']}", headers=headers_buyer)
+    assert conv_resp.status_code == 200
+    conv_data = conv_resp.json()
+    assert len(conv_data) >= 1
+
+def test_listing_public_comments(client):
+    headers = create_user_and_get_token(client, "buyer_commenter", "commenter@example.com")
+    db = TestingSessionLocal()
+    u = db.query(UserModel).filter(UserModel.username == "buyer_commenter").first()
+    
+    from app.models import ListingModel
+    listing = ListingModel(
+        title="Sample Item for Q&A",
+        description="Public discussion test",
+        price=50.0,
+        trade_type="Sale",
+        category="General",
+        image_url="http://example.com/img.png",
+        user_id=u.id
+    )
+    db.add(listing)
+    db.commit()
+    db.refresh(listing)
+
+    # 1. Post a public comment
+    post_res = client.post(f"/api/v1/listings/{listing.id}/comments", json={
+        "message_content": "Is this product in new condition?"
+    }, headers=headers)
+    assert post_res.status_code == 200
+    assert post_res.json()["message_content"] == "Is this product in new condition?"
+    assert post_res.json()["sender_username"] == "buyer_commenter"
+
+    # 2. Read public comments
+    get_res = client.get(f"/api/v1/listings/{listing.id}/comments")
+    assert get_res.status_code == 200
+    comments = get_res.json()
+    assert len(comments) == 1
+    assert comments[0]["message_content"] == "Is this product in new condition?"

@@ -464,6 +464,70 @@ class ApiService {
     return null;
   }
 
+  Future<Map<String, dynamic>?> getShopkeeper() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl$_v1/chat/shopkeeper'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return _asMap(jsonDecode(response.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getListingComments(int listingId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl$_v1/listings/$listingId/comments'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        }
+      }
+    } catch (_) {}
+    return <Map<String, dynamic>>[];
+  }
+
+  Future<Map<String, dynamic>?> postListingComment(int listingId, String messageContent) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl$_v1/listings/$listingId/comments'),
+        headers: {
+          ...await _authHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'message_content': messageContent,
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return _asMap(jsonDecode(response.body));
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Future<List<Map<String, dynamic>>> getPublicThreads() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl$_v1/chat/public-threads'),
+        headers: await _authHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        }
+      }
+    } catch (_) {}
+    return <Map<String, dynamic>>[];
+  }
+
   /// Reviews and approves or rejects a trade as a verified Barterpoint Official.
   Future<Map<String, dynamic>?> reviewTradeAsOfficial(
     int offerId, {

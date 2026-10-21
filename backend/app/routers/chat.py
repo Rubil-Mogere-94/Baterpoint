@@ -5,9 +5,10 @@ from typing import Annotated, List, Optional
 from datetime import datetime
 
 from ..database import get_db
-from ..models import UserModel, ChatMessageModel
-from ..schemas import InboxItem, ForumMessage, ChatMessageCreate, ChatMessageResponse
+from ..models import UserModel, ChatMessageModel, ListingModel
+from ..schemas import InboxItem, ForumMessage, ChatMessageCreate, ChatMessageResponse, ShopkeeperInfo
 from ..dependencies import get_current_user
+from ..auth_utils import get_password_hash
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -21,6 +22,55 @@ def send_ntfy_alert(topic: str, title: str, body: str, tags: list = None, priori
         httpx.post(f"https://ntfy.sh/{clean_topic}", headers=headers, content=body.encode("utf-8"), timeout=5.0)
     except Exception:
         pass
+
+def get_or_create_shopkeeper(db: Session) -> UserModel:
+    shopkeeper = db.query(UserModel).filter(
+        (UserModel.username == "Shopkeeper") | (UserModel.email == "shopkeeper@barterpoint.com")
+    ).first()
+    if not shopkeeper:
+        shopkeeper = UserModel(
+            username="Shopkeeper",
+            email="shopkeeper@barterpoint.com",
+            hashed_password=get_password_hash("ShopkeeperSecretPass123!"),
+            role="official",
+            overall_rating=5.0,
+            total_reviews=250,
+            avatar_url="https://api.dicebear.com/7.x/bottts/png?seed=Shopkeeper"
+        )
+        db.add(shopkeeper)
+        db.commit()
+        db.refresh(shopkeeper)
+    return shopkeeper
+
+@router.get("/shopkeeper", response_model=ShopkeeperInfo)
+def get_shopkeeper(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    shopkeeper = get_or_create_shopkeeper(db)
+    if current_user.id != shopkeeper.id:
+        existing = db.query(ChatMessageModel).filter(
+            ChatMessageModel.sender_id == shopkeeper.id,
+            ChatMessageModel.recipient_id == current_user.id
+        ).first()
+        if not existing:
+            welcome = ChatMessageModel(
+                sender_id=shopkeeper.id,
+                recipient_id=current_user.id,
+                message_content="Karibu Barterpoint Shop! 🏪 I am your verified Shopkeeper (Mweka Duka). To prevent scammers, buyers do not transact directly with suppliers in private. I inspect item quality, approve trade swaps, and guarantee safe escrow handover. How can I help you today?",
+                is_read=False
+            )
+            db.add(welcome)
+            db.commit()
+
+    return ShopkeeperInfo(
+        id=shopkeeper.id,
+        username=shopkeeper.username,
+        role=shopkeeper.role,
+        avatar_url=shopkeeper.avatar_url,
+        title="Verified Barterpoint Shopkeeper (Mweka Duka)",
+        subtitle="Official Store Desk • Escrow & Trade Verification"
+    )
 
 @router.get("/inbox", response_model=List[InboxItem])
 async def get_inbox(
@@ -47,18 +97,58 @@ async def get_inbox(
                 ChatMessageModel.is_read == False
             ).count()
             
+            name = other_user.username
+            if other_user.username == "Shopkeeper" or other_user.role in ['admin', 'official']:
+                name = f"🏪 Barterpoint Shopkeeper ({other_user.username})"
+
             inbox[other_user_id] = {
                 "other_user_id": other_user.id,
                 "other_user_email": other_user.email,
-                "other_user_username": other_user.username,
+                "other_user_username": name,
                 "other_user_avatar": other_user.avatar_url,
                 "last_message": msg.message_content or "[Image]",
                 "last_message_time": msg.timestamp,
                 "unread_count": unread_count,
                 "listing_id": msg.listing_id
             }
-            
+
     return list(inbox.values())
+
+@router.get("/public-threads")
+def get_public_threads(
+    db: Annotated[Session, Depends(get_db)]
+):
+    """Returns listings that have active public comments."""
+    listing_ids = db.query(ChatMessageModel.listing_id).filter(
+        ChatMessageModel.listing_id.isnot(None),
+        ChatMessageModel.is_forum == False
+    ).distinct().limit(20).all()
+    
+    ids = [lid[0] for lid in listing_ids if lid[0] is not None]
+    listings = db.query(ListingModel).filter(ListingModel.id.in_(ids)).all()
+    
+    result = []
+    for l in listings:
+        comment_count = db.query(ChatMessageModel).filter(
+            ChatMessageModel.listing_id == l.id,
+            ChatMessageModel.is_forum == False
+        ).count()
+        last_comment = db.query(ChatMessageModel).filter(
+            ChatMessageModel.listing_id == l.id,
+            ChatMessageModel.is_forum == False
+        ).order_by(desc(ChatMessageModel.timestamp)).first()
+
+        result.append({
+            "listing_id": l.id,
+            "title": l.title,
+            "image_url": l.image_url,
+            "price": l.price,
+            "trade_type": l.trade_type,
+            "comment_count": comment_count,
+            "last_comment": last_comment.message_content if last_comment else "No comments yet",
+            "last_comment_time": last_comment.timestamp if last_comment else l.created_at
+        })
+    return result
 
 @router.get("/conversation/{other_user_id}", response_model=List[ChatMessageResponse])
 async def get_conversation(
@@ -91,6 +181,18 @@ async def send_message(
     if not recipient:
         raise HTTPException(status_code=404, detail="Recipient user not found")
 
+    is_official_chat = (
+        recipient.role in ['admin', 'official'] or 
+        recipient.username == 'Shopkeeper' or 
+        current_user.role in ['admin', 'official'] or
+        current_user.username == 'Shopkeeper'
+    )
+    if not is_official_chat:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Direct private messaging between buyers and suppliers is disabled to prevent scams. Barterpoint operates as a supervised shop: please post inquiries publicly on the listing comments or contact the Barterpoint Shopkeeper Desk."
+        )
+
     new_msg = ChatMessageModel(
         sender_id=current_user.id,
         recipient_id=payload.recipient_id,
@@ -111,4 +213,5 @@ async def send_message(
     )
 
     return new_msg
+
 

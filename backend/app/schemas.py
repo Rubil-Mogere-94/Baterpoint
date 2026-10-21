@@ -165,6 +165,30 @@ class ChatMessageResponse(BaseModel):
     timestamp: datetime
     listing_id: Optional[int] = None
 
+class ListingCommentCreate(BaseModel):
+    message_content: str
+
+class ListingCommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    listing_id: int
+    sender_id: int
+    sender_username: str
+    sender_role: str = "buyer"
+    sender_avatar: Optional[str] = None
+    message_content: str
+    timestamp: datetime
+    is_official: bool = False
+
+class ShopkeeperInfo(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    role: str
+    avatar_url: Optional[str] = None
+    title: str = "Verified Barterpoint Shopkeeper (Mweka Duka)"
+    subtitle: str = "Official Store & Escrow Desk"
+
 class ForumMessage(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

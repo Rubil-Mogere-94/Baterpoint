@@ -9,6 +9,7 @@ import 'components/color_and_size.dart';
 import 'components/description.dart';
 import 'components/counter_with_fav_btn.dart';
 import 'components/add_to_cart.dart';
+import 'components/product_comments_section.dart';
 
 class DetailsScreen extends StatelessWidget {
   const DetailsScreen({super.key, required this.product});
@@ -314,7 +315,14 @@ class DetailsScreen extends StatelessWidget {
                   Description(product: product),
                   const SizedBox(height: 32),
                   CounterWithFavBtn(),
+                  const SizedBox(height: 24),
+                  const Divider(),
                   const SizedBox(height: 16),
+                  ProductPublicCommentsSection(
+                    productId: product.id,
+                    productTitle: product.title,
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

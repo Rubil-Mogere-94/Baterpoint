@@ -10,8 +10,8 @@ import json
 from jose import jwt
 
 from ..database import get_db
-from ..models import UserModel, ListingModel, FavoriteModel, DealModel, OfferModel
-from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate, Match
+from ..models import UserModel, ListingModel, FavoriteModel, DealModel, OfferModel, ChatMessageModel
+from ..schemas import Listing, ListingUpdate, Deal, Offer, OfferCreate, Match, ListingCommentCreate, ListingCommentResponse
 from ..dependencies import get_current_user, SECRET_KEY, ALGORITHM
 from ..services.recommendations import update_listing_embedding
 
@@ -590,4 +590,95 @@ def sync_all_external(db: Annotated[Session, Depends(get_db)]):
             + platzi_res["synced_new_products"]
         )
     }
+
+@router.get("/{listing_id}/comments", response_model=List[ListingCommentResponse])
+def get_listing_comments(
+    listing_id: int,
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    comments = db.query(ChatMessageModel).filter(
+        ChatMessageModel.listing_id == listing_id,
+        ChatMessageModel.is_forum == False
+    ).order_by(ChatMessageModel.timestamp.asc()).all()
+
+    results = []
+    for c in comments:
+        sender = db.query(UserModel).filter(UserModel.id == c.sender_id).first()
+        is_official = False
+        sender_role = "buyer"
+        sender_name = "Trader"
+        sender_avatar = None
+        if sender:
+            sender_name = sender.username
+            sender_role = sender.role or "buyer"
+            sender_avatar = sender.avatar_url
+            if sender_role in ['admin', 'official'] or sender.username == 'Shopkeeper':
+                is_official = True
+        
+        results.append(ListingCommentResponse(
+            id=c.id,
+            listing_id=listing_id,
+            sender_id=c.sender_id,
+            sender_username=sender_name,
+            sender_role=sender_role,
+            sender_avatar=sender_avatar,
+            message_content=c.message_content or "",
+            timestamp=c.timestamp,
+            is_official=is_official
+        ))
+    return results
+
+@router.post("/{listing_id}/comments", response_model=ListingCommentResponse)
+def post_listing_comment(
+    listing_id: int,
+    payload: ListingCommentCreate,
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    listing = db.query(ListingModel).filter(ListingModel.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    content = payload.message_content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Comment content cannot be empty")
+
+    new_comment = ChatMessageModel(
+        listing_id=listing_id,
+        sender_id=current_user.id,
+        recipient_id=listing.user_id,
+        message_content=content,
+        is_read=False,
+        is_forum=False
+    )
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+
+    # Push alert to supplier
+    from .chat import send_ntfy_alert
+    send_ntfy_alert(
+        topic=f"baterpoint-user-{listing.user_id}",
+        title=f"Public Question on '{listing.title}'",
+        body=f"@{current_user.username}: {content}",
+        tags=["speech_balloon", "shopping_cart"]
+    )
+
+    is_official = (current_user.role in ['admin', 'official'] or current_user.username == 'Shopkeeper')
+    return ListingCommentResponse(
+        id=new_comment.id,
+        listing_id=listing_id,
+        sender_id=current_user.id,
+        sender_username=current_user.username,
+        sender_role=current_user.role or "buyer",
+        sender_avatar=current_user.avatar_url,
+        message_content=content,
+        timestamp=new_comment.timestamp,
+        is_official=is_official
+    )
+
 
