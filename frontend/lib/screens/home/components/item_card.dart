@@ -153,7 +153,7 @@ class ItemCard extends StatelessWidget {
           ],
         ),
       ),
-    )
+    );
   }
 
   Widget _productImage() {

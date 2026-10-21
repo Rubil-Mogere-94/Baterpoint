@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openSearch() async {
-    final selected = await showSearch<Product>(
+    final selected = await showSearch<Product?>(
       context: context,
       delegate: _ListingSearchDelegate(apiService: _apiService),
     );
@@ -653,7 +653,7 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-class _ListingSearchDelegate extends SearchDelegate<Product> {
+class _ListingSearchDelegate extends SearchDelegate<Product?> {
   _ListingSearchDelegate({required this.apiService});
 
   final ApiService apiService;
