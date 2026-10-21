@@ -62,6 +62,15 @@ def fetch_beeceptor_users():
         print(f"Warning: Could not fetch from {MOCK_STORE_URL}/api/users: {exc}")
     return None
 
+def fetch_dummyjson_products(limit=15):
+    try:
+        response = httpx.get(f"https://dummyjson.com/products?limit={limit}", timeout=10.0)
+        if response.status_code == 200:
+            return response.json().get("products", [])
+    except Exception as exc:
+        print(f"Warning: Could not fetch from https://dummyjson.com/products: {exc}")
+    return []
+
 def seed_db():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -151,7 +160,57 @@ def seed_db():
 
             print(f"Successfully seeded {len(beeceptor_products)} listings from {MOCK_STORE_URL}.")
 
-        else:
+        # 4. Fetch and seed products from DummyJSON
+        dummy_products = fetch_dummyjson_products(limit=15)
+        if dummy_products:
+            print(f"Syncing {len(dummy_products)} products from https://dummyjson.com/products...")
+            for idx, dp in enumerate(dummy_products):
+                title = dp.get("title", f"Item #{dp.get('id', idx)}")
+                if not db.query(ListingModel).filter(ListingModel.title == title).first():
+                    price = float(dp.get("price", 0.0))
+                    tags = [t.lower() for t in dp.get("tags", [])]
+                    cat = dp.get("category", "General").capitalize()
+                    img = dp.get("thumbnail") or (dp.get("images")[0] if dp.get("images") else "assets/images/placeholder.png")
+
+                    if "beauty" in tags or price < 25:
+                        trade_type = "Sale"
+                        exchange = None
+                    elif "headphones" in tags or "audio" in tags or price < 150:
+                        trade_type = "Barter"
+                        exchange = "Open to gadget or accessory swap"
+                    else:
+                        trade_type = "Both"
+                        exchange = f"Trade for comparable {cat} + cash delta"
+
+                    owner = created_users[idx % len(created_users)]
+                    listing = ListingModel(
+                        title=title,
+                        description=dp.get("description", ""),
+                        price=price,
+                        category=cat,
+                        trade_type=trade_type,
+                        image_url=img,
+                        user_id=owner.id,
+                        exchange_item=exchange,
+                        sustainability_tags=["eco-friendly"] if dp.get("rating", 0) > 4.0 else []
+                    )
+                    db.add(listing)
+                    db.commit()
+                    db.refresh(listing)
+
+                    for rev in dp.get("reviews", []):
+                        reviewer = created_users[(idx + 1) % len(created_users)]
+                        r = ReviewModel(
+                            user_id=reviewer.id,
+                            listing_id=listing.id,
+                            rating=rev.get("rating", 5),
+                            comment=rev.get("comment", "Great trade!")
+                        )
+                        db.add(r)
+                    db.commit()
+            print(f"Successfully synced DummyJSON listings.")
+
+        if not beeceptor_products and not dummy_products:
             print("Falling back to local high-quality mixed currency listings...")
             fallback_listings = [
                 {

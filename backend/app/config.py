@@ -29,5 +29,7 @@ class Settings(BaseSettings):
     # External Services
     FIREBASE_SERVICE_ACCOUNT_PATH: Optional[str] = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
     GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+    MOCK_STORE_URL: str = os.getenv("MOCK_STORE_URL", "https://fake-store-api.mock.beeceptor.com")
+    DUMMYJSON_URL: str = os.getenv("DUMMYJSON_URL", "https://dummyjson.com")
 
 settings = Settings()

@@ -47,8 +47,13 @@ class Product {
         json['exchange_item'] ??
         _inferBarterPreference(title, category: json['category']?.toString());
 
-    final rawImage =
-        json['imageUrl'] ?? json['image_url'] ?? json['image'] ?? '';
+    final rawImage = json['imageUrl'] ??
+        json['image_url'] ??
+        json['thumbnail'] ??
+        (json['images'] is List && (json['images'] as List).isNotEmpty
+            ? json['images'][0]
+            : json['image']) ??
+        '';
     final String image = _resolveImage(title, rawImage.toString());
 
     final num rawRating = json['rating'] is Map
@@ -57,6 +62,10 @@ class Product {
     final int reviewCount =
         json['reviewCount'] ??
         (json['reviews'] is List ? (json['reviews'] as List).length : 0);
+
+    final bool inStock = json['inStock'] ??
+        json['availability'] ??
+        (json['stock'] != null ? ((json['stock'] as num) > 0) : true);
 
     return Product(
       id: id,
@@ -71,7 +80,7 @@ class Product {
       barterPreference: barterPref,
       rating: rawRating.toDouble(),
       reviewCount: reviewCount,
-      inStock: json['inStock'] ?? json['availability'] ?? true,
+      inStock: inStock,
       condition: json['condition'],
     );
   }

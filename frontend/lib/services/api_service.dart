@@ -72,16 +72,63 @@ class ApiService {
       // Backend unavailable; automatically use the configured Beeceptor Mock Store.
     }
 
-    // Direct integration with https://fake-store-api.mock.beeceptor.com
-    return getMockStoreProducts(
+    // Direct integration with external mock APIs (Beeceptor + DummyJSON)
+    return getUnifiedExternalProducts(
       category: category,
       search: search,
       tradeType: tradeType,
     );
   }
 
+  /// Fetches products from DummyJSON API (https://dummyjson.com/products).
+  Future<List<Product>> getDummyJsonProducts({
+    String? category,
+    String? search,
+    String? tradeType,
+  }) async {
+    try {
+      Uri uri;
+      if (search != null && search.trim().isNotEmpty) {
+        uri = Uri.parse('$kDummyJsonUrl/products/search').replace(
+          queryParameters: {'q': search.trim(), 'limit': '30'},
+        );
+      } else if (category != null &&
+          category.trim().isNotEmpty &&
+          category != 'All') {
+        final catSlug = category.trim().toLowerCase().replaceAll(' ', '-');
+        uri = Uri.parse('$kDummyJsonUrl/products/category/$catSlug');
+      } else {
+        uri = Uri.parse('$kDummyJsonUrl/products?limit=30');
+      }
+
+      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final list = decoded is Map && decoded['products'] is List
+            ? decoded['products'] as List
+            : (decoded is List ? decoded : []);
+
+        var products = list
+            .map((item) => Product.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+
+        if (tradeType != null && tradeType.trim().isNotEmpty) {
+          if (tradeType == 'Barter') {
+            products = products.where((p) => p.acceptsBarter).toList();
+          } else if (tradeType == 'Sale') {
+            products = products.where((p) => p.acceptsCurrency).toList();
+          }
+        }
+        return products;
+      }
+    } catch (_) {
+      // Fall through on network failure
+    }
+    return <Product>[];
+  }
+
   /// Fetches products directly from the Beeceptor Fake Store API.
-  Future<List<Product>> getMockStoreProducts({
+  Future<List<Product>> getBeeceptorProducts({
     String? category,
     String? search,
     String? tradeType,
@@ -144,6 +191,55 @@ class ApiService {
     return <Product>[];
   }
 
+  /// Combines products from both Beeceptor and DummyJSON into a unified catalog.
+  Future<List<Product>> getUnifiedExternalProducts({
+    String? category,
+    String? search,
+    String? tradeType,
+  }) async {
+    final results = await Future.wait([
+      getBeeceptorProducts(
+        category: category,
+        search: search,
+        tradeType: tradeType,
+      ),
+      getDummyJsonProducts(
+        category: category,
+        search: search,
+        tradeType: tradeType,
+      ),
+    ]);
+
+    final beeceptorItems = results[0];
+    final dummyJsonItems = results[1];
+
+    final combined = <Product>[];
+    final seenTitles = <String>{};
+
+    for (final p in beeceptorItems) {
+      if (seenTitles.add(p.title.toLowerCase())) {
+        combined.add(p);
+      }
+    }
+    for (final p in dummyJsonItems) {
+      if (seenTitles.add(p.title.toLowerCase())) {
+        combined.add(p);
+      }
+    }
+    return combined;
+  }
+
+  /// Backward compatibility alias
+  Future<List<Product>> getMockStoreProducts({
+    String? category,
+    String? search,
+    String? tradeType,
+  }) => getUnifiedExternalProducts(
+        category: category,
+        search: search,
+        tradeType: tradeType,
+      );
+
   Future<Product> getListing(int id) async {
     try {
       final response = await http
@@ -156,10 +252,10 @@ class ApiService {
         return Product.fromJson(_asMap(jsonDecode(response.body)));
       }
     } catch (_) {
-      // Fallback to mock store
+      // Fallback to unified external mock store
     }
 
-    final mockProducts = await getMockStoreProducts();
+    final mockProducts = await getUnifiedExternalProducts();
     final match = mockProducts.where((p) => p.id == id).firstOrNull;
     if (match != null) return match;
 
